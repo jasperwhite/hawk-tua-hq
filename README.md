@@ -80,5 +80,6 @@ outside sites.
 
 ## Ideas not built
 
+- **Defences by betting line.** The DEF audit (`research/def-audit/REPORT.md`, 7 Oct 2026) found ranking by the opponent's Vegas implied total beats the current projection, and the three-and-out patch slightly hurts it. Formula in `model.json`. Parked by choice.
 - A ledger that grades last week's calls against what actually happened.
 - A Claude skill that reads the news and writes the weekly brief in plain English.
