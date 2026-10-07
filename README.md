@@ -10,9 +10,9 @@ verdicts first, one-line reasons, tabs for the working.
 
 ## Status
 
-**v0.2.0 — Opaline redesign, deploying to GitHub Pages.** Every tab renders against
-the live league with no console errors, in light and dark mode, at phone and desktop
-width. Live link: see *Hosting*.
+**v0.2.0 — live at https://jasperwhite.github.io/hawk-tua-hq/** (Opaline redesign).
+Every tab renders against the live league with no console errors, in light and dark
+mode, at phone and desktop width, both locally and on the live link.
 
 ## How to run it
 
