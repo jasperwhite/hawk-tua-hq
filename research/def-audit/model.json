@@ -1,0 +1,98 @@
+{
+  "name": "DEF weekly projection for Sleeper league 1312056164149641216 (NFL Casuals) scoring",
+  "version": "2026-10-07",
+  "formula": "proj_league_pts = 27.75 - 0.819 * opp_implied_total",
+  "coefficients": {
+    "intercept": 27.754,
+    "opp_implied_total": -0.8194,
+    "se": {
+      "intercept": 1.24,
+      "opp_implied_total": 0.0548
+    },
+    "fit_on": "2024 wk2-18 + 2025 wk1-18 + 2026 wk1-4, every team-game with a closing line",
+    "n": 1182,
+    "residual_sd_pts": 6.9
+  },
+  "ranking_rule": "Sort DEFs by opp_implied_total ascending (lowest first). The ranking needs no fitted numbers; the coefficients only set the points level.",
+  "inputs": {
+    "opp_implied_total": {
+      "meaning": "Points the bookmakers expect the DEF's opponent to score this week.",
+      "source": "ESPN scoreboard the tool already loads: https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week={w}&dates={season}",
+      "fields": "events[].competitions[0].odds[0].overUnder (game total, O/U) and .spread (HOME team's spread; negative = home favoured). Team abbreviations from competitions[0].competitors[].team.abbreviation with homeAway; map ESPN 'WSH' -> Sleeper 'WAS'.",
+      "compute": "def_spread = spread if DEF team is home else -spread;  opp_implied_total = O/U / 2 + def_spread / 2",
+      "example": "DEF is a 7-point home favourite (def_spread = -7) in a 41.5 total: opp_implied = 20.75 - 3.5 = 17.25 -> 27.75 - 0.819*17.25 = 13.6 pts",
+      "note": "The scoreboard only carries odds before kickoff; past games need the ESPN core odds endpoint (sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/{id}/competitions/{id}/odds). Not needed for live use."
+    }
+  },
+  "fallback_when_no_odds": {
+    "formula": "proj_league_pts = 27.90 - 0.826 * sleeper_proj.pts_allow",
+    "coefficients": {
+      "intercept": 27.898,
+      "proj_pts_allow": -0.826
+    },
+    "source": "Sleeper weekly projection row for the DEF (https://api.sleeper.app/projections/nfl/{season}/{week}?season_type=regular&position[]=DEF), stats.pts_allow. It tracks the Vegas implied total at r = 0.98 (mean gap 0.4 pts), so it is nearly the same signal."
+  },
+  "optional_tiebreak_not_validated": {
+    "formula": "proj_league_pts = 22.38 - 0.732 * opp_implied_total + 1.41 * opp_sacks_allowed_per_game",
+    "opp_sacks_allowed_per_game": "From Sleeper weekly DEF stats for weeks 1..w-1: sum stats.sack over rows whose `opponent` is this week's opponent, divided by those games. Shrink: (sum + 4 * prior) / (games + 4), prior = 0.5 * opponent's last-season rate + 0.5 * league average (about 2.4).",
+    "status": "Consistent sign in 2024 and 2025-26 (coef SE 0.41) but did not improve out-of-sample ranking (Spearman 0.384 vs 0.386). Use only to split near-ties (implied totals within ~1 point)."
+  },
+  "deliberately_excluded": {
+    "team_three_and_out_rate": "Coefficient ~0 once the Vegas line is known (e.g. -0.04 +/- 0.60 per 3&O/game, trained 2024+2025 wk1-9). Blending the DEF's own 3&O rate into Sleeper's projection made weekly rankings slightly worse in 2024, 2025 and out-of-sample (Spearman 0.41->0.39, 0.36->0.34, 0.34->0.31 for own-rate weight 0 -> 0.5).",
+    "opponent_three_and_outs_allowed": "No effect beyond the Vegas line (residual +0.14 vs -0.26 pts for top vs bottom tercile, SE ~0.47).",
+    "home_away_spread": "Spread and home add nothing once the implied total is in (CV and out-of-sample both flat).",
+    "opponent_qb_new_or_rookie": "Raw effect is large but Vegas already prices it; residual +1.55 +/- 0.90 (2025-26) vs -0.79 +/- 0.82 for rookies in 2024."
+  },
+  "if_keeping_sleeper_projection_instead": "Use the league-average stop rate as a flat add-on, not the team's own rate: proj = sum(proj.stats[k] * scoring[k]) + avg_3and_out + avg_4th_stop, with the averages taken over all DEF games so far this season (2025: 2.13 and 0.72 per game; 2026 YTD: 2.15 and 0.59). Week-1 default should be ~2.2 and ~0.65 (engine.js uses 3.0 and 0.5). Also drop pass_int_td from DEF projections: it is scored at -2 (a QB key) and is already inside def_td.",
+  "validation": {
+    "train": "coefficients for validation fitted on 2024 wk2-18 + 2025 wk1-9 (intercept 28.91, slope -0.871); the ranking itself is unfitted",
+    "out_of_sample_2025wk10_18_2026wk1_4": {
+      "recommended": {
+        "mae": 5.291,
+        "spearman": 0.386,
+        "top1": 17.231,
+        "top3": 14.718,
+        "top10": 12.631,
+        "best3": 23.205,
+        "field": 9.507
+      },
+      "tool_today_patched_w50": {
+        "mae": 5.432,
+        "spearman": 0.315,
+        "top1": 16.615,
+        "top3": 13.615,
+        "top10": 12.362,
+        "best3": 23.205,
+        "field": 9.507
+      },
+      "sleeper_half_ranks": {
+        "mae": null,
+        "spearman": 0.299,
+        "top1": 16.923,
+        "top3": 14.59,
+        "top10": 12.262,
+        "best3": 23.205,
+        "field": 9.507
+      },
+      "ecr": {
+        "mae": null,
+        "spearman": 0.328,
+        "top1": 17.231,
+        "top3": 14.154,
+        "top10": 12.154,
+        "best3": 23.205,
+        "field": 9.507
+      }
+    },
+    "paired_vs_tool_today_oos": "Spearman +0.07 (SE 0.02); top-1 pick +0.6 pts/wk (SE 1.7); top-3 picks +1.1 pts/wk (SE 1.2) over 13 weeks",
+    "replication_2024_unfitted_rank": {
+      "mae": null,
+      "spearman": 0.41,
+      "top1": 14.056,
+      "top3": 15.87,
+      "top10": 13.539,
+      "best3": 23.426,
+      "field": 9.592
+    }
+  }
+}
