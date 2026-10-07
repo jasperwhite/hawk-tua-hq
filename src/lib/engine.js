@@ -23,6 +23,26 @@
   const ESPN_ABBR = { WSH: 'WAS' };
   const DAY = 864e5;
 
+  // Defences: league points = A + B × the opponent's implied total from the betting line.
+  // Fitted on NFL Casuals scoring, 2024 to week 4 of 2026 (research/def-audit). Without a line,
+  // Sleeper's projected points allowed stands in for it (they track each other at r = 0.98).
+  const DEF_LINE = { a: 27.754, b: -0.8194 };
+  const DEF_PTS_ALLOW = { a: 27.898, b: -0.826 };
+  // Last season's late lines (weeks 10–18), a light prior for the team ratings while this season's
+  // sample is small. "week home away homeImplied awayImplied", one game per entry.
+  const LINE_PRIOR = {
+    2026:
+      '10 CAR NO 22 16.5|10 CHI NYG 24.5 20|10 DEN LV 25.5 16|10 GB PHI 23 21.5|10 HOU JAX 20.5 18|10 IND ATL 27 21.5|10 LAC PIT 24.5 21|10 MIA BUF 21 29.5|10 MIN BAL 22.5 27|10 NYJ CLE 17.5 20|10 SEA ARI 26 18.5|10 SF LAR 21.5 28|10 TB NE 25.5 23|10 WAS DET 20.5 28|' +
+      '11 ARI SF 22.5 26|11 ATL CAR 23 18.5|11 BUF TB 25.5 19|11 CLE BAL 15 22.5|11 DEN KC 20.5 25|11 JAX LAC 20 22.5|11 LAR SEA 26.5 23|11 LV DAL 22.5 26|11 MIA WAS 24.5 22|11 MIN CHI 25.25 22.25|11 NE NYJ 27.5 15|11 NYG GB 17.5 25|11 PHI DET 24 21.5|11 PIT CIN 26.5 21|11 TEN HOU 16 21.5|' +
+      '12 ARI JAX 22.5 24|12 BAL NYJ 29.5 15|12 CHI PIT 25 22.5|12 CIN NE 21.5 29|12 DAL PHI 23 25.5|12 DET NYG 32.5 18|12 GB MIN 24 17.5|12 HOU BUF 20 24.5|12 KC IND 27 22.5|12 LAR TB 29 21.5|12 LV CLE 20 16.5|12 NO ATL 21 19.5|12 SF CAR 27.75 20.75|12 TEN SEA 15 26.5|' +
+      '13 BAL CIN 29.75 22.75|13 CAR LAR 17.25 27.25|13 CLE SF 15 20.5|13 DAL KC 24.5 28|13 DET GB 25.25 22.25|13 IND HOU 23.5 20|13 LAC LV 25 15.5|13 MIA NO 23.5 18|13 NE NYG 26.75 19.75|13 NYJ ATL 17.75 20.75|13 PHI CHI 25.25 18.25|13 PIT BUF 20.75 23.75|13 SEA MIN 27.5 15|13 TB ARI 25 20.5|13 TEN JAX 18.25 24.25|13 WAS DEN 18.5 25|' +
+      '14 ARI LAR 20 29.5|14 ATL SEA 18.75 25.75|14 BAL PIT 24.5 19|14 BUF CIN 30.25 24.25|14 CLE TEN 19 14.5|14 DET DAL 29.5 26|14 GB CHI 25.5 19|14 JAX IND 21 23.5|14 KC HOU 23 18.5|14 LAC PHI 20 21.5|14 LV DEN 16 24.5|14 MIN WAS 22.5 21|14 NYJ MIA 19.5 22|14 TB NO 24.5 17|' +
+      '15 CHI CLE 23 15.5|15 CIN BAL 24.5 27|15 DAL MIN 26.5 21|15 DEN GB 20.5 22|15 HOU ARI 26.5 16|15 JAX NYJ 27 13.5|15 KC LAC 23.5 18|15 LAR DET 30 24.5|15 NE BUF 23.5 26|15 NO CAR 19.5 22|15 NYG WAS 24.25 21.25|15 PHI LV 24.5 12|15 PIT MIA 23.25 20.25|15 SEA IND 27 14.5|15 SF TEN 28.5 16|15 TB ATL 24.75 18.75|' +
+      '16 ARI ATL 23 25.5|16 BAL NE 25.5 22|16 CAR TB 20.75 23.75|16 CHI GB 23 21.5|16 CLE BUF 15.5 26|16 DAL LAC 26 24.5|16 DEN JAX 25 21.5|16 DET PIT 30 22.5|16 HOU LV 27 12.5|16 IND SF 21 25.5|16 MIA CIN 22.5 26|16 NO NYJ 23.25 16.25|16 NYG MIN 19.5 22|16 SEA LAR 22 20.5|16 TEN KC 17 20.5|16 WAS PHI 18.25 25.25|' +
+      '17 ATL LAR 20.5 28|17 BUF PHI 24.5 21|17 CAR SEA 18 24.5|17 CIN ARI 30.25 23.25|17 CLE PIT 15.5 19|17 GB BAL 20 17.5|17 IND JAX 22 26.5|17 KC DEN 12 25.5|17 LAC HOU 21 19.5|17 LV NYG 18.75 21.75|17 MIA TB 19.5 25|17 MIN DET 19 26.5|17 NYJ NE 15 27.5|17 SF CHI 28 23.5|17 TEN NO 18.5 20|17 WAS DAL 21 29.5|' +
+      '18 ATL NO 23.5 20|18 BUF NYJ 26.5 13|18 CHI DET 27.25 24.25|18 CIN CLE 28 19.5|18 DEN LAC 26.5 11|18 HOU IND 23.5 14|18 JAX TEN 30 16.5|18 LAR ARI 32 17.5|18 LV KC 16 19.5|18 MIN GB 25.5 12|18 NE MIA 29 14.5|18 NYG DAL 23.75 26.75|18 PHI WAS 20.75 17.75|18 PIT BAL 18.5 23|18 SF SEA 23 25.5|18 TB CAR 22.75 19.75',
+  };
+
   const range = (a, b) => { const r = []; for (let i = a; i <= b; i++) r.push(i); return r; };
   const sum = a => a.reduce((s, x) => s + x, 0);
   const avg = a => a.length ? sum(a) / a.length : 0;
@@ -54,8 +74,10 @@
       alias('fgmiss_50_59', 'fgmiss_50p');
       alias('fgm_50_59', 'fgm_50p');
     }
-    if (pos === 'DEF' && defRates) {
-      for (const k of ['def_3_and_out', 'def_4_and_stop']) {
+    if (pos === 'DEF') {
+      // A quarterback key: on a defence it double-counts pick-sixes already inside def_td.
+      delete s.pass_int_td;
+      if (defRates) for (const k of ['def_3_and_out', 'def_4_and_stop']) {
         if (sc[k] && s[k] == null) s[k] = defRates[k];
       }
     }
@@ -123,6 +145,7 @@
     /* schedule: games[week][team] */
     const games = {};
     for (const g of schedule || []) {
+      if (g.status === 'canceled') continue; // a moved game stays in the feed under its old slot
       const w = g.week; games[w] = games[w] || {};
       games[w][g.home] = { opp: g.away, home: true, status: g.status, date: g.date };
       games[w][g.away] = { opp: g.home, home: false, status: g.status, date: g.date };
@@ -145,6 +168,10 @@
         kick[ESPN_ABBR[ab] || ab] = { at: Date.parse(e.date), state: st };
       }
     }
+    /* this week's betting lines: points each team is expected to score */
+    const lines = linesFromScoreboard(scoreboard, week);
+    const lineFor = {};
+    for (const g of lines) { lineFor[g.home] = { opp: g.away, oppImplied: g.awayImplied }; lineFor[g.away] = { opp: g.home, oppImplied: g.homeImplied }; }
 
     /* players */
     const P = {};
@@ -191,32 +218,28 @@
       }
     });
 
-    /* defence extras the projections leave out (three-and-outs, fourth-down stops) */
-    const defRatesByTeam = {}; const allDef = [];
-    for (const p of Object.values(P)) {
-      if (p.pos !== 'DEF' || !p.ytd || !p.ytd.gp) continue;
-      const r = { def_3_and_out: (p.ytd.stats.def_3_and_out || 0) / p.ytd.gp, def_4_and_stop: (p.ytd.stats.def_4_and_stop || 0) / p.ytd.gp };
-      defRatesByTeam[p.id] = r; allDef.push(r);
-    }
-    const defAvg = {
-      def_3_and_out: allDef.length ? avg(allDef.map(r => r.def_3_and_out)) : 3,
-      def_4_and_stop: allDef.length ? avg(allDef.map(r => r.def_4_and_stop)) : 0.5,
-    };
-    const defRates = id => {
-      const own = defRatesByTeam[id]; if (!own) return defAvg;
-      // shrink toward league average: a few games is a small sample
-      return { def_3_and_out: (own.def_3_and_out + defAvg.def_3_and_out) / 2, def_4_and_stop: (own.def_4_and_stop + defAvg.def_4_and_stop) / 2 };
+    /* defence extras the projections leave out (three-and-outs, fourth-down stops).
+       League average for everyone: a team's own rate takes most of a season to mean anything,
+       and blending it in made the weekly order worse in every season tested. */
+    const allDef = Object.values(P).filter(p => p.pos === 'DEF' && p.ytd && p.ytd.gp);
+    const defGames = sum(allDef.map(p => p.ytd.gp));
+    const dr = {
+      def_3_and_out: defGames ? sum(allDef.map(p => p.ytd.stats.def_3_and_out || 0)) / defGames : 2.2,
+      def_4_and_stop: defGames ? sum(allDef.map(p => p.ytd.stats.def_4_and_stop || 0)) / defGames : 0.65,
     };
 
     for (const p of Object.values(P)) {
-      const dr = p.pos === 'DEF' ? defRates(p.id) : null;
+      const isDef = p.pos === 'DEF';
       for (const w of projWeeks) {
         const raw = p.projRaw[w]; if (!raw) continue;
-        p.proj[w] = scoreStats(fillProjection(raw, p.pos, scoring, dr), scoring);
         p.half[w] = raw.pts_half_ppr || 0;
+        const line = isDef && w === week && lineFor[p.team];
+        if (line) { p.proj[w] = DEF_LINE.a + DEF_LINE.b * line.oppImplied; p.line = line.oppImplied; }
+        else if (isDef && raw.pts_allow != null) p.proj[w] = DEF_PTS_ALLOW.a + DEF_PTS_ALLOW.b * raw.pts_allow;
+        else p.proj[w] = scoreStats(fillProjection(raw, p.pos, scoring, isDef ? dr : null), scoring);
       }
       if (p.ytd) p.ytd.pts = scoreStats(p.ytd.stats, scoring);
-        if (p.pre) p.pre.pts = scoreStats(fillProjection(p.pre.stats, p.pos, scoring, dr ? { def_3_and_out: dr.def_3_and_out * 17, def_4_and_stop: dr.def_4_and_stop * 17 } : null), scoring);
+      if (p.pre) p.pre.pts = scoreStats(fillProjection(p.pre.stats, p.pos, scoring, isDef ? { def_3_and_out: dr.def_3_and_out * 17, def_4_and_stop: dr.def_4_and_stop * 17 } : null), scoring);
     }
 
     /* teams */
@@ -274,7 +297,7 @@
       leagueId, league, name: league.name, season, week, lastWeek, playoffStart: pws,
       tradeDeadline: ls.trade_deadline || null, scoring, slots, rosterLimit, nTeams,
       projWeeks, pastWeeks, weeksLeft: range(week, lastWeek),
-      players: P, teams, teamByRid, games, plays, byeWeek, kick, live, matchups,
+      players: P, teams, teamByRid, games, plays, byeWeek, kick, lines, live, matchups,
       market: mkt, hasMarket: Object.keys(mkt).length > 0, trending,
       waiver: {
         type: ls.waiver_type === 2 ? 'faab' : (ls.waiver_type === 1 ? 'rolling' : 'priority'),
@@ -668,6 +691,169 @@
     return L.weeksLeft.map(w => ({ week: w, out: starters.filter(p => p.team && !L.plays(p.team, w)) })).filter(x => x.out.length);
   }
 
+  /* ---------- defences: betting lines, team ratings, rest of season ---------- */
+
+  const ESPN_SB = (season, w) => `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${w}&dates=${season}`;
+  const ESPN_ODDS = id => `https://sports.core.api.espn.com/v2/sports/football/leagues/nfl/events/${id}/competitions/${id}/odds`;
+
+  // ESPN quotes the HOME team's spread (negative = home favoured). Live in-game odds are skipped.
+  function readLine(o) {
+    if (!o || /live/i.test((o.provider && o.provider.name) || '')) return null;
+    let sp = o.spread, ou = o.overUnder;
+    if (sp == null) sp = parseFloat(o.homeTeamOdds && o.homeTeamOdds.close && o.homeTeamOdds.close.pointSpread && o.homeTeamOdds.close.pointSpread.american);
+    if (ou == null) ou = parseFloat(o.close && o.close.total && o.close.total.american);
+    if (sp == null || ou == null || isNaN(sp) || isNaN(ou)) return null;
+    const hf = o.homeTeamOdds && o.homeTeamOdds.favorite, af = o.awayTeamOdds && o.awayTeamOdds.favorite;
+    if (hf === true && sp > 0) sp = -sp;
+    if (hf === false && af === true && sp < 0) sp = -sp;
+    return { spread: +sp, total: +ou };
+  }
+  function sides(c) {
+    const out = {};
+    for (const x of c.competitors || []) { const ab = x.team && x.team.abbreviation; if (ab) out[x.homeAway] = ESPN_ABBR[ab] || ab; }
+    return out;
+  }
+  const gameLine = (w, s, l) => ({ week: w, home: s.home, away: s.away, homeImplied: l.total / 2 - l.spread / 2, awayImplied: l.total / 2 + l.spread / 2 });
+
+  function linesFromScoreboard(sb, w) {
+    const out = [];
+    for (const e of (sb && sb.events) || []) {
+      const c = e.competitions && e.competitions[0]; if (!c) continue;
+      const s = sides(c), l = readLine((c.odds || [])[0]);
+      if (s.home && s.away && l) out.push(gameLine(w, s, l));
+    }
+    return out;
+  }
+
+  // Every line for one week. The scoreboard drops a game's odds at kickoff, so games under way or
+  // finished come from ESPN's odds feed, one call each. A finished week never changes, so it's cached.
+  async function weekLines(season, w, cache) {
+    const key = `lines:${season}:${w}`;
+    const hit = cache && cache.get(key);
+    if (hit) { try { return JSON.parse(hit); } catch (e) { /* fetch again */ } }
+    const sb = await getJSON(ESPN_SB(season, w));
+    let final = true, missing = false;
+    const out = await Promise.all(((sb && sb.events) || []).map(async e => {
+      const c = e.competitions && e.competitions[0]; if (!c) return null;
+      const st = (e.status && e.status.type) || {};
+      if (/CANCEL|POSTPON/.test(st.name || '')) return null;
+      if (st.state !== 'post') final = false;
+      const s = sides(c); if (!s.home || !s.away) return null;
+      let l = readLine((c.odds || [])[0]);
+      if (!l && st.state !== 'pre') {
+        const d = await soft(getJSON(ESPN_ODDS(e.id)));
+        for (const it of (d && d.items) || []) { l = readLine(it); if (l) break; }
+      }
+      if (!l) missing = true;
+      return l ? gameLine(w, s, l) : null;
+    }));
+    const lines = out.filter(Boolean);
+    if (cache && final && !missing && lines.length) cache.set(key, JSON.stringify(lines));
+    return lines;
+  }
+
+  // Ridge regression on implied totals: points = base + attack[scoring team] + defence[defending team] + home.
+  // Light shrinkage (lambda 1) on the team terms; base and home are left free.
+  function fitRatings(obs, teams) {
+    const T = teams.length, n = 2 * T + 2, ti = Object.fromEntries(teams.map((t, i) => [t, i]));
+    const A = Array.from({ length: n }, () => new Array(n + 1).fill(0));
+    for (let i = 1; i < n - 1; i++) A[i][i] = 1;
+    for (const o of obs) {
+      if (ti[o.s] == null || ti[o.d] == null) continue;
+      const idx = [0, 1 + ti[o.s], 1 + T + ti[o.d]]; if (o.home) idx.push(n - 1);
+      for (const a of idx) { A[a][n] += o.wt * o.y; for (const b of idx) A[a][b] += o.wt; }
+    }
+    // Gaussian elimination with partial pivoting
+    for (let c = 0; c < n; c++) {
+      let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r;
+      const tmp = A[c]; A[c] = A[p]; A[p] = tmp;
+      for (let r = c + 1; r < n; r++) { const f = A[r][c] / A[c][c]; if (f) for (let k = c; k <= n; k++) A[r][k] -= f * A[c][k]; }
+    }
+    const x = new Array(n).fill(0);
+    for (let r = n - 1; r >= 0; r--) { let s = A[r][n]; for (let k = r + 1; k < n; k++) s -= A[r][k] * x[k]; x[r] = s / A[r][r]; }
+    return {
+      base: x[0], home: x[n - 1],
+      att: Object.fromEntries(teams.map((t, i) => [t, x[1 + i]])),
+      def: Object.fromEntries(teams.map((t, i) => [t, x[1 + T + i]])),
+    };
+  }
+
+  // Every defence's rest of season: each game's line where one exists, otherwise the line the team
+  // ratings predict, turned into league points. Plus how each one's season so far compares with its lines.
+  async function defBoard(L, opts) {
+    const cache = opts && opts.cache;
+    const { season, week: cur, players: P, games } = L;
+    const byWeek = await Promise.all(range(1, cur).map(w => soft(weekLines(season, w, cache)).then(x => x || [])));
+    const played = [].concat(...byWeek);
+    const teams = [...new Set([].concat(...Object.values(games).map(g => Object.keys(g))))].sort();
+    const obs = [];
+    const add = (g, wt) => {
+      obs.push({ s: g.home, d: g.away, home: 1, y: g.homeImplied, wt });
+      obs.push({ s: g.away, d: g.home, home: 0, y: g.awayImplied, wt });
+    };
+    played.forEach(g => add(g, Math.pow(0.8, cur - g.week)));
+    (LINE_PRIOR[season] || '').split('|').filter(Boolean).forEach(e => {
+      const [, home, away, hi, ai] = e.split(' ');
+      add({ home, away, homeImplied: +hi, awayImplied: +ai }, 0.2);
+    });
+    if (!teams.length || !obs.length) return null;
+    const R = fitRatings(obs, teams);
+    const implied = (s, d, home) => R.base + R.att[s] + R.def[d] + (home ? R.home : 0);
+    const pts = imp => DEF_LINE.a + DEF_LINE.b * imp;
+    const real = {}; // `${week}:${team}` -> what its opponent is expected to score, from an actual line
+    for (const g of played) { real[g.week + ':' + g.home] = g.awayImplied; real[g.week + ':' + g.away] = g.homeImplied; }
+    const mean = a => (a.length ? avg(a) : null);
+
+    const rows = teams.map(t => {
+      const sched = [];
+      for (const w of L.weeksLeft) {
+        const g = (games[w] || {})[t]; if (!g) continue;
+        const k = w + ':' + t, imp = real[k] != null ? real[k] : implied(g.opp, t, !g.home);
+        sched.push({ week: w, opp: g.opp, home: g.home, implied: imp, pts: pts(imp), line: real[k] != null });
+      }
+      const faced = played.filter(g => g.week < cur && (g.home === t || g.away === t))
+        .map(g => (g.home === t ? { opp: g.away, imp: g.awayImplied } : { opp: g.home, imp: g.homeImplied }));
+      const p = P[t];
+      return {
+        team: t, name: p ? p.name : t, owner: p ? p.owner : null, sched,
+        ros: mean(sched.map(x => x.pts)),
+        next3: mean(sched.filter(x => x.week < cur + 3).map(x => x.pts)),
+        playoffs: mean(sched.filter(x => x.week >= L.playoffStart).map(x => x.pts)),
+        byes: L.weeksLeft.filter(w => !(games[w] || {})[t]),
+        rating: R.def[t], // points this defence takes off an average offence's line; lower is better
+        soFar: p && p.ytd && p.ytd.gp ? p.ytd.pts / p.ytd.gp : null,
+        expected: mean(faced.map(x => pts(x.imp))),
+        oppAttack: mean(faced.map(x => R.att[x.opp])), // offences faced, points above an average one
+        faced: faced.length,
+      };
+    });
+    rows.slice().sort((a, b) => a.rating - b.rating).forEach((r, i) => { r.marketRank = i + 1; });
+    rows.sort((a, b) => (b.ros || 0) - (a.ros || 0)).forEach((r, i) => { r.rank = i + 1; });
+    return { rows, lines: played.length, ratings: R };
+  }
+
+  // Week by week: your best defence against the best one nobody owns. Switch at a 2-point gap,
+  // or 4 when it takes a waiver claim this week.
+  function defPlan(L, board, rid) {
+    const P = L.players;
+    const mine = activeIds(L.teamByRid[rid]).filter(id => P[id] && P[id].pos === 'DEF');
+    const by = Object.fromEntries(board.rows.map(r => [r.team, r]));
+    const at = (team, w) => (by[team] ? by[team].sched.find(x => x.week === w) : null) || null;
+    return L.weeksLeft.map(w => {
+      let you = null, best = null;
+      const now = w === L.week;
+      for (const id of mine) { const g = at(id, w); if (g && (!you || g.pts > you.pts)) you = Object.assign({ team: id }, g); }
+      for (const r of board.rows) {
+        if (r.owner != null || (now && isLocked(L, r.team))) continue;
+        const g = at(r.team, w); if (g && (!best || g.pts > best.pts)) best = Object.assign({ team: r.team }, g);
+      }
+      const claim = now && !!best && !!P[best.team] && faStatus(L, P[best.team]) === 'waivers';
+      const locked = now && !!you && isLocked(L, you.team); // yours has kicked off: nothing left to decide
+      const gap = best ? best.pts - (you ? you.pts : 0) : 0;
+      return { week: w, you, best, gap, claim, locked, stream: !locked && !!best && (!you || gap >= (claim ? 4 : 2)) };
+    });
+  }
+
   /* ---------- how this league scores ---------- */
 
   function scoringNotes(L) {
@@ -686,7 +872,7 @@
     if (sc.pass_td && sc.pass_td <= 4) notes.push({ key: 'pass_td', text: `Passing touchdowns are worth ${fmtNum(sc.pass_td)}, so quarterbacks are deep. Don't pay up for one.` });
     if (sc.bonus_rec_te) notes.push({ key: 'te', text: `Tight ends get +${fmtNum(sc.bonus_rec_te)} a catch.` });
     if (sc.fgm_yds_over_30 || sc.fgmiss_0_19 || sc.fgmiss_20_29) notes.push({ key: 'k', text: `Kickers earn ${fmtNum(sc.fgm || 0)} per make plus ${fmtNum(sc.fgm_yds_over_30 || 0)} for every yard past 30, and lose up to ${fmtNum(Math.abs(Math.min(sc.fgmiss_0_19 || 0, sc.fgmiss_20_29 || 0)))} for a short miss. Favour big legs in domes.` });
-    if (sc.def_3_and_out) notes.push({ key: 'def', text: `Defences get ${fmtNum(sc.def_3_and_out)} pt per three-and-out${sc.def_4_and_stop ? ' and per fourth-down stop' : ''}, so stingy units beat ball-hawks.` });
+    if (sc.def_3_and_out) notes.push({ key: 'def', text: `Defences get ${fmtNum(sc.def_3_and_out)} pt per three-and-out${sc.def_4_and_stop ? ' and per fourth-down stop' : ''}, but no defence is reliably better at them. The betting line is the best guide: start the one whose opponent is expected to score least.` });
     return { notes, boosts };
   }
   function fmtNum(n) { return (Math.round(n * 100) / 100).toString(); }
@@ -694,7 +880,7 @@
   const api = {
     load, computeValues, optimize, strength, lineupCall, waiverCalls, waiverPlan, evalTrade, tradeIdeas,
     positionRanks, benchLoss, byesAhead, scoringNotes, isLocked, weekPts, kickoff, gameOf, faStatus,
-    activeIds, eligible, SLOT_LABEL, FPOS, scoreStats,
+    activeIds, eligible, SLOT_LABEL, FPOS, scoreStats, defBoard, defPlan, DEF_LINE,
   };
   // Always on the global too: the bundler may hand this file a `module` object of its own.
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -5,12 +5,12 @@ import './engine.js'
 export type Any = any
 export const HQ: Any = (globalThis as Any).HQ
 
-export const VERSION = '0.2.0'
+export const VERSION = '0.3.0'
 export const DEFAULT_LEAGUE = '1312056164149641216'
 export const DEFAULT_USER = 'jasperwhite'
 
 export const TABS = [
-  ['brief', 'Brief'], ['lineup', 'Lineup'], ['waivers', 'Waivers'], ['trades', 'Trades'],
+  ['brief', 'Brief'], ['lineup', 'Lineup'], ['waivers', 'Waivers'], ['defence', 'Defence'], ['trades', 'Trades'],
   ['players', 'Players'], ['team', 'Team'], ['news', 'News'],
 ] as const
 export type Tab = (typeof TABS)[number][0]

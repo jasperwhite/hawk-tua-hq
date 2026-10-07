@@ -2,7 +2,7 @@ import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } 
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   AmericanFootballIcon, ArrowDataTransferHorizontalIcon, News01Icon, RankingIcon, RefreshIcon,
-  TaskDaily01Icon, UserAdd01Icon, UserGroupIcon,
+  Shield01Icon, TaskDaily01Icon, UserAdd01Icon, UserGroupIcon,
 } from '@hugeicons/core-free-icons'
 
 import {
@@ -22,6 +22,7 @@ import { GlassText } from '@/components/ui/opaline/glass-text'
 import { GlassToaster, toast } from '@/components/ui/opaline/glass-toast'
 import { LiquidGlassProvider } from '@/components/ui/opaline/liquid-glass'
 import Brief from '@/views/Brief'
+import Defences from '@/views/Defences'
 import Lineup from '@/views/Lineup'
 import News from '@/views/News'
 import Players from '@/views/Players'
@@ -30,11 +31,11 @@ import Trades from '@/views/Trades'
 import Waivers from '@/views/Waivers'
 
 const ICON: Record<Tab, Any> = {
-  brief: TaskDaily01Icon, lineup: AmericanFootballIcon, waivers: UserAdd01Icon, trades: ArrowDataTransferHorizontalIcon,
+  brief: TaskDaily01Icon, lineup: AmericanFootballIcon, waivers: UserAdd01Icon, defence: Shield01Icon, trades: ArrowDataTransferHorizontalIcon,
   players: RankingIcon, team: UserGroupIcon, news: News01Icon,
 }
 const VIEW: Record<Tab, () => ReactNode> = {
-  brief: Brief, lineup: Lineup, waivers: Waivers, trades: Trades, players: Players, team: Team, news: News,
+  brief: Brief, lineup: Lineup, waivers: Waivers, defence: Defences, trades: Trades, players: Players, team: Team, news: News,
 }
 const STEPS = ['Reading your league', 'Pulling projections and stats', 'Scoring every player your way']
 
@@ -131,7 +132,7 @@ export default function App() {
               <GlassTabBarItem
                 key={k} value={k} label={label}
                 icon={<HugeiconsIcon icon={ICON[k]} strokeWidth={1.8} />}
-                className="h-[52px] w-[46px] min-w-0 px-0 [&_svg]:size-[22px] sm:w-16 aria-[current=page]:text-[var(--num)] dark:aria-[current=page]:text-[var(--num)]"
+                className="h-[52px] w-[42px] min-w-0 px-0 tracking-[-0.03em] sm:tracking-[0.01em] [&_svg]:size-[22px] sm:w-16 aria-[current=page]:text-[var(--num)] dark:aria-[current=page]:text-[var(--num)]"
               />
             ))}
           </GlassTabBar>
@@ -240,7 +241,7 @@ function Footer({ L, leagueId, onLeague }: { L: Any; leagueId: string; onLeague:
   return (
     <footer className="mt-6 flex flex-col gap-3 text-[13px]">
       <p className="max-w-[68ch] leading-relaxed opacity-65">
-        Live from Sleeper each time you open it. Projections and stats: Sleeper. Market values: FantasyCalc. Kickoffs and player news: ESPN and RotoWire. Free, no account, nothing stored but your choices on this device.
+        Live from Sleeper each time you open it. Projections and stats: Sleeper. Market values: FantasyCalc. Kickoffs, betting lines and player news: ESPN and RotoWire. Free, no account. Your choices and past betting lines are kept on this device.
       </p>
       {L && <Kicker>Loaded {whenLong(L.loadedAt)} · v{VERSION}</Kicker>}
       <details className="group">

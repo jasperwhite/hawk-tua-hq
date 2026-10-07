@@ -37,7 +37,7 @@ and Firefox get frosted glass instead, which is fine.
 | `src/lib/engine.js` | All data and all the maths, no UI. It loads the league, re-scores every projection with the league's settings, works out rest-of-season value, and runs the lineup optimiser, waiver plan and trade search. It also runs under Node (`require('./src/lib/engine.js')`) for testing. |
 | `src/lib/hq.ts` | Bridge to the engine, version number, formatters, and the per-team view that caches each engine call. |
 | `src/App.tsx` | Shell: loading and error states, masthead, season ruler, tab bar, footer. |
-| `src/views/*.tsx` | One file per tab: Brief, Lineup, Waivers, Trades, Players, Team, News. |
+| `src/views/*.tsx` | One file per tab: Brief, Lineup, Waivers, Defences, Trades, Players, Team, News. |
 | `src/components/hq-ui.tsx` | Shared pieces: panels, tables, chips, steps, bars, filters. |
 | `src/components/ui/opaline/` | The Opaline components, as installed by shadcn. Edit in place if needed. |
 | `src/app.css` | The app's tokens (orange accent, wallpaper, table styles) for light and dark. |
@@ -61,12 +61,17 @@ and Firefox get frosted glass instead, which is fine.
 - **Trades.** Every 1-for-1, 2-for-1 and 1-for-2 swap with every team, judged by what
   it does to **both** lineups. A deal shows only if the other team improves too and
   FantasyCalc market values are close.
+- **Defences.** League points = 27.75 − 0.819 × what the opponent is expected to score,
+  from ESPN's betting line (`research/def-audit/`). Without a line, Sleeper's projected
+  points allowed stands in. The Defence tab predicts future lines from team ratings: a
+  ridge regression on every line this season (recent weeks weighted up) plus 2025 weeks
+  10–18 at a fifth of the weight. Finished weeks' lines are cached in `localStorage`.
 - **Win chance.** Normal approximation on both teams' best lineups.
 
 ## Data sources (all free, no keys)
 
 Sleeper (league, rosters, matchups, projections, stats, schedule), FantasyCalc (market
-values), ESPN (kickoff times, RotoWire player notes). Endpoint details and quirks:
+values), ESPN (kickoff times, betting lines, RotoWire player notes). Endpoint details and quirks:
 `~/Work/Claude/docs/tooling/sleeper.md`.
 
 ## Hosting
@@ -80,6 +85,5 @@ outside sites.
 
 ## Ideas not built
 
-- **Defences by betting line.** The DEF audit (`research/def-audit/REPORT.md`, 7 Oct 2026) found ranking by the opponent's Vegas implied total beats the current projection, and the three-and-out patch slightly hurts it. Formula in `model.json`. Parked by choice.
 - A ledger that grades last week's calls against what actually happened.
 - A Claude skill that reads the news and writes the weekly brief in plain English.
