@@ -1,0 +1,65 @@
+/* Hawk Tua HQ — app layer on top of the Opaline theme.
+   One accent, orange, on numbers and times. The wallpaper is a night/day field with
+   yard lines, so the glass has something to bend. */
+
+:root {
+  --num: #a3550a;          /* orange that reads on light glass */
+  --accent-fill: #e8912d;
+  --good: oklch(0.52 0.13 150);
+  --bad: oklch(0.55 0.19 30);
+  --warn: oklch(0.62 0.14 75);
+  --wall-base: oklch(0.95 0.012 120);
+  --wall-a: oklch(0.86 0.11 62 / 0.75);
+  --wall-b: oklch(0.83 0.09 150 / 0.7);
+  --wall-c: oklch(0.9 0.05 230 / 0.6);
+  --yard: oklch(0.3 0.03 150 / 0.09);
+  --hair: oklch(0.21 0.004 286 / 0.1);
+  --row-mine: oklch(0.8 0.12 62 / 0.18);
+  --title-fill: oklch(0.24 0.02 55 / 0.86);
+}
+.dark {
+  --num: #f2a657;
+  --accent-fill: #f09a3c;
+  --good: oklch(0.75 0.14 150);
+  --bad: oklch(0.7 0.17 28);
+  --warn: oklch(0.8 0.13 80);
+  --wall-base: oklch(0.15 0.015 160);
+  --wall-a: oklch(0.5 0.14 55 / 0.42);
+  --wall-b: oklch(0.42 0.1 155 / 0.5);
+  --wall-c: oklch(0.35 0.07 250 / 0.4);
+  --yard: oklch(1 0 0 / 0.06);
+  --hair: oklch(1 0 0 / 0.09);
+  --row-mine: oklch(0.7 0.13 62 / 0.16);
+  --title-fill: oklch(0.98 0.01 75 / 0.9);
+}
+
+body { background: var(--wall-base); }
+
+.wallpaper {
+  position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 87px, var(--yard) 87px 89px),
+    radial-gradient(60% 50% at 88% 6%, var(--wall-a), transparent 70%),
+    radial-gradient(55% 60% at 4% 92%, var(--wall-b), transparent 70%),
+    radial-gradient(50% 45% at 50% 50%, var(--wall-c), transparent 75%),
+    var(--wall-base);
+}
+
+.num { color: var(--num); font-variant-numeric: tabular-nums; font-weight: 600; }
+.tnum { font-variant-numeric: tabular-nums; }
+.kicker { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.6; }
+
+/* tables inside glass */
+.hq-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.hq-table th { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.55; text-align: left; padding: 0 10px 8px; white-space: nowrap; }
+.hq-table td { padding: 9px 10px; border-top: 1px solid var(--hair); vertical-align: middle; }
+.hq-table th:first-child, .hq-table td:first-child { padding-left: 0; }
+.hq-table th:last-child, .hq-table td:last-child { padding-right: 0; }
+.hq-table .r { text-align: right; font-variant-numeric: tabular-nums; }
+.hq-table tr.mine td { background: var(--row-mine); }
+.hq-table tr.dim td { opacity: 0.62; }
+.hq-table .slot { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; opacity: 0.55; width: 1%; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

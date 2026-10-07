@@ -10,30 +10,38 @@ verdicts first, one-line reasons, tabs for the working.
 
 ## Status
 
-**v0.1.0 — working locally.** Every tab renders against the live league, with no
-console errors, in light and dark mode and at phone width. Not hosted yet; see
-*Hosting*.
+**v0.2.0 — Opaline redesign, deploying to GitHub Pages.** Every tab renders against
+the live league with no console errors, in light and dark mode, at phone and desktop
+width. Live link: see *Hosting*.
 
-## How to open it
+## How to run it
 
-It's a static page with no build step. Browsers block live data from a page opened as
-a `file://`, so serve the folder:
+React + Vite + Tailwind, with the Opaline liquid-glass components (shadcn registry
+`@opaline`). First time only: `npm install`. Then:
 
 ```bash
-cd ~/Personal/"Fantasy Football" && python3 -m http.server 8765
+cd ~/Personal/"Fantasy Football" && npm run dev
 ```
 
-Then open http://127.0.0.1:8765. **Refresh** reloads everything. The team dropdown
-shows any other team's view. *Use a different league* (footer) takes any Sleeper
-league ID.
+Open the local address it prints. `npm run build` type-checks and writes the static
+site to `dist/`. **Refresh** (top right) reloads the league. The team dropdown shows any
+other team's view. *Use a different league* (footer) takes any Sleeper league ID.
+
+Liquid-glass refraction only shows in Chrome, Edge and other Chromium browsers. Safari
+and Firefox get frosted glass instead, which is fine.
 
 ## Files
 
 | File | What it does |
 |---|---|
-| `engine.js` | All data and all the maths, no UI. It loads the league, re-scores every projection with the league's settings, works out rest-of-season value, and runs the lineup optimiser, waiver plan and trade search. It also runs under Node (`require('./engine.js')`) for testing. |
-| `app.js` | The page: the seven tabs, built from what the engine returns. |
-| `index.html` | Markup and all CSS (tokens for light and dark). |
+| `src/lib/engine.js` | All data and all the maths, no UI. It loads the league, re-scores every projection with the league's settings, works out rest-of-season value, and runs the lineup optimiser, waiver plan and trade search. It also runs under Node (`require('./src/lib/engine.js')`) for testing. |
+| `src/lib/hq.ts` | Bridge to the engine, version number, formatters, and the per-team view that caches each engine call. |
+| `src/App.tsx` | Shell: loading and error states, masthead, season ruler, tab bar, footer. |
+| `src/views/*.tsx` | One file per tab: Brief, Lineup, Waivers, Trades, Players, Team, News. |
+| `src/components/hq-ui.tsx` | Shared pieces: panels, tables, chips, steps, bars, filters. |
+| `src/components/ui/opaline/` | The Opaline components, as installed by shadcn. Edit in place if needed. |
+| `src/app.css` | The app's tokens (orange accent, wallpaper, table styles) for light and dark. |
+| `.github/workflows/pages.yml` | Builds and publishes to GitHub Pages on every push to `main`. |
 
 ## How the calls are made
 
@@ -63,9 +71,12 @@ values), ESPN (kickoff times, RotoWire player notes). Endpoint details and quirk
 
 ## Hosting
 
-Not decided. A claude.ai Artifact **can't** run it, because the Artifact sandbox blocks
-calls to outside sites. Options: GitHub Pages (public link, no-index) or stay on this
-Mac.
+GitHub Pages, from the public repo `jasperwhite/hawk-tua-hq`. Every push to `main`
+rebuilds and republishes. `robots.txt` and a `noindex` meta keep it out of search
+results, so it's link-only in practice, but the link itself isn't private.
+
+A claude.ai Artifact **can't** run it, because the Artifact sandbox blocks calls to
+outside sites.
 
 ## Ideas not built
 

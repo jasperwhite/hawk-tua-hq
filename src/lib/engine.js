@@ -696,6 +696,7 @@
     positionRanks, benchLoss, byesAhead, scoringNotes, isLocked, weekPts, kickoff, gameOf, faStatus,
     activeIds, eligible, SLOT_LABEL, FPOS, scoreStats,
   };
+  // Always on the global too: the bundler may hand this file a `module` object of its own.
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  else root.HQ = api;
+  root.HQ = api;
 })(typeof window !== 'undefined' ? window : globalThis);
