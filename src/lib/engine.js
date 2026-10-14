@@ -547,10 +547,16 @@
   function faStatus(L, p) {
     if (L.waiver.recentlyDropped.has(p.id)) return 'waivers';
     if (isLocked(L, p.id)) return 'waivers';
-    // anyone who played since the last run stays on waivers until the next one
-    const prev = p.team && gameOf(L, p.team, L.week - 1);
-    if (prev && prev.date && L.waiver.nextRun && Date.parse(prev.date) > L.waiver.nextRun - 7 * DAY) return 'waivers';
+    if (betweenWeeks(L)) return 'waivers';
     return 'free';
+  }
+
+  // Once a week's games are over, Sleeper puts every free agent on waivers until the weekly run,
+  // bye-week teams included. In NFL Casuals no one has added a free agent in that gap all season.
+  function betweenWeeks(L, now) {
+    const run = L.waiver.nextRun, t = now || Date.now();
+    if (!run || t >= run) return false;
+    return Object.values(L.games[L.week - 1] || {}).some(g => g.date && Date.parse(g.date) > run - 7 * DAY);
   }
 
   function waiverCalls(L, rid, idsOverride, skip) {

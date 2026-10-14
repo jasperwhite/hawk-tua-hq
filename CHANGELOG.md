@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.3 — 2026-10-14
+Between the last game of a week and the waiver run, every free agent shows as
+**Waivers**, bye-week teams included.
+
+**Why:** 0.3.1 marked players from bye-week teams as free, and told Jasper to add the
+Chiefs straight away. Sleeper wanted a claim. The league's history agrees: no one has
+added a free agent in that gap all season.
+
 ## 0.3.2 — 2026-10-14
 Defences' Value and Per wk now come from the betting lines on every tab, not just the
 Defence tab.
