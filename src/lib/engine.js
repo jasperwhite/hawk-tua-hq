@@ -347,6 +347,13 @@
       const half = p.half[projWeeks[0]];
       p.boost = half > 3 ? (p.proj[projWeeks[0]] - half) / half : null;
     }
+    rankValues(L);
+  }
+
+  // Value above replacement, ranks and the free-agent list, from each player's rest-of-season total.
+  function rankValues(L) {
+    const { players: P } = L;
+    const all = Object.values(P).filter(p => FPOS.includes(p.pos));
 
     // replacement level = first player outside the league's combined starting pool
     const pools = {};
@@ -701,6 +708,18 @@
     return L.weeksLeft.map(w => ({ week: w, out: starters.filter(p => p.team && !L.plays(p.team, w)) })).filter(x => x.out.length);
   }
 
+  // Once the betting-line board is in, defences' season values come from it as well, so the Value
+  // column, the waiver plan and the Defence tab all agree. Lines beat Sleeper's projections in the audit.
+  function applyDefBoard(L, board) {
+    for (const r of board.rows) {
+      const p = L.players[r.team]; if (!p || !p.team) continue;
+      p.ros = sum(r.sched.filter(s => s.week >= L.week).map(s => s.pts));
+      p.rosWk = L.weeksLeft.length ? p.ros / L.weeksLeft.length : 0;
+    }
+    rankValues(L);
+    L.defLines = true;
+  }
+
   /* ---------- defences: betting lines, team ratings, rest of season ---------- */
 
   const ESPN_SB = (season, w) => `https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${w}&dates=${season}`;
@@ -890,7 +909,7 @@
   const api = {
     load, computeValues, optimize, strength, lineupCall, waiverCalls, waiverPlan, evalTrade, tradeIdeas,
     positionRanks, benchLoss, byesAhead, scoringNotes, isLocked, weekPts, kickoff, gameOf, faStatus,
-    activeIds, eligible, SLOT_LABEL, FPOS, scoreStats, defBoard, defPlan, DEF_LINE,
+    activeIds, eligible, SLOT_LABEL, FPOS, scoreStats, defBoard, defPlan, applyDefBoard, DEF_LINE,
   };
   // Always on the global too: the bundler may hand this file a `module` object of its own.
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

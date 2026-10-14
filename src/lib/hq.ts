@@ -5,7 +5,7 @@ import './engine.js'
 export type Any = any
 export const HQ: Any = (globalThis as Any).HQ
 
-export const VERSION = '0.3.1'
+export const VERSION = '0.3.2'
 export const DEFAULT_LEAGUE = '1312056164149641216'
 export const DEFAULT_USER = 'jasperwhite'
 
@@ -46,6 +46,18 @@ export const ago = (ms: number) => {
 export const store = {
   get(k: string) { try { return localStorage.getItem('hq.' + k) } catch { return null } },
   set(k: string, v: string) { try { localStorage.setItem('hq.' + k, v) } catch { /* private window */ } },
+}
+
+/* The betting-line defence board: fetched once per league load, shared by every tab. */
+const boards = new Map<string, Promise<Any>>()
+export function boardFor(L: Any): Promise<Any> {
+  const key = `${L.leagueId}:${L.loadedAt}`
+  if (!boards.has(key)) {
+    const p: Promise<Any> = HQ.defBoard(L, { cache: store })
+    p.catch(() => boards.delete(key))
+    boards.set(key, p)
+  }
+  return boards.get(key)!
 }
 
 /* ---------- per-team view of the loaded league ---------- */

@@ -53,7 +53,7 @@ export default function Waivers() {
             ))}
           </tbody>
         </TableWrap>
-        <Lede className="text-[13px]">Per wk is expected points for the rest of the season, byes included. Value is points above a replacement-level starter over that stretch. Adds 24h counts pickups across all Sleeper leagues.</Lede>
+        <Lede className="text-[13px]">Per wk is expected points for the rest of the season, byes included. Value is points above a replacement-level starter over that stretch.{L.defLines ? ' Defences use the betting lines, as on the Defence tab.' : ''} Adds 24h counts pickups across all Sleeper leagues.</Lede>
       </Panel>
     </div>
   )

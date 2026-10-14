@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.2 — 2026-10-14
+Defences' Value and Per wk now come from the betting lines on every tab, not just the
+Defence tab.
+
+**Why:** the Waivers tab rated the Chiefs well above the Steelers (Value 14 vs 6) while
+the Defence tab had the Steelers ahead, because one used Sleeper's projections and the
+other the lines. The lines ranked defences better in the audit, so they win. The board
+loads in the background after the league does, and the numbers switch over when it's in.
+
 ## 0.3.1 — 2026-10-14
 Waiver day shows the week that's coming, not the one just played.
 

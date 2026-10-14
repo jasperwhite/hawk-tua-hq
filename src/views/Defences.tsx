@@ -1,11 +1,8 @@
 import { useEffect, useState } from 'react'
 
-import { HQ, f1, sgn, store, type Any } from '@/lib/hq'
+import { HQ, boardFor, f1, sgn, type Any } from '@/lib/hq'
 import { cn } from '@/lib/utils'
 import { Chip, Filter, Kicker, Lede, Num, Panel, TableWrap, useView } from '@/components/hq-ui'
-
-/* The board is the same for every team in the league, so it's kept per league load. */
-const cache = new Map<string, Promise<Any>>()
 
 const SHOW = [['all', 'All'], ['free', 'Available']] as const
 type Show = (typeof SHOW)[number][0]
@@ -21,10 +18,9 @@ export default function Defences() {
 
   useEffect(() => {
     let live = true
-    if (!cache.has(key)) cache.set(key, HQ.defBoard(L, { cache: store }))
-    cache.get(key)!
+    boardFor(L)
       .then(board => { if (live) setRes({ key, board }) })
-      .catch((e: Error) => { cache.delete(key); if (live) setRes({ key, error: e.message }) })
+      .catch((e: Error) => { if (live) setRes({ key, error: e.message }) })
     return () => { live = false }
     // L is fixed for a given key
     // eslint-disable-next-line react-hooks/exhaustive-deps

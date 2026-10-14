@@ -6,7 +6,7 @@ import {
 } from '@hugeicons/core-free-icons'
 
 import {
-  DEFAULT_LEAGUE, DEFAULT_USER, HQ, TABS, VERSION, f1, makeView, ord, store, whenLong, type Any, type Tab,
+  DEFAULT_LEAGUE, DEFAULT_USER, HQ, TABS, VERSION, boardFor, f1, makeView, ord, store, whenLong, type Any, type Tab,
 } from '@/lib/hq'
 import { cn } from '@/lib/utils'
 import { Kicker, Lede, Num, ViewContext, useView } from '@/components/hq-ui'
@@ -51,6 +51,7 @@ export default function App() {
   const [rid, setRid] = useState<number | null>(null)
   const [tab, setTab] = useState<Tab>(hashTab)
   const [nonce, setNonce] = useState(0)
+  const [rev, setRev] = useState(0)
 
   /* load (and reload) the league */
   useEffect(() => {
@@ -65,6 +66,8 @@ export default function App() {
         setRid(r => (r && data.teamByRid[r] ? r : saved && data.teamByRid[saved] ? saved : (me || data.teams[0]).rid))
         setLoad({ state: 'ready' })
         if (nonce) toast.success('Up to date', { description: `Week ${data.week} calls refreshed.` })
+        // defences switch to betting-line values once the lines are in (a few seconds on a first visit)
+        boardFor(data).then((b: Any) => { if (!live) return; HQ.applyDefBoard(data, b); setRev(r => r + 1) }).catch(() => {})
       })
       .catch((e: Error) => { console.error(e); if (live) setLoad({ state: 'error', message: e.message }) })
     return () => { live = false }
@@ -84,7 +87,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
   }, [])
 
-  const view = useMemo(() => (L && rid != null ? { ...makeView(L, rid), go } : null), [L, rid, go])
+  // rev rebuilds every tab's numbers when the defence values change underneath L
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const view = useMemo(() => (L && rid != null ? { ...makeView(L, rid), go } : null), [L, rid, go, rev])
   const t = view?.team()
   useEffect(() => { if (t) document.title = `${t.name} HQ` }, [t])
 
