@@ -66,6 +66,8 @@ and Firefox get frosted glass instead, which is fine.
   points allowed stands in. The Defence tab predicts future lines from team ratings: a
   ridge regression on every line this season (recent weeks weighted up) plus 2025 weeks
   10–18 at a fifth of the weight. Finished weeks' lines are cached in `localStorage`.
+  That board loads in the background after the league, then sets every defence's Value
+  and Per wk, so all tabs agree.
 - **Win chance.** Normal approximation on both teams' best lineups.
 
 ## Data sources (all free, no keys)
