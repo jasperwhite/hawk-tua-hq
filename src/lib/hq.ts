@@ -5,7 +5,7 @@ import './engine.js'
 export type Any = any
 export const HQ: Any = (globalThis as Any).HQ
 
-export const VERSION = '0.3.0'
+export const VERSION = '0.3.1'
 export const DEFAULT_LEAGUE = '1312056164149641216'
 export const DEFAULT_USER = 'jasperwhite'
 

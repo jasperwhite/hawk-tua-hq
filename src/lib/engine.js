@@ -111,7 +111,9 @@
     const rounds = Math.ceil(Math.log2(Math.max(2, ls.playoff_teams || 4)));
     const lastWeek = Math.min(18, pws + rounds - 1);
     let week = 1;
-    if (state.season === season && state.season_type === 'regular') week = state.display_week || state.week || 1;
+    // Sleeper moves `week` on when the last game ends but `display_week` only a day later, and that gap is
+    // exactly when waiver claims go in. Plan for the week that's coming.
+    if (state.season === season && state.season_type === 'regular') week = Math.max(state.week || 1, state.display_week || 1);
     else if (+state.season > +season || (state.season === season && state.season_type === 'post')) week = lastWeek;
     week = Math.min(Math.max(1, week), lastWeek);
 
@@ -135,7 +137,8 @@
       Promise.all(formWeeks.map(w => soft(getJSON(`${SLEEPER}/stats/nfl/${season}/${w}?season_type=regular&${POS_QS}`)))),
       soft(getJSON(`${SLEEPER}/schedule/nfl/regular/${season}`)),
       Promise.all(range(1, week).map(w => soft(getJSON(`${lg}/matchups/${w}`)))),
-      Promise.all(range(Math.max(1, week - 1), week).map(w => soft(getJSON(`${lg}/transactions/${w}`)))),
+      // two weeks back: the weekly run is filed under the week before the one it serves
+      Promise.all(range(Math.max(1, week - 2), week).map(w => soft(getJSON(`${lg}/transactions/${w}`)))),
       soft(getJSON(`${SLEEPER}/v1/players/nfl/trending/add?lookback_hours=24&limit=60`)),
       soft(getJSON(`https://api.fantasycalc.com/values/current?isDynasty=false&numQbs=${qbs}&numTeams=${nTeams}&ppr=${ppr}`)),
       soft(getJSON(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?seasontype=2&week=${week}&dates=${season}`)),
@@ -284,8 +287,12 @@
     /* waivers: rolling order, FAAB, last run, recently dropped */
     const txAll = [].concat(...txs.map(x => x || []));
     const runs = txAll.filter(t => t.type === 'waiver' && (t.status === 'complete' || t.status === 'failed')).map(t => t.status_updated);
-    let nextRun = null;
-    if (runs.length) { nextRun = Math.max(...runs); while (nextRun < Date.now()) nextRun += 7 * DAY; }
+    // The weekly run settles many claims in the same minute; claims on single dropped players trickle in between.
+    const perMin = {};
+    for (const t of runs) { const m = Math.floor(t / 60000); perMin[m] = (perMin[m] || 0) + 1; }
+    const batches = Object.keys(perMin).filter(m => perMin[m] > 1).map(m => m * 60000);
+    let nextRun = batches.length ? Math.max(...batches) : runs.length ? Math.max(...runs) : null;
+    if (nextRun) while (nextRun < Date.now()) nextRun += 7 * DAY;
     const clearMs = (ls.waiver_clear_days || 1) * DAY;
     const recentlyDropped = new Set();
     for (const t of txAll) {
@@ -533,6 +540,9 @@
   function faStatus(L, p) {
     if (L.waiver.recentlyDropped.has(p.id)) return 'waivers';
     if (isLocked(L, p.id)) return 'waivers';
+    // anyone who played since the last run stays on waivers until the next one
+    const prev = p.team && gameOf(L, p.team, L.week - 1);
+    if (prev && prev.date && L.waiver.nextRun && Date.parse(prev.date) > L.waiver.nextRun - 7 * DAY) return 'waivers';
     return 'free';
   }
 

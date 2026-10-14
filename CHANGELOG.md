@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.1 — 2026-10-14
+Waiver day shows the week that's coming, not the one just played.
+
+- The tool moves to the next week as soon as the last game ends, instead of a day later.
+- **Next waiver run** is the weekly run (Wednesday 6:14pm here), not the last one-off claim
+  on a dropped player.
+- Free agents who played since the last run show as **Waivers** until it goes through;
+  players whose team was on bye show as **Free**, so you can add them straight away.
+
+**Why:** on Wednesday afternoon, the moment waiver claims matter, the tool was still on
+week 5: a finished game at 0% to win, Saturday as the next run, and everyone marked free.
+Sleeper moves `week` on after Monday's game but `display_week` a day later; the tool read
+the late one.
+
 ## 0.3.0 — 2026-10-07
 A **Defence** tab, and every defence projection now comes from the betting line.
 
