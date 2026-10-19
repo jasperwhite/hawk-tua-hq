@@ -10,7 +10,7 @@ verdicts first, one-line reasons, tabs for the working.
 
 ## Status
 
-**v0.2.0 — live at https://jasperwhite.github.io/hawk-tua-hq/** (Opaline redesign).
+**v0.4.0 — live at https://jasperwhite.github.io/hawk-tua-hq/** (Opaline redesign).
 Every tab renders against the live league with no console errors, in light and dark
 mode, at phone and desktop width, both locally and on the live link.
 
@@ -37,7 +37,7 @@ and Firefox get frosted glass instead, which is fine.
 | `src/lib/engine.js` | All data and all the maths, no UI. It loads the league, re-scores every projection with the league's settings, works out rest-of-season value, and runs the lineup optimiser, waiver plan and trade search. It also runs under Node (`require('./src/lib/engine.js')`) for testing. |
 | `src/lib/hq.ts` | Bridge to the engine, version number, formatters, and the per-team view that caches each engine call. |
 | `src/App.tsx` | Shell: loading and error states, masthead, season ruler, tab bar, footer. |
-| `src/views/*.tsx` | One file per tab: Brief, Lineup, Waivers, Defences, Trades, Players, Team, News. |
+| `src/views/*.tsx` | One file per tab: Brief, Lineup, Waivers, Defences, Trades, Players, Scoring, Team, News. |
 | `src/components/hq-ui.tsx` | Shared pieces: panels, tables, chips, steps, bars, filters. |
 | `src/components/ui/opaline/` | The Opaline components, as installed by shadcn. Edit in place if needed. |
 | `src/app.css` | The app's tokens (orange accent, wallpaper, table styles) for light and dark. |

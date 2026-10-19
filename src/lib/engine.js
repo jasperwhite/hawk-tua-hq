@@ -706,6 +706,47 @@
     return out;
   }
 
+  /* Season scoring split by position. Only starters count, so a team's six position
+     totals add up to its real points-for in Sleeper. Players carry what they banked
+     while in a lineup, which is the number that decided games. */
+  function seasonByPos(L, opts) {
+    const liveWeek = (L.matchups[L.week - 1] || []).some(m => (m.starters_points || []).some(x => x))
+      ? L.week : null;
+    const weeks = L.pastWeeks.concat(opts && opts.live && liveWeek ? [liveWeek] : []);
+    const teams = {}, players = {};
+    for (const t of L.teams) {
+      teams[t.rid] = { rid: t.rid, name: t.name, user: t.user, wins: t.wins, losses: t.losses, ties: t.ties, total: 0, by: {} };
+      FPOS.forEach(g => { teams[t.rid].by[g] = 0; });
+    }
+    for (const w of weeks) {
+      for (const m of L.matchups[w - 1] || []) {
+        const t = teams[m.roster_id]; if (!t) continue;
+        (m.starters || []).forEach((id, i) => {
+          if (!id || id === '0') return;
+          const pts = (m.starters_points || [])[i] || 0;
+          const p = L.players[id];
+          const pos = p && FPOS.includes(p.pos) ? p.pos : 'DEF';
+          t.by[pos] += pts; t.total += pts;
+          const row = players[id] || (players[id] = { id, pos, player: p || null, rid: t.rid, started: 0, total: 0, weeks: {} });
+          row.rid = t.rid; row.started += 1; row.total += pts; row.weeks[w] = pts;
+        });
+      }
+    }
+    const games = weeks.length;
+    const rows = Object.values(teams).map(t => ({ ...t, perGame: games ? t.total / games : 0 }));
+    const perPos = {};
+    FPOS.forEach(g => {
+      const order = rows.slice().sort((a, b) => b.by[g] - a.by[g]);
+      perPos[g] = { best: order[0] ? order[0].by[g] : 0, worst: order[order.length - 1] ? order[order.length - 1].by[g] : 0 };
+      order.forEach((t, i) => { (t.rank = t.rank || {})[g] = i + 1; });
+    });
+    rows.slice().sort((a, b) => b.total - a.total).forEach((t, i) => { (t.rank = t.rank || {}).total = i + 1; });
+    return {
+      weeks, games, liveWeek, teams: rows, perPos,
+      players: Object.values(players).map(r => ({ ...r, perStart: r.started ? r.total / r.started : 0 })),
+    };
+  }
+
   function byesAhead(L, rid) {
     const P = L.players;
     const t = L.teamByRid[rid];
@@ -914,7 +955,7 @@
 
   const api = {
     load, computeValues, optimize, strength, lineupCall, waiverCalls, waiverPlan, evalTrade, tradeIdeas,
-    positionRanks, benchLoss, byesAhead, scoringNotes, isLocked, weekPts, kickoff, gameOf, faStatus,
+    positionRanks, benchLoss, byesAhead, seasonByPos, scoringNotes, isLocked, weekPts, kickoff, gameOf, faStatus,
     activeIds, eligible, SLOT_LABEL, FPOS, scoreStats, defBoard, defPlan, applyDefBoard, DEF_LINE,
   };
   // Always on the global too: the bundler may hand this file a `module` object of its own.
