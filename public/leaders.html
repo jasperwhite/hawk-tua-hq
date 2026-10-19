@@ -93,7 +93,7 @@ footer a{color:var(--mid)}
   <button class="more" id="more" hidden></button>
 
   <footer>
-    Live from the Sleeper API each time you open this page. Points are this league's
+    Built from every week's real stat lines each time you open this page, so the current week fills in as games finish. Points are this league's
     <span id="rulecount">scoring settings</span> applied to real stat lines, so they match what Sleeper paid out.
     Standard is half-PPR. <a href="./index.html">Hawk Tua HQ</a>
   </footer>
@@ -121,36 +121,73 @@ function chips(host, items, get, set){
   });
 }
 
+/* Sleeper's season-to-date aggregate lags: mid-week some players carry the current
+   week and some don't. Totals are summed from the weekly stat lines instead, which
+   are right as soon as a game ends. Finished weeks never change, so they are kept
+   in localStorage as scored points and only the live week is refetched. */
+const cache = {
+  get(k){ try { return JSON.parse(localStorage.getItem('nflld.' + k) || 'null') } catch { return null } },
+  set(k, v){ try { v == null ? localStorage.removeItem('nflld.' + k) : localStorage.setItem('nflld.' + k, JSON.stringify(v)) } catch { /* private window */ } },
+};
+
+function scoreWeek(stats, sc){
+  const out = {};
+  for (const id in stats){
+    const s = stats[id];
+    let pts = 0;
+    for (const k in sc) if (s[k]) pts += s[k] * sc[k];
+    const gp = s.gp ? 1 : 0;
+    if (pts || gp) out[id] = [Math.round(pts * 100) / 100, gp, Math.round((s.pts_half_ppr || 0) * 100) / 100];
+  }
+  return out;
+}
+
 async function load(){
   const [league, state] = await Promise.all([
     fetch(`${API}/league/${LEAGUE}`).then(r => r.json()),
     fetch(`${API}/state/nfl`).then(r => r.json()),
   ]);
-  const season = league.season;
-  const [stats, players] = await Promise.all([
-    fetch(`${API}/stats/nfl/regular/${season}`).then(r => r.json()),
-    fetch('./nfl-players.json').then(r => r.json()),
-  ]);
+  const season = league.season, week = Math.min(state.week || 1, 18);
 
-  const sc = {}, half = {};
+  const sc = {};
   for (const k in league.scoring_settings) if (league.scoring_settings[k]) sc[k] = league.scoring_settings[k];
-  $('rulecount').textContent = Object.keys(sc).length + ' scoring settings';
-  $('kicker').textContent = `${season} season · through week ${state.week}`;
+  const tag = season + ':' + Object.keys(sc).length + ':' + Object.values(sc).join(',');
+  if (cache.get('tag') !== tag) { for (let w = 1; w <= 18; w++) cache.set('w' + season + '.' + w, null); cache.set('tag', tag); }
+
+  const players = await fetch('./nfl-players.json').then(r => r.json());
+  const weeks = await Promise.all(Array.from({ length: week }, (_, i) => i + 1).map(async w => {
+    const key = 'w' + season + '.' + w;
+    const hit = w < week ? cache.get(key) : null;
+    if (hit) return hit;
+    const raw = await fetch(`${API}/stats/nfl/regular/${season}/${w}`).then(r => r.json()).catch(() => ({}));
+    const scored = scoreWeek(raw, sc);
+    if (w < week) cache.set(key, scored);
+    return scored;
+  }));
+
+  const by = {};
+  weeks.forEach(wk => {
+    for (const id in wk){
+      const [pts, gp, std] = wk[id];
+      const r = by[id] || (by[id] = { total: 0, gp: 0, std: 0 });
+      r.total += pts; r.gp += gp; r.std += std;
+    }
+  });
 
   rows = [];
-  for (const id in stats){
+  for (const id in by){
     const info = players[id]; if (!info) continue;
-    const s = stats[id];
-    let pts = 0;
-    for (const k in sc) if (s[k]) pts += s[k] * sc[k];
-    const gp = s.gp || 0;
-    if (!gp && !pts) continue;
+    const r = by[id];
+    if (!r.gp && !r.total) continue;
     rows.push({
       id, name: info[0], pos: info[1], team: info[2],
-      gp, total: pts, pg: gp ? pts / gp : 0,
-      std: s.pts_half_ppr || 0, delta: pts - (s.pts_half_ppr || 0),
+      gp: r.gp, total: r.total, pg: r.gp ? r.total / r.gp : 0,
+      std: r.std, delta: r.total - r.std,
     });
   }
+
+  $('rulecount').textContent = Object.keys(sc).length + ' scoring settings';
+  $('kicker').textContent = `${season} season · weeks 1\u2013${week}`;
   $('state').hidden = true;
 }
 

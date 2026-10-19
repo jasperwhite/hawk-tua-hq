@@ -7,8 +7,13 @@ they scored under this league's rules.
 - Filter by position, rank by total or per game, search by name.
 - A **vs standard** column shows what this league's scoring is worth to each player
   against half-PPR — Jaxon Smith-Njigba is +29.0, Josh Allen is −4.0.
-- Plain white, no glass, its own URL. One request to Sleeper's season stats, scored
-  with the league's 44 live settings, so the numbers match what Sleeper paid out.
+- Plain white, no glass, its own URL.
+
+**Totals come from the weekly stat lines, not Sleeper's season aggregate.** That
+aggregate lags mid-week — on 19 Oct it had Jaxon Smith-Njigba's week 6 but not Josh
+Allen's, so a leaderboard built on it mixes five-game and six-game totals. The page
+sums each week instead and keeps finished weeks in localStorage, so only the live
+week is refetched.
 
 ## 0.3.3 — 2026-10-14
 Between the last game of a week and the waiver run, every free agent shows as
