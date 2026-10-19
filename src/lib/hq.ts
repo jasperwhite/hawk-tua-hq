@@ -11,7 +11,7 @@ export const DEFAULT_USER = 'jasperwhite'
 
 export const TABS = [
   ['brief', 'Brief'], ['lineup', 'Lineup'], ['waivers', 'Waivers'], ['defence', 'Defence'], ['trades', 'Trades'],
-  ['players', 'Players'], ['scoring', 'Scoring'], ['team', 'Team'], ['news', 'News'],
+  ['players', 'Players'], ['team', 'Team'], ['news', 'News'],
 ] as const
 export type Tab = (typeof TABS)[number][0]
 

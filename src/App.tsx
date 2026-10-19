@@ -2,7 +2,7 @@ import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } 
 import { HugeiconsIcon } from '@hugeicons/react'
 import {
   AmericanFootballIcon, ArrowDataTransferHorizontalIcon, News01Icon, RankingIcon, RefreshIcon,
-  ChartBarLineIcon, Shield01Icon, TaskDaily01Icon, UserAdd01Icon, UserGroupIcon,
+  Shield01Icon, TaskDaily01Icon, UserAdd01Icon, UserGroupIcon,
 } from '@hugeicons/core-free-icons'
 
 import {
@@ -26,17 +26,16 @@ import Defences from '@/views/Defences'
 import Lineup from '@/views/Lineup'
 import News from '@/views/News'
 import Players from '@/views/Players'
-import Scoring from '@/views/Scoring'
 import Team from '@/views/Team'
 import Trades from '@/views/Trades'
 import Waivers from '@/views/Waivers'
 
 const ICON: Record<Tab, Any> = {
   brief: TaskDaily01Icon, lineup: AmericanFootballIcon, waivers: UserAdd01Icon, defence: Shield01Icon, trades: ArrowDataTransferHorizontalIcon,
-  players: RankingIcon, scoring: ChartBarLineIcon, team: UserGroupIcon, news: News01Icon,
+  players: RankingIcon, team: UserGroupIcon, news: News01Icon,
 }
 const VIEW: Record<Tab, () => ReactNode> = {
-  brief: Brief, lineup: Lineup, waivers: Waivers, defence: Defences, trades: Trades, players: Players, scoring: Scoring, team: Team, news: News,
+  brief: Brief, lineup: Lineup, waivers: Waivers, defence: Defences, trades: Trades, players: Players, team: Team, news: News,
 }
 const STEPS = ['Reading your league', 'Pulling projections and stats', 'Scoring every player your way']
 

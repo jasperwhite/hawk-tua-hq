@@ -1,19 +1,14 @@
 # Changelog
 
 ## 0.4.0 — 2026-10-19
-New **Scoring** tab: the season split by position.
+New standalone page, **`/leaders.html`**: every NFL player this season ranked by what
+they scored under this league's rules.
 
-- Every team's points by QB / RB / WR / TE / K / DEF, shaded light to dark down each
-  column so the strong and weak spots read at a glance. Starters only, so each row adds
-  up to that team's points for in Sleeper.
-- A **Per game** switch rescales both tables, and the chip in the corner folds the
-  live week in or out.
-- Below it, every player who has started this season, ranked by what they banked in a
-  lineup, filterable by position.
-
-**Why:** the league page shows one total per team. It doesn't say whether a team is
-winning on receivers or being dragged down by its tight end, and there was no way to
-see who has actually scored the most in a lineup this year.
+- Filter by position, rank by total or per game, search by name.
+- A **vs standard** column shows what this league's scoring is worth to each player
+  against half-PPR — Jaxon Smith-Njigba is +29.0, Josh Allen is −4.0.
+- Plain white, no glass, its own URL. One request to Sleeper's season stats, scored
+  with the league's 44 live settings, so the numbers match what Sleeper paid out.
 
 ## 0.3.3 — 2026-10-14
 Between the last game of a week and the waiver run, every free agent shows as
