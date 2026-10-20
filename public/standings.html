@@ -56,6 +56,22 @@ td.r1{background-color:#fbe6e6}td.r2{background-color:#f6c7c7}td.r3{background-c
 .lkey{font-size:12px;color:var(--mid);margin:8px 0 0;max-width:70ch}
 .lkey b{color:var(--ink)}
 .export .lkey{font-size:16px;margin-top:14px}
+/* Schedule ahead */
+#ahead th{min-width:54px}
+#ahead td.rank{color:var(--faint);font-size:12px;width:26px;text-align:left;padding:0}
+#ahead td.sum{border-left:2px solid var(--ink)}
+#ahead td.s1,#ahead td.s2{font-weight:700}
+.op{display:inline-flex;align-items:center;gap:6px}
+.op .face{width:22px;height:22px}
+.op b{font-weight:600;min-width:1.2em;text-align:left}
+.export #ahead td.rank{font-size:15px;width:34px}
+.export #ahead th{min-width:0}
+.export #ahead .nm{max-width:170px}
+.export .op .face{width:24px;height:24px}
+.export .op{gap:4px}
+.export #ahead td{font-size:17px}
+.export #ahead td.l{font-size:20px}
+.export #ahead td.s1,.export #ahead td.s2,.export #ahead td.s3{font-size:19px}
 /* Team faces */
 .tm{display:flex;align-items:center;gap:9px;min-width:0}
 .face{flex:none;width:24px;height:24px;border-radius:50%;object-fit:cover;background:#eee;display:inline-flex;
@@ -238,7 +254,18 @@ async function load() {
   const starters = {};
   raw.forEach((ms, i) => { starters[weeks[i]] = Object.fromEntries(ms.map(m => [m.roster_id, (m.starters || []).filter(x => x && x !== '0')])); });
 
-  return { league, teams, weeks, regWeeks, pts, opp, starters };
+  // Who plays whom for the rest of the regular season.
+  const ahead = [];
+  for (let w = last + 1; w <= regWeeks; w++) ahead.push(w);
+  const future = await Promise.all(ahead.map(w => get(`/league/${LEAGUE}/matchups/${w}`)));
+  future.forEach((ms, i) => {
+    const w = ahead[i]; opp[w] = {};
+    const groups = {};
+    for (const m of ms) if (m.matchup_id != null) (groups[m.matchup_id] ||= []).push(m.roster_id);
+    for (const g of Object.values(groups)) if (g.length === 2) { opp[w][g[0]] = g[1]; opp[w][g[1]] = g[0]; }
+  });
+
+  return { league, teams, weeks, ahead, regWeeks, pts, opp, starters };
 }
 
 // Team A's record if it had played team B's schedule.
@@ -336,6 +363,33 @@ function render(d) {
   });
   h += `</tbody></table></div>
     <div class="key"><span><i class="sw g2"></i>Beat most of the league</span><span><i class="sw r2"></i>Lost to most of it</span><span><b>Actual</b>&nbsp;real head-to-head record</span></div></section>`;
+
+  // ---- Schedule ahead, ranked by league play ----
+  if (d.ahead.length) {
+    const byId = Object.fromEntries(rows.map((r, k) => [r.a.id, { ...r, rank: 1 + rows.filter(x => x.pct > r.pct).length }]));
+    const span = `${d.ahead[0]}\u2013${d.ahead[d.ahead.length - 1]}`;
+    h += head('ahead', 'Schedule ahead', `Weeks ${span}: is each opponent above or below you in league play?`) + `
+      <p class="note">Teams ranked by their league play record. Each week shows who they play next and where that team ranks. <b>Red</b> is a team above them, <b>green</b> a team below, stronger the bigger the gap. The top team can only face teams below it and the bottom team only teams above, so <b>Opp win %</b> (their opponents\u2019 average league play win %) is the fairer comparison.</p>
+      <div class="scroll"><table id="ahead"><thead><tr><th></th><th class="l">Team</th>`;
+    d.ahead.forEach(w => h += `<th>Wk ${w}</th>`);
+    h += `<th class="s1">Above</th><th class="s2">Below</th><th class="s3">Opp win %</th></tr></thead><tbody>`;
+    rows.forEach(r => {
+      const me = byId[r.a.id];
+      let up = 0, down = 0, sum = 0, cnt = 0;
+      h += `<tr><td class="rank">${me.rank}</td><td class="l">${teamCell(r.a)}</td>`;
+      d.ahead.forEach(w => {
+        const o = byId[d.opp[w] && d.opp[w][r.a.id]];
+        if (!o) { h += `<td class="dash">\u2013</td>`; return; }
+        if (o.pct > me.pct) up++; else if (o.pct < me.pct) down++;
+        sum += o.pct; cnt++;
+        h += `<td class="${tint((o.rank - me.rank) / (n - 1))}" title="Week ${w}: ${esc(o.a.name)}, #${o.rank} in league play"><span class="op">${face(o.a)}<b>${o.rank}</b></span></td>`;
+      });
+      const oppPct = cnt ? sum / cnt : 0;
+      h += `<td class="s1 sum">${up}</td><td class="s2">${down}</td><td class="s3 ${tint(Math.max(-1, Math.min(1, (0.5 - oppPct) / 0.08)))}">${(oppPct * 100).toFixed(1)}%</td></tr>`;
+    });
+    h += `</tbody></table></div>
+      <div class="key"><span><i class="sw r2"></i>Plays a team above</span><span><i class="sw g2"></i>Plays a team below</span><span><b>Opp win %</b>&nbsp;opponents\u2019 average league play win %</span></div></section>`;
+  }
 
   h += head('proj', 'Against projection', 'Each team\u2019s score against Sleeper\u2019s projection for the same starters.') + `
     <p class="note">Each week, what a team\u2019s starters scored against what Sleeper projected for those same starters going into the games, scored with this league\u2019s rules. Sleeper over-projects receiving first downs, so those are cut to the real rate. Tap a team for the numbers behind it.</p>

@@ -29,7 +29,12 @@ Same day, second pass:
   scrolls sideways. Weeks not yet played aren't shown.
 - Your team is marked with a YOU tag instead of an arrow.
 
-Export cards: `standings.html?export=swap|allplay|proj` draws one table on a 1080×1440
+**Schedule ahead** (fourth table): teams in league play order, and each remaining week's
+opponent with their league play rank, red if above, green if below. Counts of above and
+below, plus opponents' average league play win %, which is the fair comparison since #1
+can only face teams below. Hawk Tua: 8 of 9 above, the second-hardest run.
+
+Export cards: `standings.html?export=swap|allplay|ahead|proj` draws one table on a 1080×1440
 card with the same header on each (league · season · weeks, title, one-line subtitle), a
 key underneath and no YOU tag. Screenshot at 2x with headless Chrome:
 `Google Chrome --headless=new --window-size=1080,1440 --force-device-scale-factor=2
