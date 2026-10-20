@@ -42,30 +42,57 @@ th.l{position:sticky;left:0;background:var(--paper);z-index:1}
 .nm{display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .sub{display:block;font-size:11px;color:var(--faint);font-weight:400;margin-top:1px}
 
-/* Schedule grid */
-#swap th{min-width:62px}
-#swap td.c{color:var(--faint)}
-#swap td.up{color:var(--ink);font-weight:700}
-#swap td.dn{color:var(--faint)}
-#swap td.eq{color:var(--mid)}
-#swap td.self{background:var(--ink);color:var(--paper);font-weight:700}
-#swap td.hl:not(.self){background:#f2f2f2}
-#swap .luck{font-weight:700}
+/* Summary columns stay pinned to the right edge when a table scrolls sideways */
+.s1,.s2,.s3{position:sticky;z-index:2;box-sizing:border-box}
+td.s1,td.s2,td.s3,th.s1,th.s2,th.s3{background-color:var(--paper)}
+.s3{right:0;width:68px;min-width:68px}
+.s2{right:68px;width:62px;min-width:62px}
+.s1{right:130px;width:72px;min-width:72px;box-shadow:-8px 0 8px -8px rgba(0,0,0,.25)}
+.lk{box-shadow:-8px 0 8px -8px rgba(0,0,0,.25)}
+#swap .luck{padding:0}
+td.g1{background-color:#e3f4e8}td.g2{background-color:#c3e9cf}td.g3{background-color:#97d8ad}
+td.r1{background-color:#fbe6e6}td.r2{background-color:#f6c7c7}td.r3{background-color:#ee9e9e}
 
-/* All-play by week: grey ramps with wins */
+/* Team faces */
+.tm{display:flex;align-items:center;gap:9px;min-width:0}
+.face{flex:none;width:24px;height:24px;border-radius:50%;object-fit:cover;background:#eee;display:inline-flex;
+  align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--mid)}
+th .face{width:26px;height:26px;margin:0 auto 6px;display:flex}
+.you{flex:none;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--paper);
+  padding:2px 5px 1px;border-radius:3px}
+
+/* Green for good, red for bad; strength = how far from even */
+.g1{background:#e3f4e8}.g2{background:#c3e9cf}.g3{background:#97d8ad}
+.r1{background:#fbe6e6}.r2{background:#f6c7c7}.r3{background:#ee9e9e}
+.g2,.g3{color:#0b4d23}.r2,.r3{color:#7a1414}
+.g3,.r3{font-weight:700}
+
+/* Schedule grid */
+#swap th{min-width:66px;white-space:normal}
+#swap th.axis{text-align:left;padding:0 0 12px;color:var(--ink);border-bottom:0;font-weight:700}
+#swap td.c{cursor:pointer}
+#swap td.self{background:var(--ink);color:var(--paper);font-weight:700}
+#swap td.on{box-shadow:inset 0 0 0 2px var(--ink)}
+#swap th.on,#swap td.l.on .nm{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
+#swap .luck{font-weight:700;padding:0 0 0 12px}
+.reader{margin-top:22px;padding:16px 18px;border:1px solid var(--rule);border-left:3px solid var(--ink);font-size:16px;line-height:1.45;min-height:58px}
+.reader b{font-weight:700}
+.reader .hint{display:block;font-size:12px;color:var(--faint);margin-top:4px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 28px;margin:20px 0 0;padding:0;list-style:none;counter-reset:s}
+.steps li{font-size:14px;color:var(--mid);counter-increment:s;padding-top:10px;border-top:1px solid var(--rule)}
+.steps li::before{content:counter(s);display:block;font-size:11px;font-weight:700;color:var(--ink);margin-bottom:4px}
+.steps b{color:var(--ink);font-weight:500}
+
+/* All-play by week */
 #allplay th{min-width:50px}
-#allplay td.w{color:var(--ink)}
 #allplay td.tot{font-weight:700;border-left:2px solid var(--ink);padding:0 10px}
 #allplay td.pct{color:var(--mid);padding:0 10px}
 #allplay td.act{color:var(--mid);padding:0 10px}
 #allplay td.rank{color:var(--faint);font-size:12px;width:26px;text-align:left;padding:0}
 #allplay td.dash,#proj td.dash{color:var(--rule)}
-tr.me td.l .nm::after{content:" \2190";font-weight:400;color:var(--mid)}
 
 /* Projected vs actual */
 #proj th{min-width:62px}
-#proj td.pos{color:var(--ink);font-weight:700}
-#proj td.neg{color:var(--faint)}
 #proj td.sum{border-left:2px solid var(--ink);padding:0 10px}
 #proj td.sum.beat{color:var(--mid);font-weight:400}
 #proj tr.open td{border-bottom:0}
@@ -75,7 +102,7 @@ tr.me td.l .nm::after{content:" \2190";font-weight:400;color:var(--mid)}
 
 .key{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--mid)}
 .key span{display:inline-flex;align-items:center;gap:6px}
-.sw{display:inline-block;width:12px;height:12px;border:1px solid var(--ink)}
+.sw{display:inline-block;width:14px;height:14px;border-radius:2px}
 .state{padding:80px 0;text-align:center;color:var(--faint);font-size:13px}
 footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--rule);color:var(--faint);font-size:13px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
 footer a,footer button{color:var(--mid);background:none;border:0;padding:0;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
@@ -106,7 +133,7 @@ const DEFAULT_LEAGUE = '1312056164149641216';
 const API = 'https://api.sleeper.app/v1';
 const qs = new URLSearchParams(location.search);
 const LEAGUE = qs.get('league') || DEFAULT_LEAGUE;
-// Your team gets an arrow. Hawk Tua in NFL Casuals unless ?team=<roster id> says otherwise.
+// Your team gets a YOU tag. Hawk Tua in NFL Casuals unless ?team=<roster id> says otherwise.
 const ME = Number(qs.get('team') || (LEAGUE === DEFAULT_LEAGUE ? 4 : 0));
 const POS_QS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(p => 'position[]=' + p).join('&');
 
@@ -115,6 +142,12 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 const getUrl = u => fetch(u).then(r => { if (!r.ok) throw new Error(r.status + ' ' + u); return r.json(); });
 const get = p => fetch(API + p).then(r => { if (!r.ok) throw new Error(r.status + ' ' + p); return r.json(); });
 const rec = (w, l, t) => t ? `${w}-${l}-${t}` : `${w}-${l}`;
+// f from -1 (bad) to +1 (good) → a green or red wash, three strengths. Near zero stays white.
+const tint = f => { const a = Math.abs(f); if (a < 0.08) return ''; const k = a < 0.25 ? 1 : a < 0.6 ? 2 : 3; return (f > 0 ? 'g' : 'r') + k; };
+const face = t => t.avatar
+  ? `<img class="face" src="${esc(t.avatar)}" alt="" loading="lazy">`
+  : `<span class="face">${esc(t.name.replace(/[^A-Za-z0-9 ]/g, '').split(/\s+/).map(x => x[0]).join('').slice(0, 2).toUpperCase())}</span>`;
+const teamCell = t => `<span class="tm">${face(t)}<span class="nm" title="${esc(t.name)}">${esc(t.name)}</span>${t.id === ME ? '<span class="you">You</span>' : ''}</span>`;
 
 $('#change').onclick = () => {
   const id = prompt('Sleeper league ID (the long number in the league URL):', LEAGUE);
@@ -140,6 +173,8 @@ async function load() {
       id: r.roster_id,
       name: (u.metadata && u.metadata.team_name) || u.display_name || `Team ${r.roster_id}`,
       owner: u.display_name || '',
+      // A team photo set in the league wins over the owner's profile picture.
+      avatar: (u.metadata && u.metadata.avatar) || (u.avatar ? `https://sleepercdn.com/avatars/thumbs/${u.avatar}` : ''),
     };
   }).sort((a, b) => a.id - b.id);
 
@@ -208,23 +243,31 @@ function render(d) {
   const avg = d.teams.map((a, i) => grid[i].reduce((s, r) => s + r.w + r.t / 2, 0) / n);
 
   let h = `<section><h2>Schedule comparison</h2>
-    <p class="note">Each row is a team’s scores. Each column is the schedule it plays. The black squares are what actually happened. <b>Bold</b> is a better record than the real one, grey is worse. <b>Luck</b> is real wins minus the average across all ${n} schedules.</p>
-    <div class="scroll"><table id="swap"><thead><tr><th class="l">Team ↓ / Schedule →</th>`;
-  d.teams.forEach(t => h += `<th>${esc(t.name)}</th>`);
-  h += `<th>Luck</th></tr></thead><tbody>`;
+    <p class="note">What each team\u2019s record would be if it had played someone else\u2019s fixture list.</p>
+    <ol class="steps">
+      <li><b>Pick a row.</b> That team\u2019s real scores, week by week.</li>
+      <li><b>Pick a column.</b> Another team\u2019s opponents, week by week.</li>
+      <li><b>Where they meet</b> is the record the row team would have, playing those opponents. Black is the real record.</li>
+    </ol>
+    <div class="reader" id="reader"></div>
+    <div class="scroll"><table id="swap"><thead>
+      <tr><th class="l"></th><th class="axis" colspan="${n}">Playing this team\u2019s schedule</th><th class="s3 lk"></th></tr>
+      <tr><th class="l">Team</th>`;
+  d.teams.forEach((t, j) => h += `<th data-c="${j}">${face(t)}${esc(t.name)}</th>`);
+  h += `<th class="s3 lk" title="Real wins minus the average across every schedule">Luck</th></tr></thead><tbody>`;
   d.teams.forEach((a, i) => {
     const real = actual[i].w + actual[i].t / 2;
-    h += `<tr${a.id === ME ? ' class="me"' : ''}><td class="l"><span class="nm" title="${esc(a.name)}">${esc(a.name)}</span></td>`;
+    h += `<tr><td class="l" data-r="${i}">${teamCell(a)}</td>`;
     grid[i].forEach((r, j) => {
-      const v = r.w + r.t / 2;
-      const cls = i === j ? 'self' : v > real ? 'up' : v < real ? 'dn' : 'eq';
+      const g = r.w + r.l + r.t;
+      const cls = i === j ? 'self' : tint(g ? (r.w - r.l) / g : 0);
       h += `<td class="c ${cls}" data-r="${i}" data-c="${j}">${rec(r.w, r.l, r.t)}</td>`;
     });
     const luck = real - avg[i];
-    h += `<td class="luck">${luck > 0 ? '+' : luck < 0 ? '−' : ''}${Math.abs(luck).toFixed(1)}</td></tr>`;
+    h += `<td class="s3 lk luck ${tint(Math.max(-1, Math.min(1, luck / 2)))}">${luck > 0 ? '+' : luck < 0 ? '−' : ''}${Math.abs(luck).toFixed(1)}</td></tr>`;
   });
   h += `</tbody></table></div>
-    <div class="key"><span><i class="sw" style="background:#000"></i>Actual</span><span><b>4-2</b>&nbsp;Better</span><span style="color:var(--faint)">2-4&nbsp;Worse</span></div></section>`;
+    <div class="key"><span><i class="sw" style="background:#000"></i>Real record</span><span><i class="sw g2"></i>Winning record</span><span><i class="sw r2"></i>Losing record</span><span><b>Luck</b>&nbsp;real wins minus the wins you\u2019d average across all ${n} schedules. \u22121 means your draw cost you about a win; +1 means it handed you one.</span></div></section>`;
 
   // ---- League play record (all-play) ----
   const rows = d.teams.map(a => {
@@ -235,21 +278,18 @@ function render(d) {
   }).sort((x, y) => y.pct - x.pct);
 
   h += `<section><h2>League play record</h2>
-    <p class="note">Every team against all ${n - 1} others, every week. The darker the square, the more of the league it would have beaten. It strips out who you happened to draw.</p>
+    <p class="note">Every team against all ${n - 1} others, every week. Green beat most of the league that week, red lost to most of it. It strips out who you happened to draw.</p>
     <div class="scroll"><table id="allplay"><thead><tr><th></th><th class="l">Team</th>`;
-  for (let w = 1; w <= d.regWeeks; w++) h += `<th>Wk ${w}</th>`;
-  h += `<th>Total</th><th>Win %</th><th>Actual</th></tr></thead><tbody>`;
+  for (let w = 1; w <= d.weeks.length; w++) h += `<th>Wk ${w}</th>`;
+  h += `<th class="s1">Total</th><th class="s2">Win %</th><th class="s3">Actual</th></tr></thead><tbody>`;
   rows.forEach((r, k) => {
-    h += `<tr${r.a.id === ME ? ' class="me"' : ''}><td class="rank">${k + 1}</td><td class="l"><span class="nm" title="${esc(r.a.name)}">${esc(r.a.name)}</span></td>`;
-    for (let w = 1; w <= d.regWeeks; w++) {
+    h += `<tr><td class="rank">${k + 1}</td><td class="l">${teamCell(r.a)}</td>`;
+    for (let w = 1; w <= d.weeks.length; w++) {
       const x = r.wk[w - 1];
       if (!x) { h += `<td class="dash">–</td>`; continue; }
-      const f = (x.w + x.t / 2) / (n - 1);              // 0..1
-      const g = Math.round(255 - f * 255);               // white → black
-      const ink = f > 0.55 ? '#fff' : '#000';
-      h += `<td class="w" style="background:rgb(${g},${g},${g});color:${ink}">${rec(x.w, x.l, x.t)}</td>`;
+      h += `<td class="${tint((x.w - x.l) / (n - 1))}">${rec(x.w, x.l, x.t)}</td>`;
     }
-    h += `<td class="tot">${rec(r.W, r.L, r.T)}</td><td class="pct">${(r.pct * 100).toFixed(0)}%</td><td class="act">${rec(r.act.w, r.act.l, r.act.t)}</td></tr>`;
+    h += `<td class="s1 tot ${tint((r.W - r.L) / Math.max(1, r.W + r.L + r.T))}">${rec(r.W, r.L, r.T)}</td><td class="s2 pct">${(r.pct * 100).toFixed(0)}%</td><td class="s3 act">${rec(r.act.w, r.act.l, r.act.t)}</td></tr>`;
   });
   h += `</tbody></table></div></section>`;
 
@@ -259,15 +299,35 @@ function render(d) {
 
   $('#out').innerHTML = h;
 
-  // Cross-hair on the schedule grid.
-  const swap = $('#swap');
-  swap.addEventListener('mouseover', e => {
-    const td = e.target.closest('td[data-r]');
-    swap.querySelectorAll('.hl').forEach(x => x.classList.remove('hl'));
-    if (!td) return;
-    swap.querySelectorAll(`td[data-r="${td.dataset.r}"],td[data-c="${td.dataset.c}"]`).forEach(x => x.classList.add('hl'));
-  });
-  swap.addEventListener('mouseleave', () => swap.querySelectorAll('.hl').forEach(x => x.classList.remove('hl')));
+  // The reader box spells out whichever square you're on.
+  const swap = $('#swap'), reader = $('#reader');
+  const wins = r => r.w + r.t / 2;
+  const say = (i, j) => {
+    const a = d.teams[i], b = d.teams[j], r = grid[i][j], real = actual[i];
+    if (i === j) return `<b>${esc(a.name)}</b>\u2019s real record is <b>${rec(r.w, r.l, r.t)}</b>.`;
+    const dw = wins(r) - wins(real);
+    const vs = dw === 0 ? 'the same as its real record' : `${Math.abs(dw)} ${Math.abs(dw) === 1 ? 'win' : 'wins'} ${dw > 0 ? 'better' : 'worse'} than its real ${rec(real.w, real.l, real.t)}`;
+    return `<b>${esc(a.name)}</b>, playing <b>${esc(b.name)}</b>\u2019s schedule, would be <b>${rec(r.w, r.l, r.t)}</b>: ${vs}.`;
+  };
+  const me = Math.max(0, d.teams.findIndex(t => t.id === ME));
+  let best = me === 0 ? 1 : 0;
+  grid[me].forEach((r, j) => { if (j !== me && wins(r) > wins(grid[me][best])) best = j; });
+  const intro = () => {
+    reader.innerHTML = say(me, best) + `<span class="hint">Its kindest schedule. Hover or tap any square to read it.</span>`;
+  };
+  const focus = td => {
+    swap.querySelectorAll('.on').forEach(x => x.classList.remove('on'));
+    if (!td) return intro();
+    const { r, c } = td.dataset;
+    td.classList.add('on');
+    swap.querySelector(`th[data-c="${c}"]`).classList.add('on');
+    swap.querySelector(`td.l[data-r="${r}"]`).classList.add('on');
+    reader.innerHTML = say(+r, +c);
+  };
+  swap.addEventListener('mouseover', e => { const td = e.target.closest('td.c'); if (td) focus(td); });
+  swap.addEventListener('click', e => focus(e.target.closest('td.c')));
+  swap.addEventListener('mouseleave', () => focus(null));
+  intro();
 }
 
 /* ---------- projected vs actual ---------- */
@@ -330,28 +390,29 @@ function renderProj(d, proj) {
   }).sort((a, b) => b.total - a.total);
 
   let h = `<div class="scroll"><table id="proj"><thead><tr><th class="l">Team</th>`;
-  for (let w = 1; w <= d.regWeeks; w++) h += `<th>Wk ${w}</th>`;
-  h += `<th>Season</th><th>Per wk</th><th>Beat</th></tr></thead><tbody>`;
+  for (let w = 1; w <= d.weeks.length; w++) h += `<th>Wk ${w}</th>`;
+  h += `<th class="s1">Season</th><th class="s2">Per wk</th><th class="s3">Beat</th></tr></thead><tbody>`;
   rows.forEach(r => {
-    h += `<tr data-t="${r.t.id}"${r.t.id === ME ? ' class="me"' : ''}><td class="l"><span class="nm" title="${esc(r.t.name)}">${esc(r.t.name)}</span></td>`;
-    for (let w = 1; w <= d.regWeeks; w++) {
+    h += `<tr data-t="${r.t.id}"><td class="l">${teamCell(r.t)}</td>`;
+    for (let w = 1; w <= d.weeks.length; w++) {
       const x = r.diffs[w - 1];
       if (x == null) { h += `<td class="dash">\u2013</td>`; continue; }
-      h += `<td class="${x >= 0 ? 'pos' : 'neg'}" title="Projected ${proj[w][r.t.id].toFixed(1)} · scored ${d.pts[w][r.t.id].toFixed(1)}">${signed(x)}</td>`;
+      h += `<td class="${tint(Math.max(-1, Math.min(1, x / 45)))}" title="Projected ${proj[w][r.t.id].toFixed(1)} · scored ${d.pts[w][r.t.id].toFixed(1)}">${signed(x)}</td>`;
     }
-    h += `<td class="sum ${r.total >= 0 ? 'pos' : 'neg'}">${signed(r.total)}</td>
-      <td class="${r.total >= 0 ? 'pos' : 'neg'}">${signed(r.total / d.weeks.length)}</td>
-      <td class="sum beat">${r.beat} of ${d.weeks.length}</td></tr>`;
+    const per = r.total / d.weeks.length;
+    h += `<td class="s1 sum ${tint(Math.max(-1, Math.min(1, per / 20)))}">${signed(r.total)}</td>
+      <td class="s2 ${tint(Math.max(-1, Math.min(1, per / 20)))}">${signed(per)}</td>
+      <td class="s3 sum beat">${r.beat} of ${d.weeks.length}</td></tr>`;
     // Hidden detail rows: projected and actual for each week.
     const line = (label, f) => {
       let x = `<tr class="detail" data-for="${r.t.id}" hidden><td class="l">${label}</td>`;
-      for (let w = 1; w <= d.regWeeks; w++) x += w <= d.weeks.length ? `<td>${f(w).toFixed(1)}</td>` : `<td></td>`;
-      return x + `<td></td><td></td><td></td></tr>`;
+      for (let w = 1; w <= d.weeks.length; w++) x += `<td>${f(w).toFixed(1)}</td>`;
+      return x + `<td class="s1"></td><td class="s2"></td><td class="s3"></td></tr>`;
     };
     h += line('Projected', w => proj[w][r.t.id]) + line('Scored', w => d.pts[w][r.t.id]);
   });
   h += `</tbody></table></div>
-    <div class="key"><span><b>+12.4</b>&nbsp;Beat projection</span><span style="color:var(--faint)">\u22128.1&nbsp;Fell short</span></div>`;
+    <div class="key"><span><i class="sw g2"></i>Beat projection</span><span><i class="sw r2"></i>Fell short</span></div>`;
   $('#projout').innerHTML = h;
 
   $('#proj').addEventListener('click', e => {

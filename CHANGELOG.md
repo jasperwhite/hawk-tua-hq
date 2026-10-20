@@ -18,6 +18,17 @@ Helvetica, black and white. Modelled on Dynasty Daddy's league standings.
 put every team 20 points a week under projection. The page replaces it with the real rate
 by position. **The main app still uses the raw figure**, so it overrates pass-catchers.
 
+Same day, second pass:
+- Green and red washes instead of black and white, as on Dynasty Daddy: a winning record
+  is green, a losing one red, stronger the further from even.
+- Each team's Sleeper photo next to its name, and above each schedule column.
+- Schedule comparison has three numbered steps on how to read it, plus a line that spells
+  out whichever square you hover or tap ("Hawk Tua, playing Bill Belichick's schedule,
+  would be 5-1"). It opens on your kindest schedule.
+- Totals, Win %, Luck and the projection sums stay pinned to the right when a table
+  scrolls sideways. Weeks not yet played aren't shown.
+- Your team is marked with a YOU tag instead of an arrow.
+
 League play matches Dynasty Daddy exactly. Schedule comparison matches 84 of 100 cells;
 the rest differ only in the week a team meets itself, where Dynasty Daddy does something
 undocumented.
