@@ -72,6 +72,28 @@ td.r1{background-color:#fbe6e6}td.r2{background-color:#f6c7c7}td.r3{background-c
 .export #ahead td{font-size:17px}
 .export #ahead td.l{font-size:20px}
 .export #ahead td.s1,.export #ahead td.s2,.export #ahead td.s3{font-size:19px}
+/* Scoring form: small multiples */
+.forms{display:grid;grid-template-columns:1fr 1fr;gap:26px 40px;margin-top:22px}
+.fp{min-width:0;border-top:1px solid var(--rule);padding-top:10px}
+.fp .tm{gap:8px}
+.fp .rk{color:var(--faint);font-size:12px;width:18px;flex:none}
+.fp .nm{max-width:none;flex:1;font-weight:500}
+.fp .v{font-weight:700;font-variant-numeric:tabular-nums;padding:1px 6px;border-radius:3px}
+.fp .dv{color:var(--mid);font-size:12px;font-variant-numeric:tabular-nums;width:46px;text-align:right;flex:none}
+.fp svg{display:block;width:100%;height:auto;margin-top:6px;overflow:visible}
+.fp svg text{font-family:var(--sans);font-size:11px;fill:var(--faint)}
+.lnk{display:inline-block;width:22px;height:0;border-top:2.5px solid var(--ink)}
+.lnk.d{border-top:1.5px dashed var(--mid)}
+@media (max-width:600px){.forms{grid-template-columns:1fr}}
+.export .forms{flex:1;min-height:0;margin-top:44px;grid-template-rows:repeat(5,1fr);gap:22px 44px}
+.export .fp{display:flex;flex-direction:column;min-height:0;padding-top:12px}
+.export .fp .tm{font-size:20px;gap:10px}
+.export .fp .rk{font-size:15px;width:22px}
+.export .fp .face{width:30px;height:30px}
+.export .fp .dv{font-size:15px;width:56px}
+.export .fp svg{flex:1;min-height:0;height:100%}
+.export .lnk{width:28px}
+.export .fp svg text{font-size:13px}
 /* Team faces */
 .tm{display:flex;align-items:center;gap:9px;min-width:0}
 .face{flex:none;width:24px;height:24px;border-radius:50%;object-fit:cover;background:#eee;display:inline-flex;
@@ -187,7 +209,7 @@ const API = 'https://api.sleeper.app/v1';
 const qs = new URLSearchParams(location.search);
 const LEAGUE = qs.get('league') || DEFAULT_LEAGUE;
 // Your team gets a YOU tag. Hawk Tua in NFL Casuals unless ?team=<roster id> says otherwise.
-// ?export=swap|allplay|proj renders one table on a 1080×1440 card, generic: no YOU tag.
+// ?export=swap|allplay|form|ahead|proj renders one table on a 1080×1440 card, generic: no YOU tag.
 const EXPORT = qs.get('export') || '';
 if (EXPORT) document.documentElement.classList.add('export');
 const ME = EXPORT ? 0 : Number(qs.get('team') || (LEAGUE === DEFAULT_LEAGUE ? 4 : 0));
@@ -363,6 +385,38 @@ function render(d) {
   });
   h += `</tbody></table></div>
     <div class="key"><span><i class="sw g2"></i>Beat most of the league</span><span><i class="sw r2"></i>Lost to most of it</span><span><b>Actual</b>&nbsp;real head-to-head record</span></div></section>`;
+
+  // ---- Scoring form: each team's points, averaged over its last three weeks ----
+  {
+    const W = d.weeks, last = W.length - 1;
+    const roll = t => W.map((w, i) => { const s = W.slice(Math.max(0, i - 2), i + 1); return s.reduce((a, x) => a + (d.pts[x][t.id] || 0), 0) / s.length; });
+    const form = d.teams.map(t => ({ t, ma: roll(t) })).sort((a, b) => b.ma[last] - a.ma[last]);
+    const avg = W.map((w, i) => form.reduce((s, f) => s + f.ma[i], 0) / n);
+    const vals = form.flatMap(f => f.ma);
+    const step = Math.max(...vals) - Math.min(...vals) > 60 ? 20 : 10;
+    const lo = Math.floor(Math.min(...vals) / step) * step, hi = Math.ceil(Math.max(...vals) / step) * step;
+    const spread = Math.max(...form.map(f => Math.abs(f.ma[last] - avg[last]))) || 1;
+    const VW = 460, VH = 150, L = 30, R = 10, T = 8, B = 20;
+    const x = i => L + (W.length > 1 ? i * (VW - L - R) / (W.length - 1) : 0);
+    const y = v => T + (hi - v) * (VH - T - B) / (hi - lo);
+    const path = a => a.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
+    let grid = '';
+    for (let v = lo; v <= hi; v += step) grid += `<line x1="${L}" x2="${VW - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e6e6e6"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+    W.forEach((w, i) => grid += `<text x="${x(i)}" y="${VH - 4}" text-anchor="middle">${w}</text>`);
+    h += head('form', 'Scoring form', 'Each team\u2019s points, averaged over its last three weeks.') + `
+      <p class="note">Each line is a team\u2019s rolling three-week scoring average, against the league average (dashed). Weeks 1 and 2 average what there is so far. Sorted by current form; the number is this week\u2019s three-week average, coloured against the league.</p>
+      <div class="forms">`;
+    form.forEach((f, k) => {
+      const v = f.ma[last], dv = last ? v - f.ma[last - 1] : 0;
+      h += `<div class="fp"><div class="tm"><span class="rk">${k + 1}</span>${face(f.t)}<span class="nm" title="${esc(f.t.name)}">${esc(f.t.name)}</span>${f.t.id === ME ? '<span class="you">You</span>' : ''}<span class="dv">${last ? (dv >= 0 ? '+' : '\u2212') + Math.abs(dv).toFixed(1) : ''}</span><span class="v ${tint((v - avg[last]) / spread)}">${v.toFixed(1)}</span></div>
+        <svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="${esc(f.t.name)} three-week average by week">${grid}
+          <path d="${path(avg)}" fill="none" stroke="#666" stroke-width="1.5" stroke-dasharray="4 4"/>
+          <path d="${path(f.ma)}" fill="none" stroke="#000" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="${x(last)}" cy="${y(v)}" r="4" fill="#000"/></svg></div>`;
+    });
+    h += `</div>
+      <div class="key"><span><i class="lnk"></i>Three-week average</span><span><i class="lnk d"></i>League average</span><span><b>+/\u2212</b>&nbsp;change on last week</span></div></section>`;
+  }
 
   // ---- Schedule ahead: each opponent coloured by its own league play rank ----
   if (d.ahead.length) {
