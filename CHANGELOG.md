@@ -29,6 +29,12 @@ Same day, second pass:
   scrolls sideways. Weeks not yet played aren't shown.
 - Your team is marked with a YOU tag instead of an arrow.
 
+Export cards: `standings.html?export=swap|allplay|proj` draws one table on a 1080×1440
+card with the same header on each (league · season · weeks, title, one-line subtitle), a
+key underneath and no YOU tag. Screenshot at 2x with headless Chrome:
+`Google Chrome --headless=new --window-size=1080,1440 --force-device-scale-factor=2
+--virtual-time-budget=40000 --screenshot=out.png "<url>?export=swap"`.
+
 League play matches Dynasty Daddy exactly. Schedule comparison matches 84 of 100 cells;
 the rest differ only in the week a team meets itself, where Dynasty Daddy does something
 undocumented.
