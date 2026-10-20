@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.1 — 2026-10-20
+New standalone page, **`/standings.html`**: three tables for telling good from lucky, plain
+Helvetica, black and white. Modelled on Dynasty Daddy's league standings.
+
+- **Schedule comparison.** Every team's scores run against every other team's schedule.
+  The week a team would meet itself, it plays the schedule's owner instead. A **Luck**
+  column is real wins minus the average across all schedules.
+- **League play record.** Every team against all nine others, every week, shaded white to
+  black by how much of the league it would have beaten.
+- **Against projection.** Each week, what a team's starters scored against what Sleeper
+  projected for those same starters, scored with this league's rules. Tap a team for the
+  projected and scored numbers.
+
+**Sleeper's projected receiving first downs are a placeholder:** always receiving yards ÷
+10, about 2.4 times the real rate (yards ÷ 24 this season). With 1 pt a first down, that
+put every team 20 points a week under projection. The page replaces it with the real rate
+by position. **The main app still uses the raw figure**, so it overrates pass-catchers.
+
+League play matches Dynasty Daddy exactly. Schedule comparison matches 84 of 100 cells;
+the rest differ only in the week a team meets itself, where Dynasty Daddy does something
+undocumented.
+
 ## 0.4.0 — 2026-10-19
 New standalone page, **`/leaders.html`**: every NFL player this season ranked by what
 they scored under this league's rules.

@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>League Standings</title>
+<meta name="description" content="Schedule swaps and all-play records for a Sleeper league.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="./favicon.svg">
+<style>
+/* Black on white, Helvetica, two tables. Grey does all the shading. */
+:root{
+  --paper:#fff; --ink:#000; --mid:#666; --faint:#a3a3a3; --rule:#e6e6e6; --rule-firm:#000;
+  --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper)}
+body{color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:48px 80px}
+
+.kicker{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);margin:0}
+h1{font-size:clamp(36px,6.4vw,64px);font-weight:700;letter-spacing:-.04em;line-height:.95;margin:12px 0 0}
+.standfirst{max-width:54ch;color:var(--mid);margin:16px 0 0}
+
+section{margin-top:64px}
+h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0;padding-bottom:10px;border-bottom:2px solid var(--rule-firm)}
+.note{color:var(--mid);font-size:14px;max-width:62ch;margin:12px 0 0}
+.note b{color:var(--ink);font-weight:500}
+
+.scroll{overflow-x:auto;margin-top:22px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-size:10.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);
+  text-align:center;padding:0 4px 10px;vertical-align:bottom;line-height:1.2}
+th.l,td.l{text-align:left;padding-left:0}
+td{text-align:center;padding:0;height:40px;border-top:1px solid var(--rule);font-size:14px;white-space:nowrap}
+td.l{font-weight:500;padding-right:14px;letter-spacing:-.01em;position:sticky;left:0;background:var(--paper);z-index:1}
+th.l{position:sticky;left:0;background:var(--paper);z-index:1}
+.nm{display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.sub{display:block;font-size:11px;color:var(--faint);font-weight:400;margin-top:1px}
+
+/* Schedule grid */
+#swap th{min-width:62px}
+#swap td.c{color:var(--faint)}
+#swap td.up{color:var(--ink);font-weight:700}
+#swap td.dn{color:var(--faint)}
+#swap td.eq{color:var(--mid)}
+#swap td.self{background:var(--ink);color:var(--paper);font-weight:700}
+#swap td.hl:not(.self){background:#f2f2f2}
+#swap .luck{font-weight:700}
+
+/* All-play by week: grey ramps with wins */
+#allplay th{min-width:50px}
+#allplay td.w{color:var(--ink)}
+#allplay td.tot{font-weight:700;border-left:2px solid var(--ink);padding:0 10px}
+#allplay td.pct{color:var(--mid);padding:0 10px}
+#allplay td.act{color:var(--mid);padding:0 10px}
+#allplay td.rank{color:var(--faint);font-size:12px;width:26px;text-align:left;padding:0}
+#allplay td.dash,#proj td.dash{color:var(--rule)}
+tr.me td.l .nm::after{content:" \2190";font-weight:400;color:var(--mid)}
+
+/* Projected vs actual */
+#proj th{min-width:62px}
+#proj td.pos{color:var(--ink);font-weight:700}
+#proj td.neg{color:var(--faint)}
+#proj td.sum{border-left:2px solid var(--ink);padding:0 10px}
+#proj td.sum.beat{color:var(--mid);font-weight:400}
+#proj tr.open td{border-bottom:0}
+#proj td.l{cursor:pointer}
+#proj tr.detail td{border-top:0;height:auto;padding:0 0 14px;font-size:12px;color:var(--mid);text-align:center;line-height:1.35}
+#proj tr.detail td.l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:400;cursor:default}
+
+.key{display:flex;gap:18px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--mid)}
+.key span{display:inline-flex;align-items:center;gap:6px}
+.sw{display:inline-block;width:12px;height:12px;border:1px solid var(--ink)}
+.state{padding:80px 0;text-align:center;color:var(--faint);font-size:13px}
+footer{margin-top:72px;padding-top:16px;border-top:1px solid var(--rule);color:var(--faint);font-size:13px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+footer a,footer button{color:var(--mid);background:none;border:0;padding:0;font:inherit;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+@media (max-width:600px){
+  .wrap{padding-block:32px 64px}
+  section{margin-top:48px}
+  .nm{max-width:96px}
+  td{height:36px;font-size:13px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker" id="kicker">Sleeper league</p>
+  <h1 id="title">Standings</h1>
+  <p class="standfirst" id="stand">Loading the league…</p>
+
+  <div id="out"><div class="state">Loading…</div></div>
+
+  <footer>
+    <span id="foot"></span>
+    <button id="change" type="button">Use a different league</button>
+  </footer>
+</div>
+
+<script>
+const DEFAULT_LEAGUE = '1312056164149641216';
+const API = 'https://api.sleeper.app/v1';
+const qs = new URLSearchParams(location.search);
+const LEAGUE = qs.get('league') || DEFAULT_LEAGUE;
+// Your team gets an arrow. Hawk Tua in NFL Casuals unless ?team=<roster id> says otherwise.
+const ME = Number(qs.get('team') || (LEAGUE === DEFAULT_LEAGUE ? 4 : 0));
+const POS_QS = ['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(p => 'position[]=' + p).join('&');
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const getUrl = u => fetch(u).then(r => { if (!r.ok) throw new Error(r.status + ' ' + u); return r.json(); });
+const get = p => fetch(API + p).then(r => { if (!r.ok) throw new Error(r.status + ' ' + p); return r.json(); });
+const rec = (w, l, t) => t ? `${w}-${l}-${t}` : `${w}-${l}`;
+
+$('#change').onclick = () => {
+  const id = prompt('Sleeper league ID (the long number in the league URL):', LEAGUE);
+  if (id && /^\d+$/.test(id.trim())) location.search = '?league=' + id.trim();
+};
+
+async function load() {
+  const [league, users, rosters, state] = await Promise.all([
+    get(`/league/${LEAGUE}`), get(`/league/${LEAGUE}/users`), get(`/league/${LEAGUE}/rosters`), get('/state/nfl'),
+  ]);
+  const s = league.settings || {};
+  const playoffStart = s.playoff_week_start || 15;
+  // Weeks that are fully scored and part of the regular season.
+  let last = s.last_scored_leg || 0;
+  if (!last && league.season === state.season) last = Math.max(0, (state.week || 1) - 1);
+  last = Math.min(last, playoffStart - 1);
+  const regWeeks = playoffStart - 1;
+
+  const byUser = Object.fromEntries(users.map(u => [u.user_id, u]));
+  const teams = rosters.map(r => {
+    const u = byUser[r.owner_id] || {};
+    return {
+      id: r.roster_id,
+      name: (u.metadata && u.metadata.team_name) || u.display_name || `Team ${r.roster_id}`,
+      owner: u.display_name || '',
+    };
+  }).sort((a, b) => a.id - b.id);
+
+  const weeks = [];
+  for (let w = 1; w <= last; w++) weeks.push(w);
+  const raw = await Promise.all(weeks.map(w => get(`/league/${LEAGUE}/matchups/${w}`)));
+
+  // pts[w][rid], opp[w][rid]
+  const pts = {}, opp = {};
+  raw.forEach((ms, i) => {
+    const w = weeks[i]; pts[w] = {}; opp[w] = {};
+    const groups = {};
+    for (const m of ms) {
+      pts[w][m.roster_id] = m.points || 0;
+      if (m.matchup_id != null) (groups[m.matchup_id] ||= []).push(m.roster_id);
+    }
+    for (const g of Object.values(groups)) if (g.length === 2) { opp[w][g[0]] = g[1]; opp[w][g[1]] = g[0]; }
+  });
+
+  // starters[w][rid] = player ids actually in the lineup
+  const starters = {};
+  raw.forEach((ms, i) => { starters[weeks[i]] = Object.fromEntries(ms.map(m => [m.roster_id, (m.starters || []).filter(x => x && x !== '0')])); });
+
+  return { league, teams, weeks, regWeeks, pts, opp, starters };
+}
+
+// Team A's record if it had played team B's schedule.
+// The week B played A, A plays B instead.
+function swapRecord(d, a, b) {
+  let w = 0, l = 0, t = 0;
+  for (const wk of d.weeks) {
+    let o = d.opp[wk][b];
+    if (o == null) continue;
+    if (o === a) o = b;
+    const diff = d.pts[wk][a] - d.pts[wk][o];
+    if (diff > 0) w++; else if (diff < 0) l++; else t++;
+  }
+  return { w, l, t };
+}
+
+// Each week, A against every other team.
+function allPlayWeek(d, a, wk) {
+  let w = 0, l = 0, t = 0;
+  for (const tm of d.teams) {
+    if (tm.id === a) continue;
+    const diff = d.pts[wk][a] - d.pts[wk][tm.id];
+    if (diff > 0) w++; else if (diff < 0) l++; else t++;
+  }
+  return { w, l, t };
+}
+
+function render(d) {
+  const n = d.teams.length;
+  $('#kicker').textContent = `${d.league.season} · ${n} teams · through week ${d.weeks.length}`;
+  $('#title').textContent = d.league.name;
+  $('#stand').textContent = 'Two ways to separate a good team from a lucky one: swap everyone’s schedule, and play everyone, every week.';
+  $('#foot').textContent = `Live from Sleeper · league ${LEAGUE}`;
+  document.title = `${d.league.name} — Standings`;
+
+  if (!d.weeks.length) { $('#out').innerHTML = '<div class="state">No scored weeks yet.</div>'; return; }
+
+  // ---- Schedule comparison ----
+  const grid = d.teams.map(a => d.teams.map(b => swapRecord(d, a.id, b.id)));
+  const actual = d.teams.map((a, i) => grid[i][i]);
+  // Average wins across every schedule, against actual wins.
+  const avg = d.teams.map((a, i) => grid[i].reduce((s, r) => s + r.w + r.t / 2, 0) / n);
+
+  let h = `<section><h2>Schedule comparison</h2>
+    <p class="note">Each row is a team’s scores. Each column is the schedule it plays. The black squares are what actually happened. <b>Bold</b> is a better record than the real one, grey is worse. <b>Luck</b> is real wins minus the average across all ${n} schedules.</p>
+    <div class="scroll"><table id="swap"><thead><tr><th class="l">Team ↓ / Schedule →</th>`;
+  d.teams.forEach(t => h += `<th>${esc(t.name)}</th>`);
+  h += `<th>Luck</th></tr></thead><tbody>`;
+  d.teams.forEach((a, i) => {
+    const real = actual[i].w + actual[i].t / 2;
+    h += `<tr${a.id === ME ? ' class="me"' : ''}><td class="l"><span class="nm" title="${esc(a.name)}">${esc(a.name)}</span></td>`;
+    grid[i].forEach((r, j) => {
+      const v = r.w + r.t / 2;
+      const cls = i === j ? 'self' : v > real ? 'up' : v < real ? 'dn' : 'eq';
+      h += `<td class="c ${cls}" data-r="${i}" data-c="${j}">${rec(r.w, r.l, r.t)}</td>`;
+    });
+    const luck = real - avg[i];
+    h += `<td class="luck">${luck > 0 ? '+' : luck < 0 ? '−' : ''}${Math.abs(luck).toFixed(1)}</td></tr>`;
+  });
+  h += `</tbody></table></div>
+    <div class="key"><span><i class="sw" style="background:#000"></i>Actual</span><span><b>4-2</b>&nbsp;Better</span><span style="color:var(--faint)">2-4&nbsp;Worse</span></div></section>`;
+
+  // ---- League play record (all-play) ----
+  const rows = d.teams.map(a => {
+    const wk = d.weeks.map(w => allPlayWeek(d, a.id, w));
+    const W = wk.reduce((s, r) => s + r.w, 0), L = wk.reduce((s, r) => s + r.l, 0), T = wk.reduce((s, r) => s + r.t, 0);
+    const i = d.teams.indexOf(a);
+    return { a, wk, W, L, T, pct: (W + T / 2) / Math.max(1, W + L + T), act: actual[i] };
+  }).sort((x, y) => y.pct - x.pct);
+
+  h += `<section><h2>League play record</h2>
+    <p class="note">Every team against all ${n - 1} others, every week. The darker the square, the more of the league it would have beaten. It strips out who you happened to draw.</p>
+    <div class="scroll"><table id="allplay"><thead><tr><th></th><th class="l">Team</th>`;
+  for (let w = 1; w <= d.regWeeks; w++) h += `<th>Wk ${w}</th>`;
+  h += `<th>Total</th><th>Win %</th><th>Actual</th></tr></thead><tbody>`;
+  rows.forEach((r, k) => {
+    h += `<tr${r.a.id === ME ? ' class="me"' : ''}><td class="rank">${k + 1}</td><td class="l"><span class="nm" title="${esc(r.a.name)}">${esc(r.a.name)}</span></td>`;
+    for (let w = 1; w <= d.regWeeks; w++) {
+      const x = r.wk[w - 1];
+      if (!x) { h += `<td class="dash">–</td>`; continue; }
+      const f = (x.w + x.t / 2) / (n - 1);              // 0..1
+      const g = Math.round(255 - f * 255);               // white → black
+      const ink = f > 0.55 ? '#fff' : '#000';
+      h += `<td class="w" style="background:rgb(${g},${g},${g});color:${ink}">${rec(x.w, x.l, x.t)}</td>`;
+    }
+    h += `<td class="tot">${rec(r.W, r.L, r.T)}</td><td class="pct">${(r.pct * 100).toFixed(0)}%</td><td class="act">${rec(r.act.w, r.act.l, r.act.t)}</td></tr>`;
+  });
+  h += `</tbody></table></div></section>`;
+
+  h += `<section id="projsec"><h2>Against projection</h2>
+    <p class="note">Each week, what a team\u2019s starters scored against what Sleeper projected for those same starters going into the games, scored with this league\u2019s rules. Sleeper over-projects receiving first downs, so those are cut to the real rate. Tap a team for the numbers behind it.</p>
+    <div id="projout"><div class="state">Loading projections\u2026</div></div></section>`;
+
+  $('#out').innerHTML = h;
+
+  // Cross-hair on the schedule grid.
+  const swap = $('#swap');
+  swap.addEventListener('mouseover', e => {
+    const td = e.target.closest('td[data-r]');
+    swap.querySelectorAll('.hl').forEach(x => x.classList.remove('hl'));
+    if (!td) return;
+    swap.querySelectorAll(`td[data-r="${td.dataset.r}"],td[data-c="${td.dataset.c}"]`).forEach(x => x.classList.add('hl'));
+  });
+  swap.addEventListener('mouseleave', () => swap.querySelectorAll('.hl').forEach(x => x.classList.remove('hl')));
+}
+
+/* ---------- projected vs actual ---------- */
+
+// Score a stat line with the league's settings. Projections leave out a few keys the league
+// scores; fill them the way the main app does (see ~/Work/Claude/docs/tooling/sleeper.md).
+function projPoints(st, pos, sc) {
+  const s = Object.assign({}, st);
+  // Projected rec_fd is a placeholder: always rec_yd / 10, about 2.4x the real rate.
+  // Real rate, 2026 weeks 1–6: one first down per ~24 receiving yards (WR .041, TE .043, RB .037).
+  if (sc.rec_fd && s.rec_yd != null) s.rec_fd = s.rec_yd * ({ WR: 0.041, TE: 0.043, RB: 0.037 }[pos] || 0.04);
+  if (pos === 'K') {
+    if (sc.fgm_yds_over_30 && s.fgm_yds_over_30 == null)
+      s.fgm_yds_over_30 = 4.5 * (s.fgm_30_39 || 0) + 14.5 * (s.fgm_40_49 || 0) +
+        (s.fgm_50_59 != null ? 24 * s.fgm_50_59 + 33 * (s.fgm_60p || 0) : 23 * (s.fgm_50p || 0));
+    if (sc.fgmiss_50_59 && !sc.fgmiss_50p && s.fgmiss_50_59 == null && s.fgmiss_50p != null) s.fgmiss_50_59 = s.fgmiss_50p;
+    if (sc.fgm_50_59 && !sc.fgm_50p && s.fgm_50_59 == null && s.fgm_50p != null) s.fgm_50_59 = s.fgm_50p;
+  }
+  if (pos === 'DEF') {
+    delete s.pass_int_td;                              // a QB key; double-counts pick-sixes on a defence
+    if (sc.def_3_and_out && s.def_3_and_out == null) s.def_3_and_out = 2.2;   // league average a game
+    if (sc.def_4_and_stop && s.def_4_and_stop == null) s.def_4_and_stop = 0.65;
+  }
+  let t = 0;
+  for (const k in sc) { const v = s[k]; if (v) t += v * sc[k]; }
+  return t;
+}
+
+// Finished weeks don't change, so keep each week's per-team totals (tiny) in localStorage.
+const cacheKey = w => `standings-proj-v2-${LEAGUE}-${w}`;
+function cacheGet(w) { try { return JSON.parse(localStorage.getItem(cacheKey(w))); } catch { return null; } }
+function cacheSet(w, v) { try { localStorage.setItem(cacheKey(w), JSON.stringify(v)); } catch {} }
+
+async function loadProjections(d) {
+  const sc = d.league.scoring_settings || {};
+  const out = {};
+  await Promise.all(d.weeks.map(async w => {
+    const hit = cacheGet(w);
+    if (hit) { out[w] = hit; return; }
+    const rows = await getUrl(`https://api.sleeper.app/projections/nfl/${d.league.season}/${w}?season_type=regular&${POS_QS}`);
+    const byId = {};
+    for (const r of rows) {
+      const pos = (r.player && r.player.fantasy_positions && r.player.fantasy_positions[0]) || r.player?.position;
+      byId[r.player_id] = projPoints(r.stats || {}, pos, sc);
+    }
+    const wk = {};
+    for (const t of d.teams) wk[t.id] = (d.starters[w][t.id] || []).reduce((s, id) => s + (byId[id] || 0), 0);
+    out[w] = wk;
+    cacheSet(w, wk);
+  }));
+  return out;
+}
+
+const signed = x => (x > 0 ? '+' : x < 0 ? '\u2212' : '') + Math.abs(x).toFixed(1);
+
+function renderProj(d, proj) {
+  const rows = d.teams.map(t => {
+    const diffs = d.weeks.map(w => d.pts[w][t.id] - proj[w][t.id]);
+    return { t, diffs, total: diffs.reduce((s, x) => s + x, 0), beat: diffs.filter(x => x > 0).length };
+  }).sort((a, b) => b.total - a.total);
+
+  let h = `<div class="scroll"><table id="proj"><thead><tr><th class="l">Team</th>`;
+  for (let w = 1; w <= d.regWeeks; w++) h += `<th>Wk ${w}</th>`;
+  h += `<th>Season</th><th>Per wk</th><th>Beat</th></tr></thead><tbody>`;
+  rows.forEach(r => {
+    h += `<tr data-t="${r.t.id}"${r.t.id === ME ? ' class="me"' : ''}><td class="l"><span class="nm" title="${esc(r.t.name)}">${esc(r.t.name)}</span></td>`;
+    for (let w = 1; w <= d.regWeeks; w++) {
+      const x = r.diffs[w - 1];
+      if (x == null) { h += `<td class="dash">\u2013</td>`; continue; }
+      h += `<td class="${x >= 0 ? 'pos' : 'neg'}" title="Projected ${proj[w][r.t.id].toFixed(1)} · scored ${d.pts[w][r.t.id].toFixed(1)}">${signed(x)}</td>`;
+    }
+    h += `<td class="sum ${r.total >= 0 ? 'pos' : 'neg'}">${signed(r.total)}</td>
+      <td class="${r.total >= 0 ? 'pos' : 'neg'}">${signed(r.total / d.weeks.length)}</td>
+      <td class="sum beat">${r.beat} of ${d.weeks.length}</td></tr>`;
+    // Hidden detail rows: projected and actual for each week.
+    const line = (label, f) => {
+      let x = `<tr class="detail" data-for="${r.t.id}" hidden><td class="l">${label}</td>`;
+      for (let w = 1; w <= d.regWeeks; w++) x += w <= d.weeks.length ? `<td>${f(w).toFixed(1)}</td>` : `<td></td>`;
+      return x + `<td></td><td></td><td></td></tr>`;
+    };
+    h += line('Projected', w => proj[w][r.t.id]) + line('Scored', w => d.pts[w][r.t.id]);
+  });
+  h += `</tbody></table></div>
+    <div class="key"><span><b>+12.4</b>&nbsp;Beat projection</span><span style="color:var(--faint)">\u22128.1&nbsp;Fell short</span></div>`;
+  $('#projout').innerHTML = h;
+
+  $('#proj').addEventListener('click', e => {
+    const tr = e.target.closest('tr[data-t]');
+    if (!tr) return;
+    const open = tr.classList.toggle('open');
+    document.querySelectorAll(`#proj tr[data-for="${tr.dataset.t}"]`).forEach(x => x.hidden = !open);
+  });
+}
+
+load().then(d => {
+  render(d);
+  if (!d.weeks.length) return;
+  loadProjections(d).then(p => renderProj(d, p)).catch(err => {
+    $('#projout').innerHTML = `<div class="state">Couldn\u2019t load projections. ${esc(err.message)}</div>`;
+  });
+}).catch(err => {
+  $('#stand').textContent = '';
+  $('#out').innerHTML = `<div class="state">Couldn’t load league ${esc(LEAGUE)}. ${esc(err.message)}</div>`;
+});
+</script>
+</body>
+</html>

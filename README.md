@@ -10,7 +10,7 @@ verdicts first, one-line reasons, tabs for the working.
 
 ## Status
 
-**v0.4.0 — live at https://jasperwhite.github.io/hawk-tua-hq/** (Opaline redesign).
+**v0.4.1 — live at https://jasperwhite.github.io/hawk-tua-hq/** (Opaline redesign).
 Every tab renders against the live league with no console errors, in light and dark
 mode, at phone and desktop width, both locally and on the live link.
 
@@ -42,6 +42,7 @@ and Firefox get frosted glass instead, which is fine.
 | `src/components/ui/opaline/` | The Opaline components, as installed by shadcn. Edit in place if needed. |
 | `src/app.css` | The app's tokens (orange accent, wallpaper, table styles) for light and dark. |
 | `public/leaders.html` | Standalone page at `/leaders.html`: every NFL player ranked by points under this league's scoring. Plain HTML and CSS, no build step, reads `public/nfl-players.json` for names. |
+| `public/standings.html` | Standalone page at `/standings.html`: schedule comparison, all-play record and actual vs projected, all live from Sleeper. Plain HTML, no build step. `?league=` and `?team=` pick another league or team. |
 | `.github/workflows/pages.yml` | Builds and publishes to GitHub Pages on every push to `main`. |
 
 ## How the calls are made
