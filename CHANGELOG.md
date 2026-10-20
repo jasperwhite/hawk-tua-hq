@@ -30,7 +30,7 @@ Same day, second pass:
 - Your team is marked with a YOU tag instead of an arrow.
 
 **Schedule ahead** (fourth table): teams in league play order, and each remaining week's
-opponent with their league play rank, red if above, green if below. Counts of above and
+opponent with their league play rank: red if above, green if below, white if level. Flat colours, no gradient. Counts of above and
 below, plus opponents' average league play win %, which is the fair comparison since #1
 can only face teams below. Hawk Tua: 8 of 9 above, the second-hardest run.
 
