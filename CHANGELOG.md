@@ -35,9 +35,11 @@ schedule it's on. Sorted hardest first by opponents' average league play win %, 
 their average rank alongside. Hawk Tua has the second-hardest run (51.2%). An earlier
 version coloured opponents by above or below the team itself; Jasper didn't want that.
 
-**Scoring form**: one small chart per team, showing its rolling three-week scoring average
-against the league average (dashed), all on the same scale. Weeks 1–2 average what's there.
-Sorted by current form; the end number is coloured against the league.
+**Scoring form**: every team's rolling three-week scoring average on one chart, one
+colour each, labelled at the line end with the latest average and the team face (labels
+nudged apart). Hover or tap a line to pick it out; your team's line is thicker on the web.
+Weeks 1–2 average what's there. Replaced a first pass of one small chart per team; Jasper
+wanted them overlapped.
 
 Export cards: `standings.html?export=swap|allplay|form|ahead|proj` draws one table on a 1080×1440
 card with the same header on each (league · season · weeks, title, one-line subtitle), a
