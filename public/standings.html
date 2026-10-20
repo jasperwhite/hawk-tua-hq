@@ -72,17 +72,29 @@ td.r1{background-color:#fbe6e6}td.r2{background-color:#f6c7c7}td.r3{background-c
 .export #ahead td{font-size:17px}
 .export #ahead td.l{font-size:20px}
 .export #ahead td.s1,.export #ahead td.s2,.export #ahead td.s3{font-size:19px}
-/* Scoring form: every team on one chart */
+/* Scoring form: every team on one chart, colour key underneath */
 .formchart{margin-top:22px}
-.formchart svg{display:block;width:100%;height:auto;overflow:visible}
+.formchart svg{display:block;width:100%;height:auto}
 .formchart text{font-family:var(--sans)}
 .formchart .ax{font-size:12px;fill:var(--faint)}
 .formchart g.ln{cursor:pointer;transition:opacity .15s}
-.formchart svg.dim g.ln{opacity:.12}
-.formchart svg.dim g.ln.hi{opacity:1}
-.export .formchart{flex:1;min-height:0;margin-top:40px}
-.export .formchart svg{height:100%}
-.export .formchart .ax{font-size:16px}
+.formchart.dim g.ln{opacity:.12}
+.formchart.dim g.ln.hi{opacity:1}
+.flegend{list-style:none;margin:18px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px 24px}
+.flegend li{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;min-width:0;transition:opacity .15s}
+.flegend i{flex:none;width:18px;height:4px;border-radius:2px}
+.flegend b{flex:none;width:3.2em;font-variant-numeric:tabular-nums}
+.flegend .face{width:22px;height:22px}
+.flegend .nm{max-width:none;font-weight:500}
+.formchart.dim .flegend li{opacity:.3}
+.formchart.dim .flegend li.hi{opacity:1}
+.export .formchart{flex:1;min-height:0;margin-top:40px;display:flex;flex-direction:column}
+.export .formchart svg{flex:1;min-height:0;height:100%}
+.export .formchart .ax{font-size:17px}
+.export .flegend{grid-template-columns:1fr 1fr;grid-template-rows:repeat(5,auto);grid-auto-flow:column;gap:14px 44px;margin-top:30px}
+.export .flegend li{font-size:21px;gap:12px}
+.export .flegend i{width:26px;height:5px}
+.export .flegend .face{width:32px;height:32px}
 /* Team faces */
 .tm{display:flex;align-items:center;gap:9px;min-width:0}
 .face{flex:none;width:24px;height:24px;border-radius:50%;object-fit:cover;background:#eee;display:inline-flex;
@@ -376,43 +388,32 @@ function render(d) {
     <div class="key"><span><i class="sw g2"></i>Beat most of the league</span><span><i class="sw r2"></i>Lost to most of it</span><span><b>Actual</b>&nbsp;real head-to-head record</span></div></section>`;
 
   // ---- Scoring form: every team's rolling three-week average, overlapped ----
-  {
-    const W = d.weeks, last = W.length - 1;
-    const roll = t => W.map((w, i) => { const s = W.slice(Math.max(0, i - 2), i + 1); return s.reduce((a, x) => a + (d.pts[x][t.id] || 0), 0) / s.length; });
+  // Only weeks with three scored weeks behind them; earlier points aren't a real average.
+  if (d.weeks.length >= 3) {
+    const W = d.weeks.slice(2), last = W.length - 1;
+    const roll = t => W.map(w => [w - 2, w - 1, w].reduce((a, x) => a + (d.pts[x][t.id] || 0), 0) / 3);
     const COL = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#17becf', '#bcbd22', '#000'];
     const form = d.teams.map((t, i) => ({ t, ma: roll(t), c: COL[i % COL.length] })).sort((a, b) => b.ma[last] - a.ma[last]);
     const vals = form.flatMap(f => f.ma);
     const step = Math.max(...vals) - Math.min(...vals) > 60 ? 20 : 10;
     const lo = Math.floor(Math.min(...vals) / step) * step, hi = Math.ceil(Math.max(...vals) / step) * step;
-    const VW = 960, VH = EXPORT ? 1000 : 560, L = 40, R = 260, T = 14, B = 34;
-    const fs = EXPORT ? 20 : 14, gap = EXPORT ? 34 : 24, ar = EXPORT ? 13 : 10, nw = EXPORT ? 46 : 32;
-    const x = i => L + (W.length > 1 ? i * (VW - L - R) / (W.length - 1) : 0);
+    const VW = 960, VH = EXPORT ? 700 : 480, L = 40, R = 16, T = 14, B = 34;
+    const x = i => L + (W.length > 1 ? i * (VW - L - R) / (W.length - 1) : (VW - L - R) / 2);
     const y = v => T + (hi - v) * (VH - T - B) / (hi - lo);
     const path = a => a.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
-    // End labels, nudged apart so none overlap.
-    const lab = form.map(f => ({ f, y: y(f.ma[last]) })).sort((a, b) => a.y - b.y);
-    lab.forEach((l, i) => { if (i) l.y = Math.max(l.y, lab[i - 1].y + gap); });
-    for (let i = lab.length - 1; i >= 0; i--) { const cap = i === lab.length - 1 ? VH - B : lab[i + 1].y - gap; if (lab[i].y > cap) lab[i].y = cap; }
     let g = '';
-    for (let v = lo; v <= hi; v += step) g += `<line x1="${L}" x2="${x(last)}" y1="${y(v)}" y2="${y(v)}" stroke="#e6e6e6"/><text class="ax" x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
-    W.forEach((w, i) => g += `<text class="ax" x="${x(i)}" y="${VH - 6}" text-anchor="middle">Wk ${w}</text>`);
-    g += `<defs><clipPath id="fc" clipPathUnits="objectBoundingBox"><circle cx=".5" cy=".5" r=".5"/></clipPath></defs>`;
-    const lx = x(last) + 18;
-    lab.forEach(({ f, y: ly }) => {
-      const v = f.ma[last], me = f.t.id === ME, ey = y(v);
-      const pic = f.t.avatar
-        ? `<image href="${esc(f.t.avatar)}" x="${lx + nw}" y="${ly - ar}" width="${ar * 2}" height="${ar * 2}" clip-path="url(#fc)" preserveAspectRatio="xMidYMid slice"/>`
-        : `<circle cx="${lx + nw + ar}" cy="${ly}" r="${ar}" fill="#eee"/>`;
+    for (let v = lo; v <= hi; v += step) g += `<line x1="${L}" x2="${VW - R}" y1="${y(v)}" y2="${y(v)}" stroke="#e6e6e6"/><text class="ax" x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+    W.forEach((w, i) => g += `<text class="ax" x="${x(i)}" y="${VH - 6}" text-anchor="${i === 0 && W.length > 1 ? 'start' : i === last && W.length > 1 ? 'end' : 'middle'}">Wk ${w}</text>`);
+    form.forEach(f => {
+      const me = f.t.id === ME;
       g += `<g class="ln" data-id="${f.t.id}"><title>${esc(f.t.name)}: ${f.ma.map(m => m.toFixed(1)).join(', ')}</title>
-        <path d="${path(f.ma)}" fill="none" stroke="${f.c}" stroke-width="${me ? 4 : 2.5}" stroke-linejoin="round" stroke-linecap="round"/>
-        <circle cx="${x(last)}" cy="${ey}" r="${me ? 5 : 4}" fill="${f.c}"/>
-        <path d="M${x(last) + 6},${ey}L${lx - 4},${ly}" stroke="${f.c}" stroke-width="1" fill="none"/>
-        <text x="${lx}" y="${ly + fs * .35}" font-size="${fs}" font-weight="700" fill="${f.c}" style="font-variant-numeric:tabular-nums">${v.toFixed(0)}</text>
-        ${pic}<text x="${lx + nw + ar * 2 + 8}" y="${ly + fs * .35}" font-size="${fs}" font-weight="${me ? 700 : 500}" fill="#000">${esc(f.t.name)}</text></g>`;
+        <path d="${path(f.ma)}" fill="none" stroke="${f.c}" stroke-width="${me ? 4.5 : 3}" stroke-linejoin="round" stroke-linecap="round"/>
+        ${f.ma.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="${me ? 5 : 4}" fill="${f.c}"/>`).join('')}</g>`;
     });
     h += head('form', 'Scoring form', 'Each team\u2019s points, averaged over its last three weeks.') + `
-      <p class="note">Each line is a team\u2019s rolling three-week scoring average. Weeks 1 and 2 average what there is so far. Hover a line or a name to pick it out.</p>
-      <div class="formchart"><svg viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Three-week scoring average by team">${g}</svg></div>
+      <p class="note">Each line is a team\u2019s rolling three-week scoring average. It starts at week 3, the first week with three scores behind it. Hover a line or a name to pick it out.</p>
+      <div class="formchart"><svg viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Three-week scoring average by team">${g}</svg>
+      <ol class="flegend">${form.map(f => `<li data-id="${f.t.id}"><i style="background:${f.c}"></i><b style="color:${f.c}">${f.ma[last].toFixed(1)}</b>${face(f.t)}<span class="nm">${esc(f.t.name)}</span>${f.t.id === ME ? '<span class="you">You</span>' : ''}</li>`).join('')}</ol></div>
       <div class="key"><span><b>Number</b>&nbsp;three-week average after week ${W[last]}, highest first</span></div></section>`;
   }
 
@@ -454,13 +455,14 @@ function render(d) {
   $('#out').innerHTML = h;
   if (EXPORT) document.querySelector(`section[data-k="${EXPORT}"]`)?.classList.add('pick');
 
-  // Scoring form: hover a line or name to pick it out.
-  const fsvg = $('.formchart svg');
-  if (fsvg) {
-    const pick = gl => { fsvg.classList.toggle('dim', !!gl); fsvg.querySelectorAll('g.ln').forEach(x => x.classList.toggle('hi', x === gl)); };
-    fsvg.addEventListener('mouseover', e => pick(e.target.closest('g.ln')));
-    fsvg.addEventListener('click', e => pick(e.target.closest('g.ln')));
-    fsvg.addEventListener('mouseleave', () => pick(null));
+  // Scoring form: hover a line or a legend name to pick it out.
+  const fc = $('.formchart');
+  if (fc) {
+    const pick = id => { fc.classList.toggle('dim', id != null); fc.querySelectorAll('[data-id]').forEach(x => x.classList.toggle('hi', x.dataset.id === id)); };
+    const at = e => e.target.closest('[data-id]')?.dataset.id ?? null;
+    fc.addEventListener('mouseover', e => pick(at(e)));
+    fc.addEventListener('click', e => pick(at(e)));
+    fc.addEventListener('mouseleave', () => pick(null));
   }
 
   // The reader box spells out whichever square you're on.
