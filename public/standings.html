@@ -60,7 +60,7 @@ td.r1{background-color:#fbe6e6}td.r2{background-color:#f6c7c7}td.r3{background-c
 #ahead th{min-width:54px}
 #ahead td.rank{color:var(--faint);font-size:12px;width:26px;text-align:left;padding:0}
 #ahead td.sum{border-left:2px solid var(--ink)}
-#ahead td.s1,#ahead td.s2{font-weight:700}
+#ahead td.s3{font-weight:700}
 .op{display:inline-flex;align-items:center;gap:6px}
 .op .face{width:22px;height:22px}
 .op b{font-weight:600;min-width:1.2em;text-align:left}
@@ -364,31 +364,35 @@ function render(d) {
   h += `</tbody></table></div>
     <div class="key"><span><i class="sw g2"></i>Beat most of the league</span><span><i class="sw r2"></i>Lost to most of it</span><span><b>Actual</b>&nbsp;real head-to-head record</span></div></section>`;
 
-  // ---- Schedule ahead, ranked by league play ----
+  // ---- Schedule ahead: each opponent coloured by its own league play rank ----
   if (d.ahead.length) {
-    const byId = Object.fromEntries(rows.map((r, k) => [r.a.id, { ...r, rank: 1 + rows.filter(x => x.pct > r.pct).length }]));
+    const byId = Object.fromEntries(rows.map(r => [r.a.id, { ...r, rank: 1 + rows.filter(x => x.pct > r.pct).length }]));
     const span = `${d.ahead[0]}\u2013${d.ahead[d.ahead.length - 1]}`;
-    h += head('ahead', 'Schedule ahead', `Weeks ${span}: is each opponent above or below you in league play?`) + `
-      <p class="note">Teams ranked by their league play record. Each week shows who they play next and where that team ranks. <b>Red</b> is a team above them, <b>green</b> a team below. The top team can only face teams below it and the bottom team only teams above, so <b>Opp win %</b> (their opponents\u2019 average league play win %) is the fairer comparison.</p>
+    const sched = d.teams.map(t => {
+      const opps = d.ahead.map(w => byId[d.opp[w] && d.opp[w][t.id]]);
+      const real = opps.filter(Boolean);
+      return {
+        t, opps,
+        oppPct: real.reduce((s, o) => s + o.pct, 0) / Math.max(1, real.length),
+        oppRank: real.reduce((s, o) => s + o.rank, 0) / Math.max(1, real.length),
+      };
+    }).sort((a, b) => b.oppPct - a.oppPct);
+    h += head('ahead', 'Schedule ahead', `Weeks ${span}: every remaining opponent, by where it ranks in league play.`) + `
+      <p class="note">Each week shows who a team plays and that opponent\u2019s league play rank. <b>Red</b> is a top-ranked opponent, <b>green</b> a bottom-ranked one. Teams are sorted hardest schedule first, by their opponents\u2019 average league play win %.</p>
       <div class="scroll"><table id="ahead"><thead><tr><th></th><th class="l">Team</th>`;
     d.ahead.forEach(w => h += `<th>Wk ${w}</th>`);
-    h += `<th class="s1">Above</th><th class="s2">Below</th><th class="s3">Opp win %</th></tr></thead><tbody>`;
-    rows.forEach(r => {
-      const me = byId[r.a.id];
-      let up = 0, down = 0, sum = 0, cnt = 0;
-      h += `<tr><td class="rank">${me.rank}</td><td class="l">${teamCell(r.a)}</td>`;
-      d.ahead.forEach(w => {
-        const o = byId[d.opp[w] && d.opp[w][r.a.id]];
+    h += `<th class="s2">Avg opp rank</th><th class="s3">Opp win %</th></tr></thead><tbody>`;
+    const mid = (n + 1) / 2, half = (n - 1) / 2;
+    sched.forEach((r, k) => {
+      h += `<tr><td class="rank">${k + 1}</td><td class="l">${teamCell(r.t)}</td>`;
+      r.opps.forEach((o, i) => {
         if (!o) { h += `<td class="dash">\u2013</td>`; return; }
-        if (o.pct > me.pct) up++; else if (o.pct < me.pct) down++;
-        sum += o.pct; cnt++;
-        h += `<td class="${o.pct > me.pct ? 'r2' : o.pct < me.pct ? 'g2' : ''}" title="Week ${w}: ${esc(o.a.name)}, #${o.rank} in league play"><span class="op">${face(o.a)}<b>${o.rank}</b></span></td>`;
+        h += `<td class="${tint((o.rank - mid) / half)}" title="Week ${d.ahead[i]}: ${esc(o.a.name)}, #${o.rank} in league play"><span class="op">${face(o.a)}<b>${o.rank}</b></span></td>`;
       });
-      const oppPct = cnt ? sum / cnt : 0;
-      h += `<td class="s1 sum">${up}</td><td class="s2">${down}</td><td class="s3">${(oppPct * 100).toFixed(1)}%</td></tr>`;
+      h += `<td class="s2 sum">${r.oppRank.toFixed(1)}</td><td class="s3">${(r.oppPct * 100).toFixed(1)}%</td></tr>`;
     });
     h += `</tbody></table></div>
-      <div class="key"><span><i class="sw r2"></i>Plays a team above</span><span><i class="sw g2"></i>Plays a team below</span><span><i class="sw" style="border:1px solid var(--rule-firm)"></i>Same record</span><span><b>Opp win %</b>&nbsp;opponents\u2019 average league play win %</span></div></section>`;
+      <div class="key"><span><i class="sw r3"></i>Top-ranked opponent</span><span><i class="sw g3"></i>Bottom-ranked opponent</span><span><b>Opp win %</b>&nbsp;opponents\u2019 average league play win %</span></div></section>`;
   }
 
   h += head('proj', 'Against projection', 'Each team\u2019s score against Sleeper\u2019s projection for the same starters.') + `

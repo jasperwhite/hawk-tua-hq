@@ -29,10 +29,11 @@ Same day, second pass:
   scrolls sideways. Weeks not yet played aren't shown.
 - Your team is marked with a YOU tag instead of an arrow.
 
-**Schedule ahead** (fourth table): teams in league play order, and each remaining week's
-opponent with their league play rank: red if above, green if below, white if level. Flat colours, no gradient. Counts of above and
-below, plus opponents' average league play win %, which is the fair comparison since #1
-can only face teams below. Hawk Tua: 8 of 9 above, the second-hardest run.
+**Schedule ahead** (fourth table): every team's remaining opponents, each coloured by
+that opponent's own league play rank (#1 deepest red, #10 deepest green), whoever's
+schedule it's on. Sorted hardest first by opponents' average league play win %, with
+their average rank alongside. Hawk Tua has the second-hardest run (51.2%). An earlier
+version coloured opponents by above or below the team itself; Jasper didn't want that.
 
 Export cards: `standings.html?export=swap|allplay|ahead|proj` draws one table on a 1080×1440
 card with the same header on each (league · season · weeks, title, one-line subtitle), a
