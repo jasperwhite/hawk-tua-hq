@@ -95,6 +95,37 @@ td.r1{background-color:#fbe6e6}td.r2{background-color:#f6c7c7}td.r3{background-c
 .export .flegend li{font-size:21px;gap:12px}
 .export .flegend i{width:26px;height:5px}
 .export .flegend .face{width:32px;height:32px}
+/* Draft board */
+#draft{table-layout:fixed;min-width:860px}
+#draft th{padding:0 2px 10px;white-space:normal}
+#draft th .face{margin-bottom:6px}
+#draft th .tn{display:block;font-size:10px;letter-spacing:.04em;line-height:1.15;overflow:hidden;text-overflow:ellipsis;max-height:2.3em}
+#draft th.rd,#draft td.rd{width:30px;position:sticky;left:0;background:var(--paper);z-index:1}
+#draft td.rd{color:var(--faint);font-size:12px;text-align:left}
+#draft td.dc{height:auto;padding:6px 3px 7px;border:2px solid var(--paper);vertical-align:top;white-space:normal;line-height:1.15}
+#draft .dt{display:flex;justify-content:space-between;font-size:10px;opacity:.75;font-variant-numeric:tabular-nums}
+#draft .ph{display:block;width:34px;height:34px;margin:4px auto 3px;border-radius:50%;object-fit:cover;background:rgba(0,0,0,.06)}
+#draft .pb,#draft .tx{display:block}
+#draft .pn{display:block;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#draft .pp{display:block;font-size:11px;font-variant-numeric:tabular-nums;margin-top:2px}
+#draft tr.ret td{border-top:2px solid var(--ink);height:44px;font-weight:700;font-size:15px}
+#draft tr.ret td.rd{font-size:11px;font-weight:500;color:var(--mid)}
+#draft td.dc{font-weight:inherit}
+#draft .g3 .pn,#draft .r3 .pn{font-weight:700}
+.export #draft{min-width:0;height:auto}
+.export #draft th .face{width:30px;height:30px}
+.export #draft th .tn{font-size:11px}
+.export #draft th.rd,.export #draft td.rd{width:44px;font-size:13px}
+.export #draft td.dc{padding:3px 4px 5px;position:relative}
+.export #draft .dt{font-size:10.5px;height:24px;align-items:center}
+.export #draft .pb{display:block;margin-top:2px}
+.export #draft .ph{position:absolute;top:3px;left:50%;transform:translateX(-50%);width:24px;height:24px;margin:0}
+.export #draft .fi{display:none}
+.export #draft .pn{font-size:13px;line-height:1.1;letter-spacing:-.01em}
+.export #draft .pp{font-size:11px;margin-top:1px;white-space:nowrap}
+.export #draft tr.ret td{height:40px;font-size:17px}
+.export #draftsec .scroll{margin-top:30px}
+.export #draftout{display:flex;flex-direction:column;flex:1;min-height:0}
 /* Team faces */
 .tm{display:flex;align-items:center;gap:9px;min-width:0}
 .face{flex:none;width:24px;height:24px;border-radius:50%;object-fit:cover;background:#eee;display:inline-flex;
@@ -186,6 +217,7 @@ html.export,html.export body{width:1080px;height:1440px;overflow:hidden}
 .export #allplay td.rank{font-size:15px;width:34px}
 .export #allplay td.tot,.export #proj td.sum{border-left:2px solid var(--ink)}
 .export .key{font-size:16px;margin-top:34px;gap:26px;padding-top:22px;border-top:1px solid var(--rule)}
+.export #draftsec .key{margin-top:20px;padding-top:16px;gap:20px;font-size:14px}
 .export .sw{width:18px;height:18px}
 .export #proj tr.detail{display:none}
 </style>
@@ -210,7 +242,7 @@ const API = 'https://api.sleeper.app/v1';
 const qs = new URLSearchParams(location.search);
 const LEAGUE = qs.get('league') || DEFAULT_LEAGUE;
 // Your team gets a YOU tag. Hawk Tua in NFL Casuals unless ?team=<roster id> says otherwise.
-// ?export=swap|allplay|form|ahead|proj renders one table on a 1080×1440 card, generic: no YOU tag.
+// ?export=swap|allplay|form|ahead|proj|draft renders one table on a 1080×1440 card, generic: no YOU tag.
 const EXPORT = qs.get('export') || '';
 if (EXPORT) document.documentElement.classList.add('export');
 const ME = EXPORT ? 0 : Number(qs.get('team') || (LEAGUE === DEFAULT_LEAGUE ? 4 : 0));
@@ -332,7 +364,7 @@ function render(d) {
   // Average wins across every schedule, against actual wins.
   const avg = d.teams.map((a, i) => grid[i].reduce((s, r) => s + r.w + r.t / 2, 0) / n);
 
-  const head = (key, title, sub) => `<section data-k="${key}"${key === 'proj' ? ' id="projsec"' : ''}>
+  const head = (key, title, sub) => `<section data-k="${key}"${key === 'proj' ? ' id="projsec"' : key === 'draft' ? ' id="draftsec"' : ''}>
     <p class="xk">${esc(d.league.name)} \u00b7 ${d.league.season} \u00b7 Weeks 1\u2013${d.weeks.length}</p>
     <h2>${title}</h2><p class="xsub">${sub}</p>`;
   let h = head('swap', 'Schedule comparison', 'Each team\u2019s record if it had played every other team\u2019s schedule.') + `
@@ -451,6 +483,10 @@ function render(d) {
   h += head('proj', 'Against projection', 'Each team\u2019s score against Sleeper\u2019s projection for the same starters.') + `
     <p class="note">Each week, what a team\u2019s starters scored against what Sleeper projected for those same starters going into the games, scored with this league\u2019s rules. Sleeper over-projects receiving first downs, so those are cut to the real rate. Tap a team for the numbers behind it.</p>
     <div id="projout"><div class="state">Loading projections\u2026</div></div></section>`;
+
+  if (d.league.draft_id) h += head('draft', 'Draft board', 'Every pick, against the players taken around it at its position.') + `
+    <p class="note">Each pick is measured against the players at its position taken around it, two either side: the 10th WR drafted is up against the 8th to 12th. <b>Green</b> is outscoring them, <b>red</b> is behind. Points are weeks 1\u2013${d.weeks.length}, this league\u2019s scoring, wherever the player is now.</p>
+    <div id="draftout"><div class="state">Loading the draft\u2026</div></div></section>`;
 
   $('#out').innerHTML = h;
   if (EXPORT) document.querySelector(`section[data-k="${EXPORT}"]`)?.classList.add('pick');
@@ -590,9 +626,106 @@ function renderProj(d, proj) {
   });
 }
 
+/* ---------- draft board ---------- */
+
+// Every player's points for the scored weeks, this league's scoring. Finished weeks are cached.
+async function loadPoints(d) {
+  const sc = {};
+  for (const k in d.league.scoring_settings) if (d.league.scoring_settings[k]) sc[k] = d.league.scoring_settings[k];
+  const tag = Object.entries(sc).join(';').length;
+  const weeks = await Promise.all(d.weeks.map(async w => {
+    const key = `standings-pts-v1-${d.league.season}-${w}-${tag}`;
+    try { const hit = JSON.parse(localStorage.getItem(key)); if (hit) return hit; } catch {}
+    const raw = await get(`/stats/nfl/regular/${d.league.season}/${w}`);
+    const out = {};
+    for (const id in raw) { let p = 0; for (const k in sc) if (raw[id][k]) p += raw[id][k] * sc[k]; if (p) out[id] = Math.round(p * 100) / 100; }
+    try { localStorage.setItem(key, JSON.stringify(out)); } catch {}
+    return out;
+  }));
+  const tot = {};
+  weeks.forEach(wk => { for (const id in wk) tot[id] = (tot[id] || 0) + wk[id]; });
+  return tot;
+}
+
+async function loadDraft(d) {
+  const id = d.league.draft_id;
+  const [draft, picks, players, tot] = await Promise.all([get(`/draft/${id}`), get(`/draft/${id}/picks`), getUrl('./nfl-players.json'), loadPoints(d)]);
+  // Points so far at each position, best first: pool.WR[9] is what the 10th-best WR has scored.
+  const pool = {};
+  for (const pid in players) { const pos = players[pid][1]; if (pos) (pool[pos] ||= []).push(tot[pid] || 0); }
+  for (const p in pool) pool[p].sort((a, b) => b - a);
+  const seen = {}, byPos = {};
+  const list = picks.sort((a, b) => a.pick_no - b.pick_no).map(p => {
+    const m = p.metadata || {}, pos = m.position || '?';
+    const dr = seen[pos] = (seen[pos] || 0) + 1;
+    const x = { p, m, pos, dr, pts: tot[p.player_id] || 0 };
+    x.now = 1 + (pool[pos] || []).filter(v => v > x.pts).length;
+    (byPos[pos] ||= []).push(x);
+    return x;
+  });
+  // The bar for each pick: the average of its position's picks taken around it, two either side.
+  // Measuring against the Nth-best scorer instead turns most picks red, since the best so far
+  // are partly luck.
+  for (const pos in byPos) {
+    const a = byPos[pos];
+    a.forEach((x, i) => {
+      const near = a.slice(Math.max(0, i - 2), i + 3);
+      x.exp = near.reduce((s, y) => s + y.pts, 0) / near.length;
+      x.f = x.exp > 0 ? Math.max(-1, Math.min(1, Math.log2(Math.max(x.pts, 0.01) / x.exp))) : 0;
+    });
+  }
+  return { draft, list };
+}
+
+function renderDraft(d, { draft, list }) {
+  const teams = draft.settings.teams, rounds = draft.settings.rounds;
+  const slotTeam = s => d.teams.find(t => t.id === Number(draft.slot_to_roster_id[s]));
+  const at = {};
+  list.forEach(x => at[`${x.p.round}.${x.p.draft_slot}`] = x);
+  const pad = n => String(n).padStart(2, '0');
+  const photo = x => x.pos === 'DEF'
+    ? `https://sleepercdn.com/images/team_logos/nfl/${String(x.p.player_id).toLowerCase()}.png`
+    : `https://sleepercdn.com/content/nfl/players/thumb/${x.p.player_id}.jpg`;
+  const name = x => x.pos === 'DEF' ? esc(x.m.last_name) : `<span class="fi">${esc((x.m.first_name || '')[0] || '')}. </span>${esc(x.m.last_name || '')}`;
+
+  let h = `<div class="scroll"><table id="draft"><thead><tr><th class="rd"></th>`;
+  for (let s = 1; s <= teams; s++) { const t = slotTeam(s); h += `<th>${t ? face(t) : ''}<span class="tn">${t ? esc(t.name).replace(/([a-z])([A-Z])/g, '$1&#8203;$2') : 'Slot ' + s}</span></th>`; }
+  h += `</tr></thead><tbody>`;
+  for (let r = 1; r <= rounds; r++) {
+    h += `<tr><td class="rd">${r}</td>`;
+    for (let s = 1; s <= teams; s++) {
+      const x = at[`${r}.${s}`];
+      if (!x) { h += `<td class="dc"></td>`; continue; }
+      const inRound = x.p.pick_no - (r - 1) * teams;
+      h += `<td class="dc ${tint(x.f)}" title="${esc(x.m.first_name || '')} ${esc(x.m.last_name || '')}: pick ${x.p.pick_no}, drafted ${x.pos}${x.dr}. ${x.pts.toFixed(1)} pts, now ${x.pos}${x.now}. ${x.pos}s taken around him average ${x.exp.toFixed(1)}.">
+        <span class="dt"><span>${r}.${pad(inRound)}</span><span>${x.pos}${x.dr}</span></span>
+        <span class="pb"><img class="ph" src="${photo(x)}" alt="" loading="${EXPORT ? 'eager' : 'lazy'}" onerror="this.style.visibility='hidden'"><span class="tx">
+        <span class="pn">${name(x)}</span>
+        <span class="pp">${x.pts.toFixed(0)} \u00b7 ${x.pos}${x.now}</span></span></span></td>`;
+    }
+    h += `</tr>`;
+  }
+  // A team's return: its picks' points against what their draft spots have scored.
+  h += `<tr class="ret"><td class="rd">Return</td>`;
+  for (let s = 1; s <= teams; s++) {
+    const mine = list.filter(x => x.p.draft_slot === s);
+    const pts = mine.reduce((a, x) => a + x.pts, 0), exp = mine.reduce((a, x) => a + x.exp, 0);
+    const ratio = exp ? pts / exp : 0;
+    h += `<td class="${tint(Math.max(-1, Math.min(1, Math.log2(Math.max(ratio, .01)) * 3)))}" title="${pts.toFixed(1)} pts against ${exp.toFixed(1)} for their peers">${Math.round(ratio * 100)}%</td>`;
+  }
+  h += `</tr></tbody></table></div>
+    <div class="key"><span><i class="sw g3"></i>Outscoring its peers</span><span><i class="sw r3"></i>Behind them</span><span><b>RB12</b>&nbsp;drafted as \u00b7 points \u00b7 rank now</span><span><b>Return</b>&nbsp;a team\u2019s picks against their peers</span></div>`;
+  $('#draftout').innerHTML = h;
+  if (EXPORT === 'draft') document.documentElement.dataset.ready = '1';
+}
+
 load().then(d => {
   render(d);
   if (!d.weeks.length) return;
+  if (d.league.draft_id && (!EXPORT || EXPORT === 'draft')) loadDraft(d).then(x => renderDraft(d, x)).catch(err => {
+    $('#draftout').innerHTML = `<div class="state">Couldn\u2019t load the draft. ${esc(err.message)}</div>`;
+  });
+  if (EXPORT && EXPORT !== 'proj') return;
   loadProjections(d).then(p => renderProj(d, p)).catch(err => {
     $('#projout').innerHTML = `<div class="state">Couldn\u2019t load projections. ${esc(err.message)}</div>`;
   });

@@ -41,7 +41,17 @@ Starts at week 3, the first week with three scores behind it. Hover or tap a lin
 name to pick it out; your team's line is thicker on the web. Replaced a first pass of one
 small chart per team, then one with labels at the line ends.
 
-Export cards: `standings.html?export=swap|allplay|form|ahead|proj` draws one table on a 1080×1440
+**Draft board**: the whole draft as a grid, one column per team in draft order, one row
+per round, each pick with headshot, pick number, the position rank it was drafted at,
+points so far and its position rank now. Coloured by its points against the average of
+the same-position players drafted around it (two either side), on a log scale: double is
+deepest green, half is deepest red. A first pass measured each pick against the Nth-best
+scorer at its drafted rank, but that turns most picks red because the best scorers so far
+are partly luck. Bottom row is each team's Return: its picks' points against their peers'.
+Points are summed from `/v1/stats/nfl/regular/{season}/{w}` with the league's scoring and
+cached per finished week.
+
+Export cards: `standings.html?export=swap|allplay|form|ahead|proj|draft` draws one table on a 1080×1440
 card with the same header on each (league · season · weeks, title, one-line subtitle), a
 key underneath and no YOU tag. Screenshot at 2x with headless Chrome:
 `Google Chrome --headless=new --window-size=1080,1440 --force-device-scale-factor=2
