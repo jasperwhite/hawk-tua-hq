@@ -51,7 +51,14 @@ are partly luck. Bottom row is each team's Return: its picks' points against the
 Points are summed from `/v1/stats/nfl/regular/{season}/{w}` with the league's scoring and
 cached per finished week.
 
-Export cards: `standings.html?export=swap|allplay|form|ahead|proj|draft` draws one table on a 1080×1440
+**Projected winners**: for every team and week, whether the projection had it as favourite
+or underdog (higher projected total for the starters who played) and whether it won. Pale
+squares are games the projection called, deep ones are misses; a last row counts the calls
+right per week. Weeks 1–6: 17 of 30, 9 of 18 when the projected gap was under 10 points and
+8 of 12 when it was wider. Filled in by `renderProj` once the projections load, so it shares
+the cache. Hawk Tua was favoured three times and lost all three.
+
+Export cards: `standings.html?export=swap|allplay|form|ahead|proj|calls|draft` draws one table on a 1080×1440
 card with the same header on each (league · season · weeks, title, one-line subtitle), a
 key underneath and no YOU tag. Screenshot at 2x with headless Chrome:
 `Google Chrome --headless=new --window-size=1080,1440 --force-device-scale-factor=2
