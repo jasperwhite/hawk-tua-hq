@@ -153,7 +153,7 @@ button.sort.on::after{content:attr(data-arrow);margin-left:3px;color:var(--accen
 
   <div class="foot">
     <div>Pts/wk = games ÷ (games + 7) × recent form, plus the rest from the market price turned into points. FC = FantasyCalc half-PPR trade value. Lineup is QB, 2 RB, 2 WR, TE, 2 FLEX. Kickers and defences are left out because a trade doesn't change them.</div>
-    <div>Chance they accept is a rough guide, not a model: it starts from what the deal is worth to them (FantasyCalc value, with a QB they wouldn't start counting a fifth, since he only covers byes and injuries), then drops for each point their lineup loses, each player they'd have to cut and each injured player they'd take on.</div>
+    <div>Chance they accept is a rough guide, not a model: it weighs what the deal is worth to them (FantasyCalc value, with a QB they wouldn't start counting a fifth, since he only covers byes and injuries) equally with what it does to their lineup: 10% of value balances 1.5 points a week. Then it drops for each player they'd have to cut and each injured player they'd take on.</div>
     <div>Other teams keep their current starters unless a new player is at least 2 points a week better, so a backup they'd never start adds nothing for them. In a 3-way, tap a player again to change who he goes to.</div>
     <div>Projection = Sleeper's next-week projection, with its usual overstatement by position taken off. Empty slots are filled with the best free agent's Pts/wk under every measure.</div>
     <div>Each extra point a week is worth about 1.6% more chance of winning that week. FantasyCalc pays extra for the best player in a deal, so on a 3-for-1 aim well above 1.15×.</div>
@@ -219,9 +219,10 @@ function fcAdjusted(give, get) {
   }
   return { fg, ft, raw: ft ? fg / ft : 0, adj: big === give ? (ft + bonus ? fg / (ft + bonus) : 0) : (ft ? (fg + bonus) / ft : 0) };
 }
+// Value and need weigh the same: 10% of FC value is worth as much to them as 1.5 points a week in their lineup.
+// So a team that needs the position will take a little less value, and won't weaken its lineup for a premium.
 function acceptChance(adj, dB, theyDrop, injIn) {
-  let p = 100 / (1 + Math.exp(-(adj - 1.05) / 0.1));
-  p += dB < 0 ? dB * 6 : Math.min(dB * 4, 12);
+  let p = 100 / (1 + Math.exp(-((adj - 1) / 0.1 + dB / 1.5)));
   p -= Math.max(theyDrop, 0) * 4 + injIn * 5;
   return Math.max(5, Math.min(90, Math.round(p)));
 }
