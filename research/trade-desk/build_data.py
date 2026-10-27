@@ -1,16 +1,20 @@
-import json,statistics as st,math,sys
-OLD='/private/tmp/claude-503/-Users-jasperwhite-1/c6e05ed4-68b1-44ae-bdc9-bb4b83fdca81/scratchpad/sl'
-LIVE=sys.argv[1]; OUT=sys.argv[2]
-sc=json.load(open(OLD+'/league.json'))['scoring_settings']
+# Fetches everything fresh from Sleeper + FantasyCalc and writes data.json.
+# Usage: python3 build_data.py [data.json]   then   python3 build.py
+import json,statistics as st,math,sys,urllib.request
+LEAGUE='1312056164149641216'; OUT=sys.argv[1] if len(sys.argv)>1 else 'data.json'
+POSQ='&position[]=QB&position[]=RB&position[]=WR&position[]=TE'
+get=lambda u:json.load(urllib.request.urlopen(urllib.request.Request(u,headers={'User-Agent':'trade-desk'})))
+league=get(f'https://api.sleeper.app/v1/league/{LEAGUE}'); season=league['season']
+sc=league['scoring_settings']
 pts=lambda s:sum(v*sc.get(k,0) for k,v in (s or {}).items())
-users={x['user_id']:(x.get('metadata',{}).get('team_name') or x['display_name']).strip() for x in json.load(open(LIVE+'/users.json'))}
-ros=json.load(open(LIVE+'/rosters.json'))
+users={x['user_id']:(x.get('metadata',{}).get('team_name') or x['display_name']).strip() for x in get(f'https://api.sleeper.app/v1/league/{LEAGUE}/users')}
+ros=get(f'https://api.sleeper.app/v1/league/{LEAGUE}/rosters')
 REPL={'QB':11,'RB':26,'WR':31,'TE':12}
 logs={};pos={};name={};team={}
 weeks=0
 for w in range(1,19):
-    try: data=json.load(open(f'{OLD}/s{w}.json'))
-    except FileNotFoundError: break
+    data=get(f'https://api.sleeper.app/stats/nfl/{season}/{w}?season_type=regular'+POSQ)
+    if not any((r.get('stats') or {}).get('gp') for r in data): break
     weeks=w
     for r in data:
         s=r.get('stats') or {}
@@ -20,13 +24,13 @@ for w in range(1,19):
         pid=r['player_id'];logs.setdefault(pid,[]).append(pts(s));pos[pid]=pl['position']
         name[pid]=(pl.get('first_name','')+' '+pl.get('last_name','')).strip()
 inj={};nfl={}
-for r in json.load(open(LIVE+'/p8.json')):
+for r in get(f'https://api.sleeper.app/projections/nfl/{season}/{weeks+1}?season_type=regular'+POSQ):
     pl=r.get('player') or {};pid=r['player_id']
     inj[pid]=pl.get('injury_status') or '';nfl[pid]=pl.get('team') or ''
     if pl.get('position') in REPL:
         pos.setdefault(pid,pl['position']);name.setdefault(pid,(pl.get('first_name','')+' '+pl.get('last_name','')).strip())
 fc={}
-for x in json.load(open(LIVE+'/fc.json')):
+for x in get('https://api.fantasycalc.com/values/current?isDynasty=false&numQbs=1&numTeams=10&ppr=0.5'):
     sid=str(x['player'].get('sleeperId'));fc[sid]=x['value']
     if x['player'].get('position') in REPL:
         pos.setdefault(sid,x['player']['position']);name.setdefault(sid,x['player']['name'])

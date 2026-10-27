@@ -82,9 +82,9 @@ A separate one-page trade calculator: https://claude.ai/artifact/Gp5ECJwLKvBXZmE
 Source is `research/trade-desk/`. Pick players on both sides, and it shows both starting
 lineups before and after on **Shrunk Form**, plus the FantasyCalc ratio. Shrunk Form is
 games ÷ (games + 7) × recent form, with the rest taken from the FantasyCalc value, which is
-turned into points on one curve across all positions. The data is a snapshot: to refresh
-it, run `build_data.py` and then `build.py`, and republish. It still reads weekly stats
-from an earlier session's scratch folder, so the next refresh should fetch stats itself.
+turned into points on one curve across all positions. The data is a snapshot. To refresh it,
+run `python3 build_data.py && python3 build.py` (this fetches fresh data from Sleeper and
+FantasyCalc), then republish.
 
 ## Hosting
 
