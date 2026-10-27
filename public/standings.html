@@ -163,6 +163,9 @@ th .face{width:26px;height:26px;margin:0 auto 6px;display:flex}
 #swap th{min-width:66px;white-space:normal}
 #swap th.axis{text-align:left;padding:0 0 12px;color:var(--ink);border-bottom:0;font-weight:700}
 #swap td.c{cursor:pointer}
+#swap tr.avgrow td{border-top:2px solid var(--ink);font-weight:700}
+#swap tr.avgrow td.c{cursor:default;font-size:13px;letter-spacing:-.01em}
+.export #swap tr.avgrow td.c{font-size:16px}
 #swap td.self{background:var(--ink);color:var(--paper);font-weight:700}
 #swap td.on{box-shadow:inset 0 0 0 2px var(--ink)}
 #swap th.on,#swap td.l.on .nm{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
@@ -410,8 +413,16 @@ function render(d) {
     const luck = real - avg[i];
     h += `<td class="s3 lk luck ${tint(Math.max(-1, Math.min(1, luck / 2)))}">${luck > 0 ? '+' : luck < 0 ? '−' : ''}${Math.abs(luck).toFixed(1)}</td></tr>`;
   });
-  h += `</tbody></table></div>
-    <div class="key"><span><i class="sw" style="background:#000"></i>Real record</span><span><i class="sw g2"></i>Winning record</span><span><i class="sw r2"></i>Losing record</span></div><p class="lkey"><b>Luck</b> is real wins minus the average across all ${n} schedules. +1 means the draw handed a team about one extra win; \u22121 means it cost one.</p></section>`;
+  // Average row: what a typical team would go playing each schedule.
+  h += `<tr class="avgrow"><td class="l"><span class="nm">Average</span></td>`;
+  d.teams.forEach((t, j) => {
+    let w = 0, l = 0;
+    d.teams.forEach((a, i) => { const r = grid[i][j]; w += r.w + r.t / 2; l += r.l + r.t / 2; });
+    w /= n; l /= n;
+    h += `<td class="c ${tint(w + l ? (w - l) / (w + l) : 0)}">${w.toFixed(1)}-${l.toFixed(1)}</td>`;
+  });
+  h += `<td class="s3 lk"></td></tr></tbody></table></div>
+    <div class="key"><span><i class="sw" style="background:#000"></i>Real record</span><span><i class="sw g2"></i>Winning record</span><span><i class="sw r2"></i>Losing record</span></div><p class="lkey"><b>Average</b> is the record a typical team would post on that schedule. <b>Luck</b> is real wins minus the average across all ${n} schedules. +1 means the draw handed a team about one extra win; \u22121 means it cost one.</p></section>`;
 
   // ---- League play record (all-play) ----
   const rows = d.teams.map(a => {
@@ -549,8 +560,8 @@ function render(d) {
     swap.querySelector(`td.l[data-r="${r}"]`).classList.add('on');
     reader.innerHTML = say(+r, +c);
   };
-  swap.addEventListener('mouseover', e => { const td = e.target.closest('td.c'); if (td) focus(td); });
-  swap.addEventListener('click', e => focus(e.target.closest('td.c')));
+  swap.addEventListener('mouseover', e => { const td = e.target.closest('td.c[data-r]'); if (td) focus(td); });
+  swap.addEventListener('click', e => focus(e.target.closest('td.c[data-r]')));
   swap.addEventListener('mouseleave', () => focus(null));
   intro();
 }

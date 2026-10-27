@@ -7,6 +7,8 @@ Helvetica, black and white. Modelled on Dynasty Daddy's league standings.
 - **Schedule comparison.** Every team's scores run against every other team's schedule.
   The week a team would meet itself, it plays the schedule's owner instead. A **Luck**
   column is real wins minus the average across all schedules.
+  An **Average** row under the grid gives the record a typical team would post on each
+  schedule (added after the week 7 refresh).
 - **League play record.** Every team against all nine others, every week, shaded white to
   black by how much of the league it would have beaten.
 - **Against projection.** Each week, what a team's starters scored against what Sleeper
