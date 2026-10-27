@@ -81,7 +81,7 @@ values), ESPN (kickoff times, betting lines, RotoWire player notes). Endpoint de
 A separate one-page trade calculator: https://claude.ai/artifact/Gp5ECJwLKvBXZmEUKgivfA.
 Source is `research/trade-desk/`. Pick players on both sides, and it shows both starting
 lineups before and after on **Shrunk Form**, plus FantasyCalc's package-adjusted ratio and a
-rough chance-they-accept. Add a third team for a 3-way (tap a player again to change where he goes). Other teams keep their current starters unless a newcomer is 2+ points a week better, and the chance they accept weighs the VORP they gain (bench included) equally with their starting-lineup change; FantasyCalc is shown as a fairness check only. Below that: the league table for any range of weeks (with
+rough chance-they-accept. Add a third team for a 3-way (tap a player again to change where he goes). Other teams keep their current starters unless a newcomer is 2+ points a week better, and the chance they accept weighs what the deal is worth to their team (lineup change plus bench depth over free agents, scaled by how often a backup plays) equally with the FantasyCalc ratio. Below that: the league table for any range of weeks (with
 all-play record), and every team's best lineup ranked by Shrunk Form, last 3, last 5,
 season average, the chosen week range or next week's bias-corrected projection. Shrunk Form is
 games ÷ (games + 7) × recent form, with the rest taken from the FantasyCalc value, which is
