@@ -32,8 +32,9 @@ for r in get(f'https://api.sleeper.app/projections/nfl/{season}/{weeks+1}?season
     if r.get('stats') and pl.get('position') in BIAS: pj[pid]=round(max(0,pts(r['stats'])-BIAS[pl['position']]),1)
     if pl.get('position') in REPL:
         pos.setdefault(pid,pl['position']);name.setdefault(pid,(pl.get('first_name','')+' '+pl.get('last_name','')).strip())
+# League scores 0.5/catch + 1 per receiving first down, so pass-catchers score like full PPR
 fc={}
-for x in get('https://api.fantasycalc.com/values/current?isDynasty=false&numQbs=1&numTeams=10&ppr=0.5'):
+for x in get('https://api.fantasycalc.com/values/current?isDynasty=false&numQbs=1&numTeams=10&ppr=1'):
     sid=str(x['player'].get('sleeperId'));fc[sid]=x['value']
     if x['player'].get('position') in REPL:
         pos.setdefault(sid,x['player']['position']);name.setdefault(sid,x['player']['name'])

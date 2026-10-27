@@ -86,7 +86,8 @@ lineups before and after on **Shrunk Form**, plus FantasyCalc's package-adjusted
 rough chance-they-accept. Add a third team for a 3-way (tap a player again to change where he goes). Other teams keep their current starters unless a newcomer is 2+ points a week better, and the chance they accept weighs what the deal is worth to their team (lineup change plus bench depth over free agents, scaled by how often a backup plays) equally with the FantasyCalc ratio. Below that: the league table for any range of weeks (with
 all-play record), and every team's best lineup ranked by Shrunk Form, last 3, last 5,
 season average, the chosen week range or next week's bias-corrected projection. Shrunk Form is
-games ÷ (games + 7) × recent form, with the rest taken from the FantasyCalc value, which is
+games ÷ (games + 7) × recent form, with the rest taken from the FantasyCalc **full-PPR** value (this league's 1 pt per receiving first
+down makes WRs and TEs score like full PPR), which is
 turned into points on one curve across all positions. The data is a snapshot. To refresh it,
 run `python3 build_data.py && python3 build.py` (this fetches fresh data from Sleeper and
 FantasyCalc), then republish.
