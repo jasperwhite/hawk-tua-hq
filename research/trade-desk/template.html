@@ -57,8 +57,11 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outlin
 .sub{color:var(--mute);font-size:12px}
 .deal{background:var(--accent-soft);border-radius:6px;padding:12px 14px;display:flex;gap:10px 24px;flex-wrap:wrap;align-items:baseline}
 .deal b{font-weight:600}
+.cols.three,.lineups.three{grid-template-columns:repeat(3,1fr)}
+.to{display:block;font-size:11px;color:var(--accent);margin-top:1px}
+.verdict.six{grid-template-columns:repeat(6,1fr)}
 .lineups{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media (max-width:720px){.lineups{grid-template-columns:1fr}}
+@media (max-width:720px){.lineups,.cols.three,.lineups.three{grid-template-columns:1fr}.verdict.six{grid-template-columns:1fr 1fr}.verdict.six .cell:nth-child(odd){border-left:0}}
 table{width:100%;border-collapse:collapse;font-size:13px}
 td{padding:5px 4px;border-top:1px solid var(--line);vertical-align:baseline}
 td.s{width:44px;font-size:10px;letter-spacing:.1em;color:var(--mute);font-weight:600}
@@ -123,23 +126,11 @@ button.sort.on::after{content:attr(data-arrow);margin-left:3px;color:var(--accen
   <div class="verdict" id="verdict"></div>
   <div class="deal" id="deal"></div>
 
-  <div class="cols">
-    <section class="panel">
-      <div class="ptop"><div><div class="kicker">You give</div><select id="teamA" aria-label="Your team"></select></div><span class="rec" id="recA"></span></div>
-      <div class="listhead"><span></span><span>Player</span><span>Pts/wk</span><span>FC</span></div>
-      <div class="list" id="listA"></div>
-    </section>
-    <section class="panel">
-      <div class="ptop"><div><div class="kicker">You get</div><select id="teamB" aria-label="Their team"></select></div><span class="rec" id="recB"></span></div>
-      <div class="listhead"><span></span><span>Player</span><span>Pts/wk</span><span>FC</span></div>
-      <div class="list" id="listB"></div>
-    </section>
-  </div>
+  <div class="ctl">Third team, for a 3-way <select id="teamC" aria-label="Third team"></select></div>
 
-  <div class="lineups">
-    <section class="panel"><div class="kicker" id="luA">Your lineup after</div><table id="tabA"></table></section>
-    <section class="panel"><div class="kicker" id="luB">Their lineup after</div><table id="tabB"></table></section>
-  </div>
+  <div class="cols" id="cols"></div>
+
+  <div class="lineups" id="lineups"></div>
 
   <section class="panel sect">
     <div class="shead"><div><div class="kicker">League table</div><h2>Results by week</h2></div>
@@ -157,7 +148,8 @@ button.sort.on::after{content:attr(data-arrow);margin-left:3px;color:var(--accen
 
   <div class="foot">
     <div>Pts/wk = games ÷ (games + 7) × recent form, plus the rest from the market price turned into points. FC = FantasyCalc half-PPR trade value. Lineup is QB, 2 RB, 2 WR, TE, 2 FLEX. Kickers and defences are left out because a trade doesn't change them.</div>
-    <div>Chance they accept is a rough guide, not a model: it starts from the FantasyCalc ratio, then drops for each point their lineup loses, each player they'd have to cut and each injured player they'd take on.</div>
+    <div>Chance they accept is a rough guide, not a model: it starts from what the deal is worth to them (FantasyCalc value, with players who'd sit on their bench counting half), then drops for each point their lineup loses, each player they'd have to cut and each injured player they'd take on.</div>
+    <div>Other teams keep their current starters unless a new player is at least 2 points a week better, so a backup they'd never start adds nothing for them. In a 3-way, tap a player again to change who he goes to.</div>
     <div>Projection = Sleeper's next-week projection, with its usual overstatement by position taken off. Empty slots are filled with the best free agent's Pts/wk under every measure.</div>
     <div>Each extra point a week is worth about 1.6% more chance of winning that week. FantasyCalc pays extra for the best player in a deal, so on a 3-for-1 aim well above 1.15×.</div>
   </div>
@@ -170,8 +162,10 @@ const OUT = new Set(['Out','IR','PUP','Doubtful','Sus','NA']);
 const KEY = 'trade-desk-v1';
 const byName = n => Object.keys(P).find(id => P[id].n === n);
 const teamOf = name => (T.find(t => t.name === name) || T[0]).id;
-let S = { a: teamOf('Hawk Tua'), b: teamOf('Kirks Cousins'), give: [byName("Ja'Marr Chase"), byName('Derrick Henry')].filter(Boolean), get: [byName('Jahmyr Gibbs')].filter(Boolean), inj: false, from: 1, to: DATA.weeks, measure: 'v', ls: { k: 'w', d: -1 }, rs: { k: 'start', d: -1 } };
+let S = { a: teamOf('Hawk Tua'), b: teamOf('Kirks Cousins'), c: 0, mv: null, give: [byName("Ja'Marr Chase"), byName('Derrick Henry')].filter(Boolean), get: [byName('Jahmyr Gibbs')].filter(Boolean), inj: false, from: 1, to: DATA.weeks, measure: 'v', ls: { k: 'w', d: -1 }, rs: { k: 'start', d: -1 } };
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) for (const k in S) if (k in s) S[k] = s[k]; } catch (e) {}
+if (!S.mv) { S.mv = {}; (S.give || []).forEach(id => S.mv[id] = S.b); (S.get || []).forEach(id => S.mv[id] = S.a); }
+delete S.give; delete S.get;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 const team = id => T.find(t => t.id === +id);
 const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
@@ -190,9 +184,10 @@ const MEASURES = {
   rng: [null, id => mean(Object.entries(P[id].wk || {}).filter(e => +e[0] >= S.from && +e[0] <= S.to).map(e => e[1]))],
   pj: ['Week ' + (DATA.weeks + 1) + ' projection', id => P[id].pj || 0],
 };
-function lineup(ids, val = id => P[id].v) {
-  const V = {}; ids.forEach(id => { if (P[id] && avail(id)) { const x = val(id); if (x !== null) V[id] = x; } });
-  const pool = Object.keys(V).sort((x, y) => V[y] - V[x]);
+function lineup(ids, val = id => P[id].v, all = false, pick = null) {
+  const V = {}; ids.forEach(id => { if (P[id] && (all || avail(id))) { const x = val(id); if (x !== null) V[id] = x; } });
+  const rank = pick || (id => V[id]);
+  const pool = Object.keys(V).sort((x, y) => rank(y) - rank(x));
   const used = new Set(), slots = [];
   const WA = DATA.wa || {};
   const waiver = ps => ps.map(p => WA[p] && { v: WA[p].v, n: WA[p].n, p }).filter(Boolean).sort((x, y) => y.v - x.v)[0] || null;
@@ -226,19 +221,33 @@ function acceptChance(adj, dB, theyDrop, injIn) {
   return Math.max(5, Math.min(90, Math.round(p)));
 }
 
-function renderList(el, ids, picked) {
-  const sorted = ids.slice().sort((x, y) => P[y].v - P[x].v);
-  el.innerHTML = sorted.map(id => {
-    const p = P[id], on = picked.includes(id);
+const ownerOf = {}; T.forEach(t => t.players.forEach(id => ownerOf[id] = t.id));
+const dealTeams = () => [S.a, S.b, S.c].filter(Boolean).map(team);
+const you = id => id === S.a;
+// Other managers keep the starters they trust: a newcomer only takes a spot if he's 2+ points a week better.
+// A team with Mahomes won't bench him for Jordan Love on a 1.7-point gap.
+const STICK = 2;
+const sticky = (tid, roster, all = false) => {
+  if (you(tid)) return null;
+  const keep = new Set(lineup(team(tid).players, undefined, all).slots.map(s => s[1]));
+  return id => P[id].v + (keep.has(id) ? STICK : 0);
+};
+
+function renderList(t, others) {
+  const sorted = t.players.slice().sort((x, y) => P[y].v - P[x].v);
+  const many = others.length > 1;
+  return sorted.map(id => {
+    const p = P[id], dest = S.mv[id], on = !!dest;
     const tag = p.i && p.i !== 'Questionable' ? `<span class="tag">${esc(p.i)}</span>` : p.i === 'Questionable' ? `<span class="tag" style="color:var(--mute)">Q</span>` : '';
+    const to = on && many ? `<span class="to">→ ${esc(you(dest) ? 'You' : team(dest).name)}</span>` : '';
     return `<button type="button" class="row${on ? ' on' : ''}" data-id="${id}" aria-pressed="${on}">
       <span class="box">${on ? '✓' : ''}</span>
-      <span class="nm"><span class="pos">${p.p}</span>&nbsp; ${esc(p.n)}${tag}</span>
+      <span class="nm"><span class="pos">${p.p}</span>&nbsp; ${esc(p.n)}${tag}${to}</span>
       <span class="v">${f1(p.v)}</span><span class="fc">${k(p.fc)}</span></button>`;
   }).join('');
 }
 
-function renderTable(el, before, after) {
+function renderTable(before, after) {
   const was = new Set(before.slots.map(s => s[1]));
   const rows = after.slots.map(([slot, id, v, w], i) => {
     const old = before.slots[i][1];
@@ -247,48 +256,69 @@ function renderTable(el, before, after) {
     const prev = old && old !== id ? `<span class="old">${esc(P[old].n)}</span>` : '';
     return `<tr class="${isNew ? 'new' : ''}"><td class="s">${slot}</td><td class="n">${nm}${prev}</td><td class="p">${v ? f1(v) : '—'}</td></tr>`;
   }).join('');
-  const d = after.total - before.total;
-  el.innerHTML = rows + `<tr class="tot"><td class="s">Total</td><td class="n"><span class="sub">was ${f1(before.total)}</span></td><td class="p">${f1(after.total)}</td></tr>`;
-  return d;
+  return rows + `<tr class="tot"><td class="s">Total</td><td class="n"><span class="sub">was ${f1(before.total)}</span></td><td class="p">${f1(after.total)}</td></tr>`;
+}
+
+// FC that a team would actually use: players who wouldn't start for them (healthy) count half
+function usefulFC(ids, roster, tid) {
+  const starters = new Set(lineup(roster, undefined, true, sticky(tid, roster, true)).slots.map(s => s[1]));
+  return ids.reduce((s, id) => s + P[id].fc * (starters.has(id) ? 1 : 0.5), 0);
 }
 
 function render() {
-  const A = team(S.a), B = team(S.b);
-  S.give = S.give.filter(id => A.players.includes(id));
-  S.get = S.get.filter(id => B.players.includes(id));
+  if (S.c && (S.c === S.a || S.c === S.b)) S.c = 0;
+  const D = dealTeams(), ids = new Set(D.map(t => t.id));
+  for (const id in S.mv) if (!ids.has(ownerOf[id]) || !ids.has(S.mv[id]) || S.mv[id] === ownerOf[id]) delete S.mv[id];
   document.getElementById('asof').textContent = DATA.asOf;
-  for (const [sel, cur, other] of [['teamA', S.a, S.b], ['teamB', S.b, S.a]]) {
-    document.getElementById(sel).innerHTML = T.filter(t => t.id !== other).map(t => `<option value="${t.id}"${t.id === cur ? ' selected' : ''}>${esc(t.name)}</option>`).join('');
-  }
-  document.getElementById('recA').textContent = A.rec; document.getElementById('recB').textContent = B.rec;
   document.getElementById('inj').checked = S.inj;
-  renderList(document.getElementById('listA'), A.players, S.give);
-  renderList(document.getElementById('listB'), B.players, S.get);
+  document.getElementById('teamC').innerHTML = `<option value="0">None</option>` + T.filter(t => t.id !== S.a && t.id !== S.b).map(t => `<option value="${t.id}"${t.id === S.c ? ' selected' : ''}>${esc(t.name)}</option>`).join('');
 
-  const aAfter = A.players.filter(id => !S.give.includes(id)).concat(S.get);
-  const bAfter = B.players.filter(id => !S.get.includes(id)).concat(S.give);
-  const dA = renderTable(document.getElementById('tabA'), lineup(A.players), lineup(aAfter));
-  const dB = renderTable(document.getElementById('tabB'), lineup(B.players), lineup(bAfter));
-  document.getElementById('luA').textContent = A.name + ' · lineup after';
-  document.getElementById('luB').textContent = B.name + ' · lineup after';
+  // each team in the deal: what leaves, what arrives, lineup before and after in its own view
+  const R = D.map((t, i) => {
+    const out = t.players.filter(id => S.mv[id]), inn = Object.keys(S.mv).filter(id => S.mv[id] === t.id);
+    const after = t.players.filter(id => !S.mv[id]).concat(inn);
+    const b = lineup(t.players), a = lineup(after, undefined, false, sticky(t.id));
+    const fc = fcAdjusted(inn, out);
+    const raw = (fc.fg + 0.001) / (fc.ft + 0.001), useful = usefulFC(inn, after, t.id) / Math.max(1, usefulFC(out, t.players, t.id));
+    const need = fc.adj * (useful / (raw || 1));
+    return { t, i, out, inn, after, b, a, d: a.total - b.total, fc, need };
+  });
+  const me = R[0], others = R.slice(1);
 
-  const fc = fcAdjusted(S.give, S.get), ratio = fc.adj, fcGive = fc.fg, fcGet = fc.ft;
-  const empty = !S.give.length && !S.get.length;
-  const spots = S.give.length - S.get.length;
+  const slot = S.c ? ['You', 'Team 2', 'Team 3'] : ['You give', 'You get'];
+  document.getElementById('cols').className = 'cols' + (S.c ? ' three' : '');
+  document.getElementById('cols').innerHTML = R.map((r, i) => {
+    const pickable = T.filter(t => !ids.has(t.id) || t.id === r.t.id);
+    return `<section class="panel"><div class="ptop"><div><div class="kicker">${slot[i]}</div><select data-slot="${'abc'[i]}" aria-label="${slot[i]} team">${pickable.map(t => `<option value="${t.id}"${t.id === r.t.id ? ' selected' : ''}>${esc(t.name)}</option>`).join('')}</select></div><span class="rec">${r.t.rec}</span></div>
+      <div class="listhead"><span></span><span>Player</span><span>Pts/wk</span><span>FC</span></div>
+      <div class="list" data-team="${r.t.id}">${renderList(r.t, D.filter(t => t.id !== r.t.id))}</div></section>`;
+  }).join('');
+  document.getElementById('lineups').className = 'lineups' + (S.c ? ' three' : '');
+  document.getElementById('lineups').innerHTML = R.map((r, i) => `<section class="panel"><div class="kicker">${esc(i ? r.t.name : 'Your lineup')} · after</div><table>${renderTable(r.b, r.a)}</table></section>`).join('');
+
+  const empty = !Object.keys(S.mv).length;
   const chip = (good, yes, no, neutral) => empty ? `<span class="chip meh">${neutral}</span>` : `<span class="chip ${good ? 'ok' : 'no'}">${good ? yes : no}</span>`;
-  document.getElementById('verdict').innerHTML = `
-    <div class="cell"><div class="kicker">Your lineup</div><div class="big acc">${sgn(dA)}</div><div class="sub">points a week</div>${chip(dA >= 2, 'Worth it', dA > 0 ? 'Too small' : 'Makes you worse', 'Pick players')}</div>
-    <div class="cell"><div class="kicker">Win chance</div><div class="big acc">${sgn(dA * 1.6)}%</div><div class="sub">each week, roughly</div></div>
-    <div class="cell"><div class="kicker">Their lineup</div><div class="big">${sgn(dB)}</div><div class="sub">points a week</div>${chip(dB >= -2, 'They can live with it', 'Hurts them too much', '—')}</div>
-    <div class="cell"><div class="kicker">They get in FC</div><div class="big">${fcGet ? ratio.toFixed(2) + '×' : '—'}</div><div class="sub">raw ${fc.raw ? fc.raw.toFixed(2) + '×' : '—'} · ${k(fcGive)} for ${k(fcGet)}</div>${chip(ratio >= 1.15, 'Fair to pitch', 'Add more', '—')}</div>`;
+  const short = r => S.c ? esc(r.t.name) : 'Their';
+  const cells = [`<div class="cell"><div class="kicker">Your lineup</div><div class="big acc">${sgn(me.d)}</div><div class="sub">points a week</div>${chip(me.d >= 2, 'Worth it', me.d > 0 ? 'Too small' : 'Makes you worse', 'Pick players')}</div>`,
+    `<div class="cell"><div class="kicker">Win chance</div><div class="big acc">${sgn(me.d * 1.6)}%</div><div class="sub">each week, roughly</div></div>`];
+  others.forEach(r => cells.push(
+    `<div class="cell"><div class="kicker">${short(r)} lineup</div><div class="big">${sgn(r.d)}</div><div class="sub">points a week</div>${chip(r.d >= -2, 'They can live with it', 'Hurts them too much', '—')}</div>`,
+    `<div class="cell"><div class="kicker">${S.c ? short(r) + ' get' : 'They get'} in FC</div><div class="big">${r.fc.ft ? r.fc.adj.toFixed(2) + '×' : '—'}</div><div class="sub">raw ${r.fc.ft ? r.fc.raw.toFixed(2) + '×' : '—'} · ${k(r.fc.fg)} for ${k(r.fc.ft)}<br>worth ${r.fc.ft ? r.need.toFixed(2) + '×' : '—'} to them</div>${chip(r.fc.adj >= 1.15, 'Fair to pitch', 'Add more', '—')}</div>`));
+  const v = document.getElementById('verdict');
+  v.className = 'verdict' + (S.c ? ' six' : '');
+  v.innerHTML = cells.join('');
 
   const nm = ids => ids.length ? ids.map(id => esc(P[id].n)).join(' + ') : 'nothing';
-  const roster = spots > 0 ? `${esc(B.name)} must drop ${spots} to fit it.` : spots < 0 ? `You must drop ${-spots} to fit it.` : 'Roster sizes stay the same.';
-  const injIn = S.give.filter(id => OUT.has(P[id].i)).length;
-  const pc = S.give.length && S.get.length ? acceptChance(ratio, dB, spots, injIn) : null;
+  const lines = R.map(r => `<span><span class="sub">${r.i ? esc(r.t.name) + ' get' : 'You get'}</span> <b>${nm(r.inn)}</b></span>`).join('');
+  const drops = R.filter(r => r.inn.length > r.out.length).map(r => `${r.i ? esc(r.t.name) : 'You'} must drop ${r.inn.length - r.out.length}`);
+  const roster = drops.length ? drops.join(', ') + ' to fit it.' : 'Roster sizes stay the same.';
+  const live = others.filter(r => r.inn.length || r.out.length);
+  const each = others.map(r => r.inn.length && r.out.length ? acceptChance(r.need, r.d, r.inn.length - r.out.length, r.inn.filter(id => OUT.has(P[id].i)).length) : null);
+  const pc = me.inn.length && me.out.length && live.length === others.length && each.every(x => x !== null) ? Math.round(each.reduce((p, x) => p * x / 100, 1) * 100) : null;
   const word = pc === null ? '' : pc >= 65 ? 'Likely' : pc >= 40 ? 'Maybe' : 'Unlikely';
-  const odds = pc === null ? '' : `<span class="odds"><span class="kicker">Chance they accept</span><span class="bar"><i style="width:${pc}%"></i></span><span class="num acc">${pc}%</span><span class="chip ${pc >= 65 ? 'ok' : pc >= 40 ? 'meh' : 'no'}">${word}</span></span>`;
-  document.getElementById('deal').innerHTML = `<span><b>${nm(S.give)}</b> for <b>${nm(S.get)}</b></span><span class="sub">${roster}</span>${odds}`;
+  const split = S.c && pc !== null ? `<span class="sub">${others.map((r, i) => esc(r.t.name) + ' ' + each[i] + '%').join(' · ')}</span>` : '';
+  const odds = pc === null ? '' : `<span class="odds"><span class="kicker">${S.c ? 'Chance both accept' : 'Chance they accept'}</span><span class="bar"><i style="width:${pc}%"></i></span><span class="num acc">${pc}%</span><span class="chip ${pc >= 65 ? 'ok' : pc >= 40 ? 'meh' : 'no'}">${word}</span>${split}</span>`;
+  document.getElementById('deal').innerHTML = lines + `<span class="sub">${roster}</span>${odds}`;
   renderLeague(); renderRanks();
   save();
 }
@@ -353,12 +383,17 @@ document.addEventListener('click', e => { const b = e.target.closest('button.sor
 document.getElementById('wkFrom').addEventListener('change', e => { S.from = +e.target.value; if (S.to < S.from) S.to = S.from; render(); });
 document.getElementById('wkTo').addEventListener('change', e => { S.to = +e.target.value; if (S.from > S.to) S.from = S.to; render(); });
 document.getElementById('measure').addEventListener('change', e => { S.measure = e.target.value; render(); });
-document.getElementById('teamA').addEventListener('change', e => { S.a = +e.target.value; S.give = []; render(); });
-document.getElementById('teamB').addEventListener('change', e => { S.b = +e.target.value; S.get = []; render(); });
+const cols = document.getElementById('cols');
+cols.addEventListener('change', e => { const sl = e.target.dataset.slot; if (sl) { S[sl] = +e.target.value; render(); } });
+cols.addEventListener('click', e => {
+  const r = e.target.closest('.row'); if (!r) return;
+  const id = r.dataset.id, others = dealTeams().filter(t => t.id !== ownerOf[id]).map(t => t.id);
+  const n = others.indexOf(S.mv[id]) + 1;   // none → first other team → second → none
+  if (n < others.length) S.mv[id] = others[n]; else delete S.mv[id];
+  render();
+});
+document.getElementById('teamC').addEventListener('change', e => { S.c = +e.target.value; render(); });
 document.getElementById('inj').addEventListener('change', e => { S.inj = e.target.checked; render(); });
-document.getElementById('clear').addEventListener('click', () => { S.give = []; S.get = []; render(); });
-const toggle = (arr, id) => arr.includes(id) ? arr.filter(x => x !== id) : arr.concat(id);
-document.getElementById('listA').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) { S.give = toggle(S.give, r.dataset.id); render(); } });
-document.getElementById('listB').addEventListener('click', e => { const r = e.target.closest('.row'); if (r) { S.get = toggle(S.get, r.dataset.id); render(); } });
+document.getElementById('clear').addEventListener('click', () => { S.mv = {}; render(); });
 render();
 </script>
