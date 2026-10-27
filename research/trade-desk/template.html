@@ -153,7 +153,7 @@ button.sort.on::after{content:attr(data-arrow);margin-left:3px;color:var(--accen
 
   <div class="foot">
     <div>Pts/wk = games ÷ (games + 7) × recent form, plus the rest from the market price turned into points. FC = FantasyCalc half-PPR trade value. Lineup is QB, 2 RB, 2 WR, TE, 2 FLEX. Kickers and defences are left out because a trade doesn't change them.</div>
-    <div>Chance they accept is a rough guide, not a model: it weighs what the deal is worth to them (FantasyCalc value, with a QB they wouldn't start counting a fifth, since he only covers byes and injuries) equally with what it does to their lineup: 10% of value balances 1.5 points a week. Then it drops for each player they'd have to cut and each injured player they'd take on.</div>
+    <div>Chance they accept is a rough guide, not a model: it weighs the talent they gain over replacement (VORP, bench included) equally with what it does to their starting lineup, both in points a week. FantasyCalc is shown as a fairness check but doesn't drive it. Then it drops for each player they'd have to cut and each injured player they'd take on.</div>
     <div>Other teams keep their current starters unless a new player is at least 2 points a week better, so a backup they'd never start adds nothing for them. In a 3-way, tap a player again to change who he goes to.</div>
     <div>Projection = Sleeper's next-week projection, with its usual overstatement by position taken off. Empty slots are filled with the best free agent's Pts/wk under every measure.</div>
     <div>Each extra point a week is worth about 1.6% more chance of winning that week. FantasyCalc pays extra for the best player in a deal, so on a 3-for-1 aim well above 1.15×.</div>
@@ -219,10 +219,10 @@ function fcAdjusted(give, get) {
   }
   return { fg, ft, raw: ft ? fg / ft : 0, adj: big === give ? (ft + bonus ? fg / (ft + bonus) : 0) : (ft ? (fg + bonus) / ft : 0) };
 }
-// Value and need weigh the same: 10% of FC value is worth as much to them as 1.5 points a week in their lineup.
-// So a team that needs the position will take a little less value, and won't weaken its lineup for a premium.
-function acceptChance(adj, dB, theyDrop, injIn) {
-  let p = 100 / (1 + Math.exp(-((adj - 1) / 0.1 + dB / 1.5)));
+// Two things in points a week, weighed the same: talent they gain over replacement (VORP, bench included)
+// and what it does to their starting lineup now. A team will take a sideways move that fills a hole.
+function acceptChance(vorp, dB, theyDrop, injIn) {
+  let p = 100 / (1 + Math.exp(-(vorp / 1.5 + dB / 1.5)));
   p -= Math.max(theyDrop, 0) * 4 + injIn * 5;
   return Math.max(5, Math.min(90, Math.round(p)));
 }
@@ -265,13 +265,9 @@ function renderTable(before, after) {
   return rows + `<tr class="tot"><td class="s">Total</td><td class="n"><span class="sub">was ${f1(before.total)}</span></td><td class="p">${f1(after.total)}</td></tr>`;
 }
 
-// FC that a team would actually use. Bench RBs, WRs and TEs are real depth (flex, byes, injuries), so they keep
-// full value. A QB who wouldn't start only covers the odd bye or injury in one slot, so he counts a fifth.
-const BACKUP_QB = 0.2;
-function usefulFC(ids, roster, tid) {
-  const starters = new Set(lineup(roster, undefined, true, sticky(tid, roster, true)).slots.map(s => s[1]));
-  return ids.reduce((s, id) => s + P[id].fc * (starters.has(id) || P[id].p !== 'QB' ? 1 : BACKUP_QB), 0);
-}
+// Value over replacement: Pts/wk above the league's replacement level at the position (QB11, RB26, WR31, TE12).
+// In a one-QB league that level is high, so a spare QB is worth little on his own terms.
+const vorp = ids => ids.reduce((s, id) => s + Math.max(0, P[id].v - DATA.repl[P[id].p]), 0);
 
 function render() {
   if (S.c && (S.c === S.a || S.c === S.b)) S.c = 0;
@@ -287,9 +283,7 @@ function render() {
     const after = t.players.filter(id => !S.mv[id]).concat(inn);
     const b = lineup(t.players), a = lineup(after, undefined, false, sticky(t.id));
     const fc = fcAdjusted(inn, out);
-    const raw = (fc.fg + 0.001) / (fc.ft + 0.001), useful = usefulFC(inn, after, t.id) / Math.max(1, usefulFC(out, t.players, t.id));
-    const need = fc.adj * (useful / (raw || 1));
-    return { t, i, out, inn, after, b, a, d: a.total - b.total, fc, need };
+    return { t, i, out, inn, after, b, a, d: a.total - b.total, fc, vd: vorp(inn) - vorp(out) };
   });
   const me = R[0], others = R.slice(1);
 
@@ -307,7 +301,7 @@ function render() {
   const empty = !Object.keys(S.mv).length;
   const chip = (good, yes, no, neutral) => empty ? `<span class="chip meh">${neutral}</span>` : `<span class="chip ${good ? 'ok' : 'no'}">${good ? yes : no}</span>`;
   const short = r => S.c ? esc(r.t.name) : 'Their';
-  const each = others.map(r => r.inn.length && r.out.length ? acceptChance(r.need, r.d, r.inn.length - r.out.length, r.inn.filter(id => OUT.has(P[id].i)).length) : null);
+  const each = others.map(r => r.inn.length && r.out.length ? acceptChance(r.vd, r.d, r.inn.length - r.out.length, r.inn.filter(id => OUT.has(P[id].i)).length) : null);
   const word = x => x >= 65 ? 'Likely' : x >= 40 ? 'Maybe' : 'Unlikely';
   const tone = x => x >= 65 ? 'ok' : x >= 40 ? 'meh' : 'no';
   const box = (name, rec, big, cls, verdict, mets) => `<div class="cell"><div class="ctop"><span class="kicker">${name}</span><span class="rec">${rec}</span></div><div class="big ${cls}">${big}</div><div class="sub">points a week</div>${verdict}<div class="mets">${mets}</div></div>`;
@@ -316,7 +310,7 @@ function render() {
   others.forEach((r, i) => cells.push(box(esc(r.t.name), r.t.rec, sgn(r.d), '', chip(r.d >= -2, 'They can live with it', 'Hurts them too much', '—'),
     `<span class="kicker">FC</span><span class="val"><span class="num">${r.fc.ft ? r.fc.adj.toFixed(2) + '×' : '—'}</span>${chip(r.fc.adj >= 1.15, 'Fair to pitch', 'Add more', '—')}</span>
      <span></span><span class="sub">raw ${r.fc.ft ? r.fc.raw.toFixed(2) + '×' : '—'} · ${k(r.fc.fg)} for ${k(r.fc.ft)}</span>
-     <span class="kicker">To them</span><span class="val"><span class="num">${r.fc.ft ? r.need.toFixed(2) + '×' : '—'}</span><span class="sub">backup QBs count a fifth</span></span>
+     <span class="kicker">VORP</span><span class="val"><span class="num">${r.inn.length || r.out.length ? sgn(r.vd) : '—'}</span><span class="sub">pts/wk over replacement, bench included</span></span>
      <span class="kicker">Accept</span><span class="val">${each[i] === null ? '<span class="num">—</span>' : `<span class="num acc">${each[i]}%</span><span class="bar"><i style="width:${each[i]}%"></i></span><span class="chip ${tone(each[i])}">${word(each[i])}</span>`}</span>`)));
   const v = document.getElementById('verdict');
   v.style.setProperty('--n', cells.length);
