@@ -87,16 +87,19 @@ button.link{font:inherit;font-size:12px;background:none;border:0;color:var(--mut
 .lt td.r{color:var(--mute);width:26px}
 .lt tr.me td{font-weight:600}.lt tr.me td:nth-child(2){color:var(--accent)}
 .scroll{overflow-x:auto}
+button.sort{font:inherit;font-size:inherit;letter-spacing:inherit;text-transform:inherit;font-weight:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;white-space:nowrap}
+button.sort:hover,button.sort.on{color:var(--fg)}
+button.sort.on::after{content:attr(data-arrow);margin-left:3px;color:var(--accent)}
 .rk{display:grid;gap:2px}
 .rk details{border-top:1px solid var(--line)}
-.rk summary{list-style:none;display:grid;grid-template-columns:26px 1fr 64px 64px 14px;gap:10px;align-items:baseline;padding:8px 4px;cursor:pointer}
+.rk summary{list-style:none;display:grid;grid-template-columns:26px 1fr 48px 64px 64px 14px;gap:10px;align-items:baseline;padding:8px 4px;cursor:pointer}
 .rk summary::-webkit-details-marker{display:none}
 .rk summary::after{content:'+';color:var(--mute);text-align:right}
 .rk details[open] summary::after{content:'−'}
 .rk summary .num{text-align:right}
 .rk .me .tn{color:var(--accent);font-weight:600}
-.rk .hd{display:grid;grid-template-columns:26px 1fr 64px 64px 14px;gap:10px;padding:0 4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
-.rk .hd span:nth-child(3),.rk .hd span:nth-child(4){text-align:right}
+.rk .hd{display:grid;grid-template-columns:26px 1fr 48px 64px 64px 14px;gap:10px;padding:0 4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.rk .hd>*{text-align:left}.rk .hd>*:nth-child(n+3){text-align:right}
 .rk .body{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;padding:0 4px 12px 40px}
 @media (max-width:720px){.rk .body{grid-template-columns:1fr;padding-left:4px}}
 .rk .body table td{padding:3px 4px}
@@ -142,14 +145,14 @@ button.link{font:inherit;font-size:12px;background:none;border:0;color:var(--mut
     <div class="shead"><div><div class="kicker">League table</div><h2>Results by week</h2></div>
       <div class="ctl">Weeks <select id="wkFrom" aria-label="From week"></select> to <select id="wkTo" aria-label="To week"></select></div></div>
     <div class="scroll"><table class="lt" id="league"></table></div>
-    <div class="sub">All-play = your record if you'd played every team every week. A big gap from W–L is luck.</div>
+    <div class="sub">All-play = your record if you'd played every team every week. A big gap from W–L is luck. Tap a column to sort.</div>
   </section>
 
   <section class="panel sect">
     <div class="shead"><div><div class="kicker">Every team</div><h2>Lineups ranked</h2></div>
       <div class="ctl">Rank by <select id="measure" aria-label="Rank by"></select></div></div>
     <div class="rk" id="ranks"></div>
-    <div class="sub">Best legal lineup under the chosen measure. Bench = the next three best. Tap a team for its lineup and full roster.</div>
+    <div class="sub">Best legal lineup under the chosen measure. Bench = the next three best. Tap a column to sort, a team for its lineup and full roster.</div>
   </section>
 
   <div class="foot">
@@ -167,7 +170,7 @@ const OUT = new Set(['Out','IR','PUP','Doubtful','Sus','NA']);
 const KEY = 'trade-desk-v1';
 const byName = n => Object.keys(P).find(id => P[id].n === n);
 const teamOf = name => (T.find(t => t.name === name) || T[0]).id;
-let S = { a: teamOf('Hawk Tua'), b: teamOf('Kirks Cousins'), give: [byName("Ja'Marr Chase"), byName('Derrick Henry')].filter(Boolean), get: [byName('Jahmyr Gibbs')].filter(Boolean), inj: false, from: 1, to: DATA.weeks, measure: 'v' };
+let S = { a: teamOf('Hawk Tua'), b: teamOf('Kirks Cousins'), give: [byName("Ja'Marr Chase"), byName('Derrick Henry')].filter(Boolean), get: [byName('Jahmyr Gibbs')].filter(Boolean), inj: false, from: 1, to: DATA.weeks, measure: 'v', ls: { k: 'w', d: -1 }, rs: { k: 'start', d: -1 } };
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) for (const k in S) if (k in s) S[k] = s[k]; } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 const team = id => T.find(t => t.id === +id);
@@ -290,6 +293,11 @@ function render() {
   save();
 }
 
+// Click a header to sort by it; click again to flip. Names start A–Z, numbers start high–low.
+const sorter = (st, cols) => (x, y) => { const a = cols[st.k](x), b = cols[st.k](y); return (typeof a === 'string' ? a.localeCompare(b) : a - b) * st.d; };
+const head = (st, key, label, group) => `<button type="button" class="sort${st.k === key ? ' on' : ''}" data-sort="${key}" data-group="${group}" data-arrow="${st.d > 0 ? '↑' : '↓'}">${label}</button>`;
+function flip(st, key, text) { if (st.k === key) st.d = -st.d; else { st.k = key; st.d = text ? 1 : -1; } }
+
 function renderLeague() {
   const W = DATA.weeks, M = DATA.match || {};
   S.from = Math.min(Math.max(1, S.from), W); S.to = Math.min(Math.max(S.from, S.to), W);
@@ -306,10 +314,14 @@ function renderLeague() {
       rows.forEach(b => { if (b.r !== a.r) { if (a.p > b.p) r.aw++; else if (a.p < b.p) r.al++; } });
     });
   }
-  const list = T.map(t => ({ t, ...R[t.id] })).sort((x, y) => (y.w + y.d / 2) - (x.w + x.d / 2) || y.pf - x.pf);
+  const stand = T.map(t => ({ t, ...R[t.id] })).sort((x, y) => (y.w + y.d / 2) - (x.w + x.d / 2) || y.pf - x.pf);
+  stand.forEach((r, i) => r.pos = i + 1);
+  const LS = { pos: r => -r.pos, team: r => r.t.name, w: r => (r.w + r.d / 2) * 1e4 + r.pf, pf: r => r.pf, pa: r => r.pa, ppg: r => r.g ? r.pf / r.g : 0, ap: r => r.aw };
+  if (!LS[S.ls.k]) S.ls = { k: 'w', d: -1 };
+  const list = stand.slice().sort(sorter(S.ls, LS));
   const me = teamOf('Hawk Tua');
-  document.getElementById('league').innerHTML = `<tr><th></th><th>Team</th><th>W–L</th><th>PF</th><th>PA</th><th>Pts/wk</th><th>All-play</th></tr>` +
-    list.map((r, i) => `<tr class="${r.t.id === me ? 'me' : ''}"><td class="r">${i + 1}</td><td>${esc(r.t.name)}</td><td>${r.w}–${r.l}${r.d ? '–' + r.d : ''}</td><td>${r.pf.toFixed(1)}</td><td>${r.pa.toFixed(1)}</td><td class="acc">${r.g ? (r.pf / r.g).toFixed(1) : '—'}</td><td>${r.aw}–${r.al}</td></tr>`).join('');
+  document.getElementById('league').innerHTML = `<tr><th>${head(S.ls, 'pos', '#', 'ls')}</th><th>${head(S.ls, 'team', 'Team', 'ls')}</th><th>${head(S.ls, 'w', 'W–L', 'ls')}</th><th>${head(S.ls, 'pf', 'PF', 'ls')}</th><th>${head(S.ls, 'pa', 'PA', 'ls')}</th><th>${head(S.ls, 'ppg', 'Pts/wk', 'ls')}</th><th>${head(S.ls, 'ap', 'All-play', 'ls')}</th></tr>` +
+    list.map(r => `<tr class="${r.t.id === me ? 'me' : ''}"><td class="r">${r.pos}</td><td>${esc(r.t.name)}</td><td>${r.w}–${r.l}${r.d ? '–' + r.d : ''}</td><td>${r.pf.toFixed(1)}</td><td>${r.pa.toFixed(1)}</td><td class="acc">${r.g ? (r.pf / r.g).toFixed(1) : '—'}</td><td>${r.aw}–${r.al}</td></tr>`).join('');
 }
 
 function renderRanks() {
@@ -321,17 +333,23 @@ function renderRanks() {
   const open = new Set([...document.querySelectorAll('#ranks details[open]')].map(d => d.dataset.id));
   const rows = T.map(t => { const L = lineup(t.players, val); return { t, L, bench: L.bench.slice(0, 3).reduce((s, id) => s + L.V[id], 0) }; })
     .sort((x, y) => y.L.total - x.L.total);
-  document.getElementById('ranks').innerHTML = `<div class="hd"><span></span><span>Team</span><span>Starters</span><span>Bench</span><span></span></div>` +
-    rows.map((r, i) => {
+  rows.forEach((r, i) => r.pos = i + 1);
+  const wins = r => { const [w, l] = r.t.rec.split('-').map(Number); return w * 100 - l; };
+  const RS = { pos: r => -r.pos, team: r => r.t.name, rec: wins, start: r => r.L.total, bench: r => r.bench };
+  if (!RS[S.rs.k]) S.rs = { k: 'start', d: -1 };
+  rows.sort(sorter(S.rs, RS));
+  document.getElementById('ranks').innerHTML = `<div class="hd">${head(S.rs, 'pos', '#', 'rs')}${head(S.rs, 'team', 'Team', 'rs')}${head(S.rs, 'rec', 'W–L', 'rs')}${head(S.rs, 'start', 'Starters', 'rs')}${head(S.rs, 'bench', 'Bench', 'rs')}<span></span></div>` +
+    rows.map(r => {
       const starters = r.L.slots.map(([slot, id, v, w]) => `<tr><td class="s">${slot}</td><td class="n">${id ? esc(P[id].n) : `<span class="sub">Waiver: ${w ? esc(w.n) : 'none'}</span>`}</td><td class="p">${f1(v)}</td></tr>`).join('');
       const rest = r.t.players.filter(id => P[id] && !r.L.slots.some(sl => sl[1] === id))
         .sort((x, y) => (r.L.V[y] ?? -1) - (r.L.V[x] ?? -1))
         .map(id => { const p = P[id], out = !(id in r.L.V); return `<tr><td class="s">${p.p}</td><td class="n">${esc(p.n)}${p.i ? `<span class="tag">${esc(p.i === 'Questionable' ? 'Q' : p.i)}</span>` : ''}</td><td class="p">${out ? '—' : f1(r.L.V[id])}</td></tr>`; }).join('');
-      return `<details data-id="${r.t.id}"${open.has(String(r.t.id)) ? ' open' : ''}><summary class="${r.t.id === me ? 'me' : ''}"><span class="num sub">${i + 1}</span><span class="tn">${esc(r.t.name)} <span class="rec">${r.t.rec}</span></span><span class="num acc">${f1(r.L.total)}</span><span class="num sub">${f1(r.bench)}</span></summary>
+      return `<details data-id="${r.t.id}"${open.has(String(r.t.id)) ? ' open' : ''}><summary class="${r.t.id === me ? 'me' : ''}"><span class="num sub">${r.pos}</span><span class="tn">${esc(r.t.name)}</span><span class="num sub">${r.t.rec}</span><span class="num acc">${f1(r.L.total)}</span><span class="num sub">${f1(r.bench)}</span></summary>
         <div class="body"><div><div class="kicker">Lineup</div><table>${starters}</table></div><div><div class="kicker">Bench</div><table>${rest}</table></div></div></details>`;
     }).join('');
 }
 
+document.addEventListener('click', e => { const b = e.target.closest('button.sort'); if (b) { flip(S[b.dataset.group], b.dataset.sort, b.dataset.sort === 'team'); render(); } });
 document.getElementById('wkFrom').addEventListener('change', e => { S.from = +e.target.value; if (S.to < S.from) S.to = S.from; render(); });
 document.getElementById('wkTo').addEventListener('change', e => { S.to = +e.target.value; if (S.from > S.to) S.from = S.to; render(); });
 document.getElementById('measure').addEventListener('change', e => { S.measure = e.target.value; render(); });
