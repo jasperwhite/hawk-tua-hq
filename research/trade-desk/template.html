@@ -136,11 +136,17 @@ const avail = id => S.inj || !OUT.has(P[id].i);
 function lineup(ids) {
   const pool = ids.filter(id => P[id] && avail(id)).sort((x, y) => P[y].v - P[x].v);
   const used = new Set(), slots = [];
-  const take = (label, ok) => { const id = pool.find(i => !used.has(i) && ok(P[i].p)); if (id) used.add(id); slots.push([label, id]); };
-  take('QB', p => p === 'QB'); take('RB', p => p === 'RB'); take('RB', p => p === 'RB');
-  take('WR', p => p === 'WR'); take('WR', p => p === 'WR'); take('TE', p => p === 'TE');
-  take('FLEX', p => p !== 'QB'); take('FLEX', p => p !== 'QB');
-  return { slots, total: slots.reduce((s, [, id]) => s + (id ? P[id].v : 0), 0) };
+  const WA = DATA.wa || {};
+  const waiver = ps => ps.map(p => WA[p] && { v: WA[p].v, n: WA[p].n, p }).filter(Boolean).sort((x, y) => y.v - x.v)[0] || null;
+  const take = (label, ok, ps) => {
+    const id = pool.find(i => !used.has(i) && ok(P[i].p));
+    if (id) { used.add(id); slots.push([label, id, P[id].v]); }
+    else { const w = waiver(ps); slots.push([label, null, w ? w.v : 0, w]); }
+  };
+  take('QB', p => p === 'QB', ['QB']); take('RB', p => p === 'RB', ['RB']); take('RB', p => p === 'RB', ['RB']);
+  take('WR', p => p === 'WR', ['WR']); take('WR', p => p === 'WR', ['WR']); take('TE', p => p === 'TE', ['TE']);
+  take('FLEX', p => p !== 'QB', ['RB', 'WR', 'TE']); take('FLEX', p => p !== 'QB', ['RB', 'WR', 'TE']);
+  return { slots, total: slots.reduce((s, sl) => s + sl[2], 0) };
 }
 
 function renderList(el, ids, picked) {
@@ -157,12 +163,12 @@ function renderList(el, ids, picked) {
 
 function renderTable(el, before, after) {
   const was = new Set(before.slots.map(s => s[1]));
-  const rows = after.slots.map(([slot, id], i) => {
+  const rows = after.slots.map(([slot, id, v, w], i) => {
     const old = before.slots[i][1];
     const isNew = id && !was.has(id);
-    const nm = id ? esc(P[id].n) : '<span class="sub">empty</span>';
+    const nm = id ? esc(P[id].n) : w ? `<span class="sub">Waiver: ${esc(w.n)}</span>` : '<span class="sub">empty</span>';
     const prev = old && old !== id ? `<span class="old">${esc(P[old].n)}</span>` : '';
-    return `<tr class="${isNew ? 'new' : ''}"><td class="s">${slot}</td><td class="n">${nm}${prev}</td><td class="p">${id ? f1(P[id].v) : '—'}</td></tr>`;
+    return `<tr class="${isNew ? 'new' : ''}"><td class="s">${slot}</td><td class="n">${nm}${prev}</td><td class="p">${v ? f1(v) : '—'}</td></tr>`;
   }).join('');
   const d = after.total - before.total;
   el.innerHTML = rows + `<tr class="tot"><td class="s">Total</td><td class="n"><span class="sub">was ${f1(before.total)}</span></td><td class="p">${f1(after.total)}</td></tr>`;

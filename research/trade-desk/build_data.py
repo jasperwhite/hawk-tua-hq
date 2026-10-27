@@ -3,7 +3,7 @@
 import json,statistics as st,math,sys,urllib.request
 LEAGUE='1312056164149641216'; OUT=sys.argv[1] if len(sys.argv)>1 else 'data.json'
 POSQ='&position[]=QB&position[]=RB&position[]=WR&position[]=TE'
-get=lambda u:json.load(urllib.request.urlopen(urllib.request.Request(u,headers={'User-Agent':'trade-desk'})))
+get=lambda u:json.load(urllib.request.urlopen(urllib.request.Request(u,headers={'User-Agent':'trade-desk'}),timeout=30))
 league=get(f'https://api.sleeper.app/v1/league/{LEAGUE}'); season=league['season']
 sc=league['scoring_settings']
 pts=lambda s:sum(v*sc.get(k,0) for k,v in (s or {}).items())
@@ -58,7 +58,15 @@ for r in sorted(ros,key=lambda r:r['roster_id']):
                         f=round(l5w(g),1) if n else None,m=round(M,1),i=inj.get(p,''))
         ids.append(p)
     teams.append(dict(id=r['roster_id'],name=tname,players=ids,rec='%d-%d'%(r['settings']['wins'],r['settings']['losses'])))
-out=dict(asOf='After week %d'%weeks,weeks=weeks,repl={k:round(v,1) for k,v in repl.items()},curve=[round(a,2),round(b,2)],teams=teams,players=players)
+# best healthy free agent per position (3+ games) fills a starting slot a trade leaves empty
+rostered={p for r in ros for p in (r['players'] or [])}
+wa={}
+for p,g in logs.items():
+    P=pos.get(p)
+    if p in rostered or P not in REPL or len(g)<3 or inj.get(p,'') in OUTS: continue
+    n=len(g);w=n/(n+7);v=w*l5w(g)+(1-w)*(repl[P]+market(p))
+    if v>wa.get(P,(0,''))[0]: wa[P]=(round(v,1),name.get(p,p))
+out=dict(wa={k:{'v':v,'n':n} for k,(v,n) in wa.items()},asOf='After week %d'%weeks,weeks=weeks,repl={k:round(v,1) for k,v in repl.items()},curve=[round(a,2),round(b,2)],teams=teams,players=players)
 json.dump(out,open(OUT,'w'),separators=(',',':'))
 print('fit',round(a,2),round(b,2),'n',len(fit),'repl',out['repl'],'players',len(players))
 for t in teams:
