@@ -80,7 +80,10 @@ values), ESPN (kickoff times, betting lines, RotoWire player notes). Endpoint de
 
 A separate one-page trade calculator: https://claude.ai/artifact/Gp5ECJwLKvBXZmEUKgivfA.
 Source is `research/trade-desk/`. Pick players on both sides, and it shows both starting
-lineups before and after on **Shrunk Form**, plus the FantasyCalc ratio. Shrunk Form is
+lineups before and after on **Shrunk Form**, plus FantasyCalc's package-adjusted ratio and a
+rough chance-they-accept. Below that: the league table for any range of weeks (with
+all-play record), and every team's best lineup ranked by Shrunk Form, last 3, last 5,
+season average, the chosen week range or next week's bias-corrected projection. Shrunk Form is
 games ÷ (games + 7) × recent form, with the rest taken from the FantasyCalc value, which is
 turned into points on one curve across all positions. The data is a snapshot. To refresh it,
 run `python3 build_data.py && python3 build.py` (this fetches fresh data from Sleeper and

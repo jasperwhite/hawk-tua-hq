@@ -72,6 +72,34 @@ tr.new td.p{color:var(--accent)}
 .tools{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .tools label{display:flex;gap:6px;align-items:center;color:var(--mute);font-size:12px;cursor:pointer}
 button.link{font:inherit;font-size:12px;background:none;border:0;color:var(--mute);text-decoration:underline;cursor:pointer;padding:0}
+.odds{margin-left:auto;display:flex;gap:10px;align-items:center}
+.bar{width:90px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent)}
+.sect{display:grid;gap:10px}
+.shead{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.shead h2{font-family:var(--display);font-weight:600;font-size:24px;line-height:1;margin:4px 0 0}
+.ctl{display:flex;gap:8px;align-items:center;color:var(--mute);font-size:12px;flex-wrap:wrap}
+.ctl select{font-size:13px}
+.lt th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);font-weight:600;text-align:right;padding:0 4px 6px}
+.lt th:nth-child(2),.lt td:nth-child(2){text-align:left}
+.lt td{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;padding:6px 4px}
+.lt td:nth-child(2){font-family:var(--body)}
+.lt td.r{color:var(--mute);width:26px}
+.lt tr.me td{font-weight:600}.lt tr.me td:nth-child(2){color:var(--accent)}
+.scroll{overflow-x:auto}
+.rk{display:grid;gap:2px}
+.rk details{border-top:1px solid var(--line)}
+.rk summary{list-style:none;display:grid;grid-template-columns:26px 1fr 64px 64px 14px;gap:10px;align-items:baseline;padding:8px 4px;cursor:pointer}
+.rk summary::-webkit-details-marker{display:none}
+.rk summary::after{content:'+';color:var(--mute);text-align:right}
+.rk details[open] summary::after{content:'−'}
+.rk summary .num{text-align:right}
+.rk .me .tn{color:var(--accent);font-weight:600}
+.rk .hd{display:grid;grid-template-columns:26px 1fr 64px 64px 14px;gap:10px;padding:0 4px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.rk .hd span:nth-child(3),.rk .hd span:nth-child(4){text-align:right}
+.rk .body{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px;padding:0 4px 12px 40px}
+@media (max-width:720px){.rk .body{grid-template-columns:1fr;padding-left:4px}}
+.rk .body table td{padding:3px 4px}
 .box{width:16px;height:16px;border:1.5px solid var(--line);border-radius:3px;display:inline-grid;place-items:center;font-size:11px}
 .row.on .box{border-color:var(--accent);background:var(--accent);color:var(--pick-fg)}
 </style>
@@ -110,8 +138,24 @@ button.link{font:inherit;font-size:12px;background:none;border:0;color:var(--mut
     <section class="panel"><div class="kicker" id="luB">Their lineup after</div><table id="tabB"></table></section>
   </div>
 
+  <section class="panel sect">
+    <div class="shead"><div><div class="kicker">League table</div><h2>Results by week</h2></div>
+      <div class="ctl">Weeks <select id="wkFrom" aria-label="From week"></select> to <select id="wkTo" aria-label="To week"></select></div></div>
+    <div class="scroll"><table class="lt" id="league"></table></div>
+    <div class="sub">All-play = your record if you'd played every team every week. A big gap from W–L is luck.</div>
+  </section>
+
+  <section class="panel sect">
+    <div class="shead"><div><div class="kicker">Every team</div><h2>Lineups ranked</h2></div>
+      <div class="ctl">Rank by <select id="measure" aria-label="Rank by"></select></div></div>
+    <div class="rk" id="ranks"></div>
+    <div class="sub">Best legal lineup under the chosen measure. Bench = the next three best. Tap a team for its lineup and full roster.</div>
+  </section>
+
   <div class="foot">
     <div>Pts/wk = games ÷ (games + 7) × recent form, plus the rest from the market price turned into points. FC = FantasyCalc half-PPR trade value. Lineup is QB, 2 RB, 2 WR, TE, 2 FLEX. Kickers and defences are left out because a trade doesn't change them.</div>
+    <div>Chance they accept is a rough guide, not a model: it starts from the FantasyCalc ratio, then drops for each point their lineup loses, each player they'd have to cut and each injured player they'd take on.</div>
+    <div>Projection = Sleeper's next-week projection, with its usual overstatement by position taken off. Empty slots are filled with the best free agent's Pts/wk under every measure.</div>
     <div>Each extra point a week is worth about 1.6% more chance of winning that week. FantasyCalc pays extra for the best player in a deal, so on a 3-for-1 aim well above 1.15×.</div>
   </div>
 </div>
@@ -123,7 +167,7 @@ const OUT = new Set(['Out','IR','PUP','Doubtful','Sus','NA']);
 const KEY = 'trade-desk-v1';
 const byName = n => Object.keys(P).find(id => P[id].n === n);
 const teamOf = name => (T.find(t => t.name === name) || T[0]).id;
-let S = { a: teamOf('Hawk Tua'), b: teamOf('Kirks Cousins'), give: [byName("Ja'Marr Chase"), byName('Derrick Henry')].filter(Boolean), get: [byName('Jahmyr Gibbs')].filter(Boolean), inj: false };
+let S = { a: teamOf('Hawk Tua'), b: teamOf('Kirks Cousins'), give: [byName("Ja'Marr Chase"), byName('Derrick Henry')].filter(Boolean), get: [byName('Jahmyr Gibbs')].filter(Boolean), inj: false, from: 1, to: DATA.weeks, measure: 'v' };
 try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s) for (const k in S) if (k in s) S[k] = s[k]; } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
 const team = id => T.find(t => t.id === +id);
@@ -133,20 +177,50 @@ const k = x => x >= 1000 ? (x / 1000).toFixed(1) + 'k' : String(x);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const avail = id => S.inj || !OUT.has(P[id].i);
 
-function lineup(ids) {
-  const pool = ids.filter(id => P[id] && avail(id)).sort((x, y) => P[y].v - P[x].v);
+const games = id => Object.entries(P[id].wk || {}).sort((x, y) => x[0] - y[0]).map(e => e[1]);
+const mean = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
+const MEASURES = {
+  v: ['Shrunk Form', id => P[id].v],
+  l3: ['Last 3 games', id => mean(games(id).slice(-3))],
+  l5: ['Last 5 games', id => mean(games(id).slice(-5))],
+  avg: ['Season average', id => mean(games(id))],
+  rng: [null, id => mean(Object.entries(P[id].wk || {}).filter(e => +e[0] >= S.from && +e[0] <= S.to).map(e => e[1]))],
+  pj: ['Week ' + (DATA.weeks + 1) + ' projection', id => P[id].pj || 0],
+};
+function lineup(ids, val = id => P[id].v) {
+  const V = {}; ids.forEach(id => { if (P[id] && avail(id)) { const x = val(id); if (x !== null) V[id] = x; } });
+  const pool = Object.keys(V).sort((x, y) => V[y] - V[x]);
   const used = new Set(), slots = [];
   const WA = DATA.wa || {};
   const waiver = ps => ps.map(p => WA[p] && { v: WA[p].v, n: WA[p].n, p }).filter(Boolean).sort((x, y) => y.v - x.v)[0] || null;
   const take = (label, ok, ps) => {
     const id = pool.find(i => !used.has(i) && ok(P[i].p));
-    if (id) { used.add(id); slots.push([label, id, P[id].v]); }
+    if (id) { used.add(id); slots.push([label, id, V[id]]); }
     else { const w = waiver(ps); slots.push([label, null, w ? w.v : 0, w]); }
   };
   take('QB', p => p === 'QB', ['QB']); take('RB', p => p === 'RB', ['RB']); take('RB', p => p === 'RB', ['RB']);
   take('WR', p => p === 'WR', ['WR']); take('WR', p => p === 'WR', ['WR']); take('TE', p => p === 'TE', ['TE']);
   take('FLEX', p => p !== 'QB', ['RB', 'WR', 'TE']); take('FLEX', p => p !== 'QB', ['RB', 'WR', 'TE']);
-  return { slots, total: slots.reduce((s, sl) => s + sl[2], 0) };
+  const bench = pool.filter(i => !used.has(i));
+  return { slots, total: slots.reduce((s, sl) => s + sl[2], 0), bench, V };
+}
+
+// FantasyCalc's redraft package bonus: the side getting fewer players is credited for the extras it takes on
+function fcAdjusted(give, get) {
+  const fg = give.reduce((s, id) => s + P[id].fc, 0), ft = get.reduce((s, id) => s + P[id].fc, 0);
+  const [big, small] = give.length > get.length ? [give, get] : [get, give];
+  const n = big.length - small.length;
+  let bonus = 0;
+  if (n > 0 && small.length) {
+    bonus = big.map(id => P[id].fc).sort((x, y) => x - y).slice(0, n).reduce((s, v) => s + Math.min(Math.round(0.42 * v), 550), 0) + (n - 1) * 200;
+  }
+  return { fg, ft, raw: ft ? fg / ft : 0, adj: big === give ? (ft + bonus ? fg / (ft + bonus) : 0) : (ft ? (fg + bonus) / ft : 0) };
+}
+function acceptChance(adj, dB, theyDrop, injIn) {
+  let p = 100 / (1 + Math.exp(-(adj - 1.05) / 0.1));
+  p += dB < 0 ? dB * 6 : Math.min(dB * 4, 12);
+  p -= Math.max(theyDrop, 0) * 4 + injIn * 5;
+  return Math.max(5, Math.min(90, Math.round(p)));
 }
 
 function renderList(el, ids, picked) {
@@ -195,8 +269,7 @@ function render() {
   document.getElementById('luA').textContent = A.name + ' · lineup after';
   document.getElementById('luB').textContent = B.name + ' · lineup after';
 
-  const fcGive = S.give.reduce((s, id) => s + P[id].fc, 0), fcGet = S.get.reduce((s, id) => s + P[id].fc, 0);
-  const ratio = fcGet ? fcGive / fcGet : 0;
+  const fc = fcAdjusted(S.give, S.get), ratio = fc.adj, fcGive = fc.fg, fcGet = fc.ft;
   const empty = !S.give.length && !S.get.length;
   const spots = S.give.length - S.get.length;
   const chip = (good, yes, no, neutral) => empty ? `<span class="chip meh">${neutral}</span>` : `<span class="chip ${good ? 'ok' : 'no'}">${good ? yes : no}</span>`;
@@ -204,14 +277,64 @@ function render() {
     <div class="cell"><div class="kicker">Your lineup</div><div class="big acc">${sgn(dA)}</div><div class="sub">points a week</div>${chip(dA >= 2, 'Worth it', dA > 0 ? 'Too small' : 'Makes you worse', 'Pick players')}</div>
     <div class="cell"><div class="kicker">Win chance</div><div class="big acc">${sgn(dA * 1.6)}%</div><div class="sub">each week, roughly</div></div>
     <div class="cell"><div class="kicker">Their lineup</div><div class="big">${sgn(dB)}</div><div class="sub">points a week</div>${chip(dB >= -2, 'They can live with it', 'Hurts them too much', '—')}</div>
-    <div class="cell"><div class="kicker">They get in FC</div><div class="big">${fcGet ? ratio.toFixed(2) + '×' : '—'}</div><div class="sub">${k(fcGive)} for ${k(fcGet)}</div>${chip(ratio >= 1.15, 'Fair to pitch', 'Add more', '—')}</div>`;
+    <div class="cell"><div class="kicker">They get in FC</div><div class="big">${fcGet ? ratio.toFixed(2) + '×' : '—'}</div><div class="sub">raw ${fc.raw ? fc.raw.toFixed(2) + '×' : '—'} · ${k(fcGive)} for ${k(fcGet)}</div>${chip(ratio >= 1.15, 'Fair to pitch', 'Add more', '—')}</div>`;
 
   const nm = ids => ids.length ? ids.map(id => esc(P[id].n)).join(' + ') : 'nothing';
   const roster = spots > 0 ? `${esc(B.name)} must drop ${spots} to fit it.` : spots < 0 ? `You must drop ${-spots} to fit it.` : 'Roster sizes stay the same.';
-  document.getElementById('deal').innerHTML = `<span><b>${nm(S.give)}</b> for <b>${nm(S.get)}</b></span><span class="sub">${roster}</span>`;
+  const injIn = S.give.filter(id => OUT.has(P[id].i)).length;
+  const pc = S.give.length && S.get.length ? acceptChance(ratio, dB, spots, injIn) : null;
+  const word = pc === null ? '' : pc >= 65 ? 'Likely' : pc >= 40 ? 'Maybe' : 'Unlikely';
+  const odds = pc === null ? '' : `<span class="odds"><span class="kicker">Chance they accept</span><span class="bar"><i style="width:${pc}%"></i></span><span class="num acc">${pc}%</span><span class="chip ${pc >= 65 ? 'ok' : pc >= 40 ? 'meh' : 'no'}">${word}</span></span>`;
+  document.getElementById('deal').innerHTML = `<span><b>${nm(S.give)}</b> for <b>${nm(S.get)}</b></span><span class="sub">${roster}</span>${odds}`;
+  renderLeague(); renderRanks();
   save();
 }
 
+function renderLeague() {
+  const W = DATA.weeks, M = DATA.match || {};
+  S.from = Math.min(Math.max(1, S.from), W); S.to = Math.min(Math.max(S.from, S.to), W);
+  const opts = cur => Array.from({ length: W }, (_, i) => `<option value="${i + 1}"${i + 1 === cur ? ' selected' : ''}>${i + 1}</option>`).join('');
+  document.getElementById('wkFrom').innerHTML = opts(S.from); document.getElementById('wkTo').innerHTML = opts(S.to);
+  const R = {}; T.forEach(t => R[t.id] = { w: 0, l: 0, d: 0, pf: 0, pa: 0, g: 0, aw: 0, al: 0 });
+  for (let w = S.from; w <= S.to; w++) {
+    const rows = M[w] || [];
+    rows.forEach(a => {
+      const r = R[a.r]; if (!r) return;
+      const opp = rows.find(b => b.m === a.m && b.r !== a.r);
+      r.pf += a.p; r.g++;
+      if (opp) { r.pa += opp.p; if (a.p > opp.p) r.w++; else if (a.p < opp.p) r.l++; else r.d++; }
+      rows.forEach(b => { if (b.r !== a.r) { if (a.p > b.p) r.aw++; else if (a.p < b.p) r.al++; } });
+    });
+  }
+  const list = T.map(t => ({ t, ...R[t.id] })).sort((x, y) => (y.w + y.d / 2) - (x.w + x.d / 2) || y.pf - x.pf);
+  const me = teamOf('Hawk Tua');
+  document.getElementById('league').innerHTML = `<tr><th></th><th>Team</th><th>W–L</th><th>PF</th><th>PA</th><th>Pts/wk</th><th>All-play</th></tr>` +
+    list.map((r, i) => `<tr class="${r.t.id === me ? 'me' : ''}"><td class="r">${i + 1}</td><td>${esc(r.t.name)}</td><td>${r.w}–${r.l}${r.d ? '–' + r.d : ''}</td><td>${r.pf.toFixed(1)}</td><td>${r.pa.toFixed(1)}</td><td class="acc">${r.g ? (r.pf / r.g).toFixed(1) : '—'}</td><td>${r.aw}–${r.al}</td></tr>`).join('');
+}
+
+function renderRanks() {
+  const sel = document.getElementById('measure');
+  MEASURES.rng[0] = `Weeks ${S.from}–${S.to} average`;
+  if (!MEASURES[S.measure]) S.measure = 'v';
+  sel.innerHTML = Object.entries(MEASURES).map(([key, [label]]) => `<option value="${key}"${key === S.measure ? ' selected' : ''}>${label}</option>`).join('');
+  const val = MEASURES[S.measure][1], me = teamOf('Hawk Tua');
+  const open = new Set([...document.querySelectorAll('#ranks details[open]')].map(d => d.dataset.id));
+  const rows = T.map(t => { const L = lineup(t.players, val); return { t, L, bench: L.bench.slice(0, 3).reduce((s, id) => s + L.V[id], 0) }; })
+    .sort((x, y) => y.L.total - x.L.total);
+  document.getElementById('ranks').innerHTML = `<div class="hd"><span></span><span>Team</span><span>Starters</span><span>Bench</span><span></span></div>` +
+    rows.map((r, i) => {
+      const starters = r.L.slots.map(([slot, id, v, w]) => `<tr><td class="s">${slot}</td><td class="n">${id ? esc(P[id].n) : `<span class="sub">Waiver: ${w ? esc(w.n) : 'none'}</span>`}</td><td class="p">${f1(v)}</td></tr>`).join('');
+      const rest = r.t.players.filter(id => P[id] && !r.L.slots.some(sl => sl[1] === id))
+        .sort((x, y) => (r.L.V[y] ?? -1) - (r.L.V[x] ?? -1))
+        .map(id => { const p = P[id], out = !(id in r.L.V); return `<tr><td class="s">${p.p}</td><td class="n">${esc(p.n)}${p.i ? `<span class="tag">${esc(p.i === 'Questionable' ? 'Q' : p.i)}</span>` : ''}</td><td class="p">${out ? '—' : f1(r.L.V[id])}</td></tr>`; }).join('');
+      return `<details data-id="${r.t.id}"${open.has(String(r.t.id)) ? ' open' : ''}><summary class="${r.t.id === me ? 'me' : ''}"><span class="num sub">${i + 1}</span><span class="tn">${esc(r.t.name)} <span class="rec">${r.t.rec}</span></span><span class="num acc">${f1(r.L.total)}</span><span class="num sub">${f1(r.bench)}</span></summary>
+        <div class="body"><div><div class="kicker">Lineup</div><table>${starters}</table></div><div><div class="kicker">Bench</div><table>${rest}</table></div></div></details>`;
+    }).join('');
+}
+
+document.getElementById('wkFrom').addEventListener('change', e => { S.from = +e.target.value; if (S.to < S.from) S.to = S.from; render(); });
+document.getElementById('wkTo').addEventListener('change', e => { S.to = +e.target.value; if (S.from > S.to) S.from = S.to; render(); });
+document.getElementById('measure').addEventListener('change', e => { S.measure = e.target.value; render(); });
 document.getElementById('teamA').addEventListener('change', e => { S.a = +e.target.value; S.give = []; render(); });
 document.getElementById('teamB').addEventListener('change', e => { S.b = +e.target.value; S.get = []; render(); });
 document.getElementById('inj').addEventListener('change', e => { S.inj = e.target.checked; render(); });

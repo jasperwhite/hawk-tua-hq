@@ -10,7 +10,7 @@ pts=lambda s:sum(v*sc.get(k,0) for k,v in (s or {}).items())
 users={x['user_id']:(x.get('metadata',{}).get('team_name') or x['display_name']).strip() for x in get(f'https://api.sleeper.app/v1/league/{LEAGUE}/users')}
 ros=get(f'https://api.sleeper.app/v1/league/{LEAGUE}/rosters')
 REPL={'QB':11,'RB':26,'WR':31,'TE':12}
-logs={};pos={};name={};team={}
+logs={};pos={};name={};team={};wk={}
 weeks=0
 for w in range(1,19):
     data=get(f'https://api.sleeper.app/stats/nfl/{season}/{w}?season_type=regular'+POSQ)
@@ -21,12 +21,15 @@ for w in range(1,19):
         if not s.get('gp'): continue
         pl=r.get('player') or {}
         if pl.get('position') not in REPL: continue
-        pid=r['player_id'];logs.setdefault(pid,[]).append(pts(s));pos[pid]=pl['position']
+        pid=r['player_id'];logs.setdefault(pid,[]).append(pts(s));pos[pid]=pl['position'];wk.setdefault(pid,{})[w]=round(pts(s),1)
         name[pid]=(pl.get('first_name','')+' '+pl.get('last_name','')).strip()
-inj={};nfl={}
+inj={};nfl={};pj={}
+# Sleeper projections run high by position (docs/tooling/sleeper.md), so take the measured bias off
+BIAS={'QB':0.0,'RB':1.4,'WR':3.3,'TE':2.1}
 for r in get(f'https://api.sleeper.app/projections/nfl/{season}/{weeks+1}?season_type=regular'+POSQ):
     pl=r.get('player') or {};pid=r['player_id']
     inj[pid]=pl.get('injury_status') or '';nfl[pid]=pl.get('team') or ''
+    if r.get('stats') and pl.get('position') in BIAS: pj[pid]=round(max(0,pts(r['stats'])-BIAS[pl['position']]),1)
     if pl.get('position') in REPL:
         pos.setdefault(pid,pl['position']);name.setdefault(pid,(pl.get('first_name','')+' '+pl.get('last_name','')).strip())
 fc={}
@@ -55,7 +58,7 @@ for r in sorted(ros,key=lambda r:r['roster_id']):
         if n: w=n/(n+7);v=w*l5w(g)+(1-w)*M
         else: w=0;v=M
         players[p]=dict(n=name.get(p,p),p=P,t=nfl.get(p,''),v=round(v,1),fc=fc.get(p,0),g=n,
-                        f=round(l5w(g),1) if n else None,m=round(M,1),i=inj.get(p,''))
+                        f=round(l5w(g),1) if n else None,m=round(M,1),i=inj.get(p,''),wk=wk.get(p,{}),pj=pj.get(p,0))
         ids.append(p)
     teams.append(dict(id=r['roster_id'],name=tname,players=ids,rec='%d-%d'%(r['settings']['wins'],r['settings']['losses'])))
 # best healthy free agent per position (3+ games) fills a starting slot a trade leaves empty
@@ -66,7 +69,11 @@ for p,g in logs.items():
     if p in rostered or P not in REPL or len(g)<3 or inj.get(p,'') in OUTS: continue
     n=len(g);w=n/(n+7);v=w*l5w(g)+(1-w)*(repl[P]+market(p))
     if v>wa.get(P,(0,''))[0]: wa[P]=(round(v,1),name.get(p,p))
-out=dict(wa={k:{'v':v,'n':n} for k,(v,n) in wa.items()},asOf='After week %d'%weeks,weeks=weeks,repl={k:round(v,1) for k,v in repl.items()},curve=[round(a,2),round(b,2)],teams=teams,players=players)
+# weekly results for the league table
+match={}
+for w in range(1,weeks+1):
+    match[w]=[dict(r=m['roster_id'],m=m['matchup_id'],p=m['points']) for m in get(f'https://api.sleeper.app/v1/league/{LEAGUE}/matchups/{w}')]
+out=dict(match=match,wa={k:{'v':v,'n':n} for k,(v,n) in wa.items()},asOf='After week %d'%weeks,weeks=weeks,repl={k:round(v,1) for k,v in repl.items()},curve=[round(a,2),round(b,2)],teams=teams,players=players)
 json.dump(out,open(OUT,'w'),separators=(',',':'))
 print('fit',round(a,2),round(b,2),'n',len(fit),'repl',out['repl'],'players',len(players))
 for t in teams:
