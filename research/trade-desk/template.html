@@ -6,17 +6,17 @@
 /* Layout: two roster columns (you | them) feeding one verdict strip, then before/after lineups. */
 :root{
   --bg:#f6f6f4; --panel:#ffffff; --fg:#17181a; --mute:#6c6f75; --line:#e3e3df;
-  --accent:#e8912d; --accent-soft:#fbeedd; --good:#2f7d4f; --bad:#b4442f; --pick:#17181a; --pick-fg:#ffffff;
+  --accent:#2f6fe0; --accent-soft:#e6eefc; --good:#2f7d4f; --bad:#b4442f; --pick:#17181a; --pick-fg:#ffffff;
   --display:"Barlow Condensed","Arial Narrow",sans-serif;
   --body:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#121315; --panel:#1b1c1f; --fg:#ececea; --mute:#9a9da3; --line:#2c2e32;
-  --accent:#f0a14a; --accent-soft:#3a2a18; --good:#5cbf84; --bad:#e37a63; --pick:#ececea; --pick-fg:#121315; color-scheme:dark}}
+  --accent:#6fa3ff; --accent-soft:#18263f; --good:#5cbf84; --bad:#e37a63; --pick:#ececea; --pick-fg:#121315; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121315; --panel:#1b1c1f; --fg:#ececea; --mute:#9a9da3; --line:#2c2e32;
-  --accent:#f0a14a; --accent-soft:#3a2a18; --good:#5cbf84; --bad:#e37a63; --pick:#ececea; --pick-fg:#121315; color-scheme:dark}
+  --accent:#6fa3ff; --accent-soft:#18263f; --good:#5cbf84; --bad:#e37a63; --pick:#ececea; --pick-fg:#121315; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.45}
 .wrap{max-width:1040px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
@@ -46,11 +46,17 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outlin
 .fc{font-family:var(--mono);color:var(--mute);font-size:12px;text-align:right;min-width:52px}
 .listhead{display:grid;grid-template-columns:30px 1fr auto auto;gap:10px;padding:0 8px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 .listhead span:nth-child(3){min-width:38px;text-align:right}.listhead span:nth-child(4){min-width:52px;text-align:right}
-.verdict{display:grid;grid-template-columns:repeat(4,1fr);gap:0;background:var(--panel);border:1px solid var(--line);border-radius:6px}
-@media (max-width:720px){.verdict{grid-template-columns:1fr 1fr}}
+.verdict{display:grid;grid-template-columns:repeat(var(--n,2),1fr);gap:0;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+@media (max-width:720px){.verdict{grid-template-columns:1fr}}
 .cell{padding:14px 16px;border-left:1px solid var(--line);display:grid;gap:4px;align-content:start}
+.ctop{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.mets{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;align-items:baseline;border-top:1px solid var(--line);padding-top:10px;margin-top:8px}
+.mets .kicker{font-size:10px}
+.mets .val{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.mets .num{font-size:15px;font-weight:500}
+.mets .bar{width:60px;align-self:center}
 .cell:first-child{border-left:0}
-@media (max-width:720px){.cell:nth-child(3){border-left:0}.cell:nth-child(n+3){border-top:1px solid var(--line)}}
+@media (max-width:720px){.cell{border-left:0}.cell+.cell{border-top:1px solid var(--line)}}
 .big{font-family:var(--display);font-weight:600;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
 .chip{justify-self:start;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:3px 7px;border-radius:3px;border:1px solid currentColor}
 .ok{color:var(--good)}.no{color:var(--bad)}.meh{color:var(--mute)}
@@ -59,9 +65,8 @@ select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outlin
 .deal b{font-weight:600}
 .cols.three,.lineups.three{grid-template-columns:repeat(3,1fr)}
 .to{display:block;font-size:11px;color:var(--accent);margin-top:1px}
-.verdict.six{grid-template-columns:repeat(6,1fr)}
 .lineups{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media (max-width:720px){.lineups,.cols.three,.lineups.three{grid-template-columns:1fr}.verdict.six{grid-template-columns:1fr 1fr}.verdict.six .cell:nth-child(odd){border-left:0}}
+@media (max-width:720px){.lineups,.cols.three,.lineups.three{grid-template-columns:1fr}}
 table{width:100%;border-collapse:collapse;font-size:13px}
 td{padding:5px 4px;border-top:1px solid var(--line);vertical-align:baseline}
 td.s{width:44px;font-size:10px;letter-spacing:.1em;color:var(--mute);font-weight:600}
@@ -299,13 +304,19 @@ function render() {
   const empty = !Object.keys(S.mv).length;
   const chip = (good, yes, no, neutral) => empty ? `<span class="chip meh">${neutral}</span>` : `<span class="chip ${good ? 'ok' : 'no'}">${good ? yes : no}</span>`;
   const short = r => S.c ? esc(r.t.name) : 'Their';
-  const cells = [`<div class="cell"><div class="kicker">Your lineup</div><div class="big acc">${sgn(me.d)}</div><div class="sub">points a week</div>${chip(me.d >= 2, 'Worth it', me.d > 0 ? 'Too small' : 'Makes you worse', 'Pick players')}</div>`,
-    `<div class="cell"><div class="kicker">Win chance</div><div class="big acc">${sgn(me.d * 1.6)}%</div><div class="sub">each week, roughly</div></div>`];
-  others.forEach(r => cells.push(
-    `<div class="cell"><div class="kicker">${short(r)} lineup</div><div class="big">${sgn(r.d)}</div><div class="sub">points a week</div>${chip(r.d >= -2, 'They can live with it', 'Hurts them too much', '—')}</div>`,
-    `<div class="cell"><div class="kicker">${S.c ? short(r) + ' get' : 'They get'} in FC</div><div class="big">${r.fc.ft ? r.fc.adj.toFixed(2) + '×' : '—'}</div><div class="sub">raw ${r.fc.ft ? r.fc.raw.toFixed(2) + '×' : '—'} · ${k(r.fc.fg)} for ${k(r.fc.ft)}<br>worth ${r.fc.ft ? r.need.toFixed(2) + '×' : '—'} to them</div>${chip(r.fc.adj >= 1.15, 'Fair to pitch', 'Add more', '—')}</div>`));
+  const each = others.map(r => r.inn.length && r.out.length ? acceptChance(r.need, r.d, r.inn.length - r.out.length, r.inn.filter(id => OUT.has(P[id].i)).length) : null);
+  const word = x => x >= 65 ? 'Likely' : x >= 40 ? 'Maybe' : 'Unlikely';
+  const tone = x => x >= 65 ? 'ok' : x >= 40 ? 'meh' : 'no';
+  const box = (name, rec, big, cls, verdict, mets) => `<div class="cell"><div class="ctop"><span class="kicker">${name}</span><span class="rec">${rec}</span></div><div class="big ${cls}">${big}</div><div class="sub">points a week</div>${verdict}<div class="mets">${mets}</div></div>`;
+  const cells = [box('You · ' + esc(me.t.name), me.t.rec, sgn(me.d), 'acc', chip(me.d >= 2, 'Worth it', me.d > 0 ? 'Too small' : 'Makes you worse', 'Pick players'),
+    `<span class="kicker">Win chance</span><span class="val"><span class="num acc">${sgn(me.d * 1.6)}%</span><span class="sub">each week, roughly</span></span>`)];
+  others.forEach((r, i) => cells.push(box(esc(r.t.name), r.t.rec, sgn(r.d), '', chip(r.d >= -2, 'They can live with it', 'Hurts them too much', '—'),
+    `<span class="kicker">FC</span><span class="val"><span class="num">${r.fc.ft ? r.fc.adj.toFixed(2) + '×' : '—'}</span>${chip(r.fc.adj >= 1.15, 'Fair to pitch', 'Add more', '—')}</span>
+     <span></span><span class="sub">raw ${r.fc.ft ? r.fc.raw.toFixed(2) + '×' : '—'} · ${k(r.fc.fg)} for ${k(r.fc.ft)}</span>
+     <span class="kicker">To them</span><span class="val"><span class="num">${r.fc.ft ? r.need.toFixed(2) + '×' : '—'}</span><span class="sub">bench pieces count half</span></span>
+     <span class="kicker">Accept</span><span class="val">${each[i] === null ? '<span class="num">—</span>' : `<span class="num acc">${each[i]}%</span><span class="bar"><i style="width:${each[i]}%"></i></span><span class="chip ${tone(each[i])}">${word(each[i])}</span>`}</span>`)));
   const v = document.getElementById('verdict');
-  v.className = 'verdict' + (S.c ? ' six' : '');
+  v.style.setProperty('--n', cells.length);
   v.innerHTML = cells.join('');
 
   const nm = ids => ids.length ? ids.map(id => esc(P[id].n)).join(' + ') : 'nothing';
@@ -313,11 +324,8 @@ function render() {
   const drops = R.filter(r => r.inn.length > r.out.length).map(r => `${r.i ? esc(r.t.name) : 'You'} must drop ${r.inn.length - r.out.length}`);
   const roster = drops.length ? drops.join(', ') + ' to fit it.' : 'Roster sizes stay the same.';
   const live = others.filter(r => r.inn.length || r.out.length);
-  const each = others.map(r => r.inn.length && r.out.length ? acceptChance(r.need, r.d, r.inn.length - r.out.length, r.inn.filter(id => OUT.has(P[id].i)).length) : null);
   const pc = me.inn.length && me.out.length && live.length === others.length && each.every(x => x !== null) ? Math.round(each.reduce((p, x) => p * x / 100, 1) * 100) : null;
-  const word = pc === null ? '' : pc >= 65 ? 'Likely' : pc >= 40 ? 'Maybe' : 'Unlikely';
-  const split = S.c && pc !== null ? `<span class="sub">${others.map((r, i) => esc(r.t.name) + ' ' + each[i] + '%').join(' · ')}</span>` : '';
-  const odds = pc === null ? '' : `<span class="odds"><span class="kicker">${S.c ? 'Chance both accept' : 'Chance they accept'}</span><span class="bar"><i style="width:${pc}%"></i></span><span class="num acc">${pc}%</span><span class="chip ${pc >= 65 ? 'ok' : pc >= 40 ? 'meh' : 'no'}">${word}</span>${split}</span>`;
+  const odds = pc === null ? '' : `<span class="odds"><span class="kicker">${S.c ? 'Chance both accept' : 'Chance they accept'}</span><span class="bar"><i style="width:${pc}%"></i></span><span class="num acc">${pc}%</span><span class="chip ${tone(pc)}">${word(pc)}</span></span>`;
   document.getElementById('deal').innerHTML = lines + `<span class="sub">${roster}</span>${odds}`;
   renderLeague(); renderRanks();
   save();
