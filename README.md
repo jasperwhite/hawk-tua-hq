@@ -8,6 +8,8 @@ half-PPR.
 Modelled on the reference site FF Front Office (fantasy-football-bzo.pages.dev):
 verdicts first, one-line reasons, tabs for the working.
 
+**Jasper's shorthand:** in his trade lists, "Love" or "J Love" always means **Jeremiyah Love** (RB, ARI), never Jordan Love (QB, also on his roster).
+
 ## Status
 
 **v0.2.0 — live at https://jasperwhite.github.io/hawk-tua-hq/** (Opaline redesign).
