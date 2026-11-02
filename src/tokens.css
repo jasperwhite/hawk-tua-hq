@@ -3,7 +3,8 @@
    for GitHub Pages, so it can't link the shared file; it carries a copy instead.
    When the original changes, re-copy this file. Hawk Tua HQ is on the Used-by list
    in that repo's DESIGN.md so the change has somewhere to be worked through.
-   Copied: 2026-11-02 */
+   Copied: 2026-11-02 (re-copied the same day: borders 0.5px, +surface-soft,
+   +border-soft, +transition-row) */
 
 /* ==========================================================================
    Design tokens
@@ -56,15 +57,30 @@
   /* ---- Colour: surfaces ---------------------------------------------------
      There is no grey "page background". The centre column is white; the
      rails are grey.
-     --surface-content       centre column, top bar, unselected segments
-     --surface-rail          left and right rails
-     --surface-selected      selected fill AND hover fill (nav items, icon
-                             buttons, rows). Nav hover uses this too.
-     --surface-segment-hover hover fill on unselected segments only */
+     There are SIX, not four, and the reference's own names are used here — taken
+     from its stylesheet, not inferred from a screenshot:
+     --surface-content       centre column, top bar, unselected segments (its `base`)
+     --surface-rail          left and right rails (its `surface`)
+     --surface-strong        the SELECTED fill, and the hover fill for anything
+                             sitting ON the rail grey (nav items, icon buttons)
+     --surface-soft          the hover fill for anything sitting ON WHITE —
+                             filter tabs, segments, rows in the content column
+     TWO hover fills, not one. Which you use depends on what is underneath:
+     on grey you go darker (--surface-strong), on white you go barely-grey
+     (--surface-soft). Using the dark one on white is the single most visible
+     way to get the hover wrong. */
   --surface-content: #ffffff;
   --surface-rail: #f0f0f0;
-  --surface-selected: #e6e6e6;
-  --surface-segment-hover: #fafafa;
+  --surface-strong: #e6e6e6;
+  --surface-soft: #fafafa;
+
+  /* Earlier names for the two fills above. Kept so existing blocks keep working;
+     write new code against --surface-strong / --surface-soft. The old names were
+     a guess at what each fill was FOR; the new ones are what the reference calls
+     them. --surface-selected was never selection-only, and --surface-segment-hover
+     was never segments-only. */
+  --surface-selected: var(--surface-strong);
+  --surface-segment-hover: var(--surface-soft);
 
   /* ---- Colour: a standalone action button. OURS — the reference is a
      marketing site and has no such control, so there was nothing to measure.
@@ -73,8 +89,13 @@
   --surface-action: var(--surface-rail);
   --surface-action-hover: var(--surface-selected);
 
-  /* ---- Colour: border ---------------------------------------------------- */
+  /* ---- Colour: border. TWO, not one.
+     --border-color  the ordinary one: inputs, selected controls, dividers
+     --border-soft   lighter again, for a border that is almost not there —
+                     a card edge, a block that needs separating without a line
+                     you consciously see. One step away from the surface it sits on. */
   --border-color: #e0e0e0;
+  --border-soft: #ededed;
 
   /* ---- Borders: rare and specific. Never a general separator between rows
      or sections — separation stays gap and tone. The only uses:
@@ -86,13 +107,18 @@
        - a divider in EITHER rail, separating one group of nav items from
          another: a bar --border-hairline high, filled with --border-color.
          Never in the content column. */
-  --border-control: 1px solid var(--border-color);
-  --border-transparent: 1px solid transparent;
+  --border-control: 0.5px solid var(--border-color);
+  --border-transparent: 0.5px solid transparent;
   --border-panel-ring: 0 0 0 0.5px var(--surface-content);  /* measured: a white
      highlight edge on floating panels, NOT the border colour. Inverts on dark. */
-  --border-hairline: 1px;   /* A divider BAR, in --border-color. 1px, not 0.5px:
-     a 0.5px element rounds to 0 on a 1x display and the divider vanishes. The
-     0.5px in --border-panel-ring is safe because a box-shadow doesn't collapse. */
+  --border-hairline: 0.5px; /* A divider BAR, in --border-color.
+     MEASURED, and corrected: this said 1px, with a theory attached about 0.5px
+     rounding to zero on a 1x display. The reference's own rule is
+     `.border { border-width: .5px }` — every border on it is a half pixel. On a
+     Retina display that is one physical pixel, which is exactly the hairline
+     look the system is after; 1px is twice the weight of the thing it was
+     measured from. If a 1x display ever matters, solve it there with a media
+     query — don't double the weight everywhere to pre-empt it. */
 
   /* ---- Colour: accent. OURS ENTIRELY — the reference's interface has no colour in
      it at all, across 19 pages in light, dark and system. So the accent can never be
@@ -148,7 +174,8 @@
 
   /* ---- Radius: nothing above 4px exists --------------------------------- */
   --radius-none: 0;
-  --radius-small: 2px;
+  --radius-small: 2px;     /* measured: a chip only (the reference's "New"
+                              chip, 10px text, ~20x16). Not a general small radius. */
   --radius-default: 4px;   /* essentially everything */
   --radius-track: 6px;     /* measured: the one exception — a track that
                               WRAPS 4px controls (e.g. a segmented switch),
@@ -201,7 +228,8 @@
   --grid-columns-max: 2;
   --grid-gap-column: var(--space-2);
   --grid-gap-row: var(--space-16);
-  --grid-tile-ratio: 16 / 9;
+  --grid-tile-ratio: 16 / 10;  /* measured: 457x285 = 1.6035. NOT 16/9 —
+                                  an earlier version said 16/9 and was wrong. */
 
   /* ---- Motion. Two different languages, and conflating them was the old error.
      COLOUR changes are short and nearly linear.
@@ -214,6 +242,10 @@
      view transition deliberately switched off. Don't invent one. */
   --transition-nav: 0.1s cubic-bezier(.4, 0, .2, 1);      /* nav item colour */
   --transition-control: 0.15s cubic-bezier(.4, 0, .2, 1); /* control colour */
+  --transition-row: 0.2s cubic-bezier(.4, 0, .2, 1);      /* the CURRENT row.
+     Measured: the reference gives the row you are on `transition-all` at 200ms —
+     slower than its siblings, and it transitions everything, not just colour,
+     because that row is also cancelling its own hover. */
   --transition-none: none;
 
   --ease-spring: linear(0,.001 .44%,.0045 .94%,.0195 2.03%,.0446 3.19%,.0811 4.5%,.1598 6.82%,.3685 12.34%,.4693 15.17%,.5663,.6498 21.27%,.7215 24.39%,.7532 25.98%,.7829 27.65%,.8105,.8349 31.14%,.8573 32.95%,.8776 34.84%,.8964 36.87%,.9136 39.05%,.929 41.37%,.9421 43.77%,.9537 46.38%,.9636 49.14%,.9789 55.31%,.9888 62.35%,.9949 71.06%,.9982 82.52%,.9997 99.94%);
@@ -263,10 +295,11 @@
 
     --surface-content: #000000;
     --surface-rail: #0f0f0f;
-    --surface-selected: #1a1a1a;
-    --surface-segment-hover: #0a0a0a;
+    --surface-strong: #1a1a1a;
+    --surface-soft: #0a0a0a;
 
     --border-color: #242424;
+    --border-soft: #171717;
 
     --accent: #4d8bff;
 
@@ -290,10 +323,11 @@
 
   --surface-content: #000000;
   --surface-rail: #0f0f0f;
-  --surface-selected: #1a1a1a;
-  --surface-segment-hover: #0a0a0a;
+  --surface-strong: #1a1a1a;
+  --surface-soft: #0a0a0a;
 
   --border-color: #242424;
+  --border-soft: #171717;
 
   --accent: #4d8bff;
 

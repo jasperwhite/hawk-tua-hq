@@ -2,7 +2,8 @@
    ~/Claude/Design System/blocks/app-shell.html. Everything below the "app additions"
    marker is this app's own; everything above it is a copy, so a fix to the block
    copies straight across. Don't restyle the copied part here — fix the block.
-   Ported: 2026-11-02
+   Ported: 2026-11-02 (re-ported the same day: two hover fills, min-height rows,
+   the current row's 200ms transition)
 
    Tailwind's preflight already does the element reset the block carried, so only the
    components came across. */
@@ -34,7 +35,7 @@ body {
 .rail-nav__brand { display: flex; align-items: center; height: var(--layout-topbar-height); }
 .rail-nav__brand-link {
   display: inline-flex; align-items: center;
-  height: var(--control-height);
+  min-height: var(--control-height);
   padding: 0 var(--space-10) 0 var(--space-8);
   border-radius: var(--radius-default);
   color: var(--text-primary);
@@ -58,7 +59,8 @@ body {
 /* selected: the grey pill. Primary text on the selected fill; unselected siblings stay
    secondary and carry a transparent border, so selecting never shifts layout. */
 .rail-nav :is(.rail-nav__item, .rail-nav__child)[aria-current="page"] {
-  background: var(--surface-selected);
+  transition: all var(--transition-row);  /* measured: the current row runs slower */
+  background: var(--surface-strong);
   border: var(--border-control);
   border-radius: var(--radius-default);
   color: var(--text-primary);
@@ -66,7 +68,7 @@ body {
 @media (hover: hover) {
   .rail-nav :is(.rail-nav__item, .rail-nav__child):not([aria-current="page"]):hover {
     color: var(--text-primary);
-    background: var(--surface-selected);
+    background: var(--surface-strong);
   }
 }
 .rail-nav__divider {
@@ -77,7 +79,7 @@ body {
 }
 .rail-nav__group-label {
   display: flex; align-items: center; justify-content: space-between;
-  height: var(--control-height);
+  min-height: var(--control-height);
   padding: 0 var(--space-8);
   line-height: var(--type-interface-tight-line);
   color: var(--text-secondary);
@@ -104,14 +106,14 @@ body {
 /* selected: the grey pill. Primary text on the selected fill, real border, no transition.
    Unselected segments stay secondary with a transparent border. */
 .seg__btn[aria-pressed="true"] {
-  background: var(--surface-selected);
+  background: var(--surface-strong);
   border: var(--border-control);
   border-radius: var(--radius-default);
   color: var(--text-primary);
   transition: var(--transition-none);
 }
 @media (hover: hover) {
-  .seg__btn:not([aria-pressed="true"]):hover { background: var(--surface-segment-hover); }
+  .seg__btn:not([aria-pressed="true"]):hover { background: var(--surface-soft); }
 }
 .seg__btn:disabled { color: var(--text-disabled); pointer-events: var(--disabled-pointer-events); }
 /* 44px touch target by invisible extension, vertical only so neighbours stay clear */
@@ -130,9 +132,9 @@ body {
   transition: color var(--transition-control), background-color var(--transition-control);
 }
 .icon-btn svg { display: block; width: var(--icon-size); height: var(--icon-size); }
-.icon-btn[aria-pressed="true"], .icon-btn[aria-expanded="true"] { color: var(--text-primary); background: var(--surface-selected); }
+.icon-btn[aria-pressed="true"], .icon-btn[aria-expanded="true"] { color: var(--text-primary); background: var(--surface-strong); }
 @media (hover: hover) {
-  .icon-btn:not([aria-pressed="true"], [aria-expanded="true"]):hover { color: var(--text-primary); background: var(--surface-selected); }
+  .icon-btn:not([aria-pressed="true"], [aria-expanded="true"]):hover { color: var(--text-primary); background: var(--surface-strong); }
 }
 .icon-btn:disabled { color: var(--text-disabled); pointer-events: var(--disabled-pointer-events); }
 @media (max-width: 639.98px), (pointer: coarse) {
@@ -155,7 +157,7 @@ body {
 .rows { display: flex; flex-direction: column; gap: var(--space-16); }
 .rows__group-label {
   display: flex; align-items: center;
-  height: var(--control-height);
+  min-height: var(--control-height);
   padding: 0 var(--space-8);
   line-height: var(--type-interface-tight-line);
   color: var(--text-secondary);
@@ -178,12 +180,13 @@ body {
 /* selected row: the grey pill. Primary text on the selected fill; no border on a row,
    the fill alone marks it. Unselected rows keep the transparent border. */
 .rows__row[aria-current="true"] {
-  background: var(--surface-selected);
+  transition: all var(--transition-row);  /* measured: the current row runs slower */
+  background: var(--surface-strong);
   border-radius: var(--radius-default);
   color: var(--text-primary);
 }
 @media (hover: hover) {
-  .rows__row:not([aria-current="true"]):hover { color: var(--text-primary); background: var(--surface-selected); }
+  .rows__row:not([aria-current="true"]):hover { color: var(--text-primary); background: var(--surface-soft); }
 }
 @media (max-width: 991.98px), (pointer: coarse) {
   .rows__row { min-height: var(--control-height-touch); }
@@ -332,7 +335,7 @@ body {
   min-width: var(--icon-size);
   padding: 0 var(--space-4);
   border-radius: var(--radius-default);
-  background: var(--surface-selected);
+  background: var(--surface-strong);
   color: var(--text-primary);
   font: inherit;
 }
@@ -369,8 +372,10 @@ body {
 .ds-table tbody tr > *:last-child  { border-top-right-radius: var(--radius-default); border-bottom-right-radius: var(--radius-default); }
 .ds-table .ds-table__name { color: var(--text-primary); }
 .ds-table .r { text-align: right; font-variant-numeric: tabular-nums; }
+/* The table sits in the white content column, so its row hover is --surface-soft.
+   The selected fill here would read as sixty selected rows. */
 @media (hover: hover) {
-  .ds-table tbody tr:hover td { color: var(--text-primary); background: var(--surface-selected); }
+  .ds-table tbody tr:hover td { color: var(--text-primary); background: var(--surface-soft); }
 }
 @media (max-width: 991.98px), (pointer: coarse) {
   .ds-table td { height: var(--control-height-touch); }
@@ -416,7 +421,7 @@ body {
   display: inline-flex; align-items: center; height: var(--control-height);
   padding: var(--control-padding);
   border-radius: var(--radius-default);
-  background: var(--surface-selected); color: var(--text-primary);
+  background: var(--surface-strong); color: var(--text-primary);
   translate: 0 -200%;
   transition: var(--transition-move);
 }
@@ -472,7 +477,7 @@ body {
   color: var(--text-secondary);
   transition: color var(--transition-nav);
 }
-.ds-bottombar__item[aria-current="page"] { color: var(--text-primary); background: var(--surface-selected); }
+.ds-bottombar__item[aria-current="page"] { color: var(--text-primary); background: var(--surface-strong); }
 @media (max-width: 991.98px) { .ds-bottombar { display: block; } }
 
 /* Empty / loading state, from the empty-state block's shape. */
@@ -489,10 +494,12 @@ body {
    where the 16px article body (.ds-prose) would be the loudest thing on the screen. ---- */
 .ds-help { max-width: var(--measure-reading); color: var(--text-secondary); font-size: var(--type-interface-size); line-height: var(--type-interface-line); }
 
-/* ---- Segmented control hover. The block's own hover (#fafafa on #fff) is invisible on the
-   track, so unselected segments take the nav-item treatment. Selected segments never react. ---- */
+/* ---- Segmented control hover. Not an override of the block so much as the block's own
+   rule applied correctly: the hover fill depends on what is UNDERNEATH. These segments sit
+   on a grey track, not on white, so they take --surface-strong rather than --surface-soft.
+   Selected segments never react. ---- */
 @media (hover: hover) {
-  .seg__btn:not([aria-pressed="true"]):hover { color: var(--text-primary); background: var(--surface-selected); }
+  .seg__btn:not([aria-pressed="true"]):hover { color: var(--text-primary); background: var(--surface-strong); }
 }
 
 /* ---- Tooltip with a key chip. Beside the control, in on hover (desktop) and on keyboard focus.
@@ -565,9 +572,9 @@ select.ds-input { appearance: none; width: 100%; padding-right: calc(var(--space
   white-space: nowrap;
   transition: color var(--transition-nav), background-color var(--transition-nav);
 }
-.ds-weekbtn[aria-current="true"] { background: var(--surface-selected); color: var(--text-primary); }
+.ds-weekbtn[aria-current="true"] { background: var(--surface-strong); color: var(--text-primary); }
 @media (hover: hover) {
-  .ds-weekbtn:not([aria-current="true"]):hover { background: var(--surface-selected); color: var(--text-primary); }
+  .ds-weekbtn:not([aria-current="true"]):hover { background: var(--surface-soft); color: var(--text-primary); }
 }
 @media (max-width: 991.98px), (pointer: coarse) {
   .ds-weekbtn { height: var(--control-height-touch); }
