@@ -12,9 +12,38 @@ verdicts first, one-line reasons, tabs for the working.
 
 ## Status
 
-**v0.2.0 — live at https://jasperwhite.github.io/hawk-tua-hq/** (Opaline redesign).
-Every tab renders against the live league with no console errors, in light and dark
-mode, at phone and desktop width, both locally and on the live link.
+**v0.3.3 — the shell and the Players tab are rebuilt on Jasper's design system**
+(`~/Claude/Design System`, via `/design`). Hawk Tua HQ is its first consumer and its
+first real test.
+
+- **Shell:** the `app-shell` skeleton — left rail for the eight sections, a centre column
+  that scrolls on its own, right rail for the standing and the season. Theme switch at the
+  foot of the left rail (System · Light · Dark). Shortcuts: `[` `]` rails, `T` theme,
+  `/` search, `?` legend, `Esc` close. Skip link first. Below 992px the rails become
+  overlays and a 40px bottom bar takes over navigation.
+- **Players:** rebuilt on `ds-ui`. The accent has exactly one job on that screen — rows
+  you own. Nothing else is coloured.
+- **The other seven tabs still render on the Opaline glass components**, inside the new
+  shell. That is deliberate: this is a pilot on one view, not a migration.
+
+### Where the tokens come from
+
+| File | What it is |
+|---|---|
+| `src/tokens.css` | a **vendored copy** of the design system's tokens. A Vite build has to be self-contained, so it can't link the shared file. Re-copy when the original changes. |
+| `src/ds.css` | the `app-shell` block's CSS, **ported**. The copied section is marked; this app's own additions sit below the marker. Fix the block and re-port — never patch the copy. |
+
+This project is on the `Used by` table in that repo's `DESIGN.md`, so a token change has
+somewhere to be worked through.
+
+### Known, not fixed
+
+- The intro paragraph on Players still takes the top ~130px of a phone screen.
+- The week ruler in the right rail reads as a grid of numbers rather than a timeline.
+- Tailwind utilities sit in a layer, so they can't override `ds.css` classes — layout
+  workarounds in the shell exist for that reason.
+- ESPN scoreboard fetches are blocked by CORS from a localhost origin; the deployed build
+  is unaffected and the Sleeper data loads either way.
 
 ## How to run it
 
