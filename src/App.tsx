@@ -193,13 +193,14 @@ export default function App() {
   const navTo = (k: Tab) => (e: { preventDefault: () => void }) => { e.preventDefault(); go(k) }
 
   return (
+    <>
     <div inert={legend}>
       <SkipLink />
       {view && t ? (
         <ViewContext.Provider value={view}>
           <div className="shell">
             <RailNav
-              id="rail-left" label="Main" className="z-4" collapsed={docked && collapsed.l} open={!docked && overlay.l}
+              id="rail-left" label="Main" className={cn(!docked && 'z-4')} collapsed={docked && collapsed.l} open={!docked && overlay.l}
               brand={<RailNavBrand href="#brief" onClick={navTo('brief')}>Hawk Tua HQ</RailNavBrand>}
               foot={<Segmented value={theme} onChange={chooseTheme} options={THEMES} label="Theme" icons={THEME_ICON} />}
             >
@@ -238,7 +239,7 @@ export default function App() {
               </main>
             </div>
 
-            <RightRail id="rail-right" className="z-4" collapsed={docked && collapsed.r} open={!docked && overlay.r} onLeague={newLeague} />
+            <RightRail id="rail-right" className={cn(!docked && 'z-4')} collapsed={docked && collapsed.r} open={!docked && overlay.r} onLeague={newLeague} />
           </div>
 
           <BottomBar label="Sections">
@@ -275,8 +276,9 @@ export default function App() {
           </div>
         </div>
       )}
-      <Legend open={legend} onClose={() => setLegend(false)} items={SHORTCUTS} />
     </div>
+    <Legend open={legend} onClose={() => setLegend(false)} items={SHORTCUTS} />
+    </>
   )
 }
 
@@ -301,6 +303,7 @@ function RightRail({
   const rec = `${t.wins}–${t.losses}${t.ties ? '–' + t.ties : ''}`
   return (
     <InfoRail id={id} className={className} title={t.name} collapsed={collapsed} open={open}>
+      <div className="flex flex-col gap-(--space-16)">
       <InfoPairs items={[
         ['League', L.name],
         ['Record', rec],
@@ -319,6 +322,7 @@ function RightRail({
         <summary className="rows__group-label cursor-pointer select-none">Use a different league</summary>
         <LeagueForm leagueId={L.leagueId} onLeague={onLeague} />
       </details>
+      </div>
     </InfoRail>
   )
 }
@@ -340,7 +344,7 @@ function Ruler() {
     </li>
   )
   const grid = (ws: number[]) => (
-    <ol className="grid gap-(--space-2) px-(--space-4)" style={{ gridTemplateColumns: `repeat(${Math.min(PER_ROW, ws.length)}, minmax(0, 1fr))` }}>
+    <ol className="grid gap-(--space-2) px-(--space-4)" style={{ gridTemplateColumns: `repeat(${PER_ROW}, minmax(0, 1fr))` }}>
       {ws.map(cell)}
     </ol>
   )
