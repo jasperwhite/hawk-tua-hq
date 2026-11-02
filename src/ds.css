@@ -326,7 +326,8 @@ body {
 .legend__row { display: flex; align-items: center; gap: var(--space-16); }
 .legend__row dt { flex: none; width: var(--info-label-width); }
 .legend__row dd { margin: 0; color: var(--text-secondary); }
-.legend kbd {
+/* the key chip: shared by the legend, the tooltips and the Shortcuts row */
+.legend kbd, .tip kbd, .ds-keyrow kbd {
   display: inline-flex; align-items: center; justify-content: center;
   min-width: var(--icon-size);
   padding: 0 var(--space-4);
@@ -479,3 +480,99 @@ body {
 .ds-note__title { color: var(--text-primary); }
 .ds-prose { max-width: var(--measure-reading); font-size: var(--type-body-size); line-height: var(--type-body-line); color: var(--text-secondary); }
 .ds-prose b, .ds-prose strong { font-weight: var(--weight-strong); color: var(--text-primary); }
+
+
+/* ---- Icons: Remix "Line" glyphs. Filled compound paths, currentColor, no stroke. ---- */
+.ds-icon { display: block; flex: none; width: var(--icon-size); height: var(--icon-size); fill: currentColor; stroke: none; }
+
+/* ---- Interface-sized help text: 12/16, secondary, no weight. For helper copy inside a tool,
+   where the 16px article body (.ds-prose) would be the loudest thing on the screen. ---- */
+.ds-help { max-width: var(--measure-reading); color: var(--text-secondary); font-size: var(--type-interface-size); line-height: var(--type-interface-line); }
+
+/* ---- Segmented control hover. The block's own hover (#fafafa on #fff) is invisible on the
+   track, so unselected segments take the nav-item treatment. Selected segments never react. ---- */
+@media (hover: hover) {
+  .seg__btn:not([aria-pressed="true"]):hover { color: var(--text-primary); background: var(--surface-selected); }
+}
+
+/* ---- Tooltip with a key chip. Beside the control, in on hover (desktop) and on keyboard focus.
+   150ms colour-register timing, not a spring. Never a tab stop, never eats a click. ---- */
+.tip-wrap { position: relative; display: inline-flex; }
+.tip {
+  position: absolute; z-index: 5;
+  display: inline-flex; align-items: center; gap: var(--space-8);
+  padding: var(--space-4) var(--space-8);
+  border-radius: var(--radius-default);
+  background: var(--surface-rail);
+  box-shadow: var(--border-panel-ring);
+  color: var(--text-primary);
+  font-size: var(--type-interface-size); line-height: var(--type-interface-line);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0; scale: .95;
+  transition: opacity var(--transition-control), scale var(--transition-control);
+}
+.tip[data-side="right"]  { left: 100%;  top: 50%;    margin-left: var(--space-4); translate: 0 -50%; transform-origin: left center; }
+.tip[data-side="bottom"] { right: 0;    top: 100%;   margin-top: var(--space-4);                       transform-origin: top right; }
+.tip[data-side="below"]  { left: 0;     top: 100%;   margin-top: var(--space-4);                       transform-origin: top left; }
+.tip[data-side="top"]    { left: 0;     bottom: 100%; margin-bottom: var(--space-4);                   transform-origin: bottom left; }
+.tip-wrap:has(:focus-visible) > .tip { opacity: 1; scale: 1; }
+@media (hover: hover) {
+  .tip-wrap:hover > .tip { opacity: 1; scale: 1; }
+}
+
+/* ---- The Shortcuts row: the ? chip and the word. On hover the chip flips to the content
+   colour so it doesn't vanish into the selected fill (the reference does the same to its chip). ---- */
+.ds-keyrow { width: 100%; }
+@media (hover: hover) { .ds-keyrow:hover kbd { background: var(--surface-content); } }
+
+/* ---- Select: the OS arrow off, ours over the right edge ---- */
+.ds-select { position: relative; display: inline-flex; }
+select.ds-input { appearance: none; width: 100%; padding-right: calc(var(--space-8) + var(--icon-size) + var(--space-4)); }
+.ds-select__icon { position: absolute; right: var(--space-8); top: 50%; translate: 0 -50%; color: var(--text-secondary); pointer-events: none; }
+
+/* ---- Right-rail link rows: no colour change; a trailing arrow fades in (desktop only) ---- */
+.ds-linkrow {
+  display: flex; align-items: center; gap: var(--gap-default);
+  min-height: var(--control-height);
+  padding: var(--control-padding);
+  border-radius: var(--radius-default);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-primary);
+}
+.ds-linkrow__desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-secondary); }
+.ds-linkrow__arrow { margin-left: auto; opacity: 0; transition: opacity var(--transition-nav); }
+@media (hover: hover) { .ds-linkrow:hover .ds-linkrow__arrow { opacity: 1; } }
+.ds-linkrow:focus-visible .ds-linkrow__arrow { opacity: 1; }
+@media (max-width: 991.98px), (pointer: coarse) {
+  .ds-linkrow { min-height: var(--control-height-touch); }
+}
+
+/* ---- Week picker: one row of 17 buttons. Selected = the grey pill, as on a nav row; the rest
+   secondary grey on nothing; hover = the selected fill, unselected only. The tight pitch is why
+   these meet touch by growing to 32px, not by invisible padding that would overlap a neighbour. ---- */
+.ds-weeks { display: flex; gap: var(--space-2); padding: var(--space-4) 0; }
+.ds-weeks > li { flex: 1 1 0; min-width: 0; }
+.ds-weekbtn {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: var(--control-height);
+  padding: 0;
+  border-radius: var(--radius-default);
+  color: var(--text-secondary);
+  /* 10px label size: at 12px the deadline week's "14†" is 19px in a 16.5px cell and clips */
+  font-size: var(--type-label-size); line-height: var(--type-label-line);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: color var(--transition-nav), background-color var(--transition-nav);
+}
+.ds-weekbtn[aria-current="true"] { background: var(--surface-selected); color: var(--text-primary); }
+@media (hover: hover) {
+  .ds-weekbtn:not([aria-current="true"]):hover { background: var(--surface-selected); color: var(--text-primary); }
+}
+@media (max-width: 991.98px), (pointer: coarse) {
+  .ds-weekbtn { height: var(--control-height-touch); }
+}
+
+/* a text-only button in the help register: "Back to live" */
+.ds-textbtn { padding: 0 var(--space-8); text-align: right; }
+@media (hover: hover) { .ds-textbtn:hover { color: var(--text-primary); } }

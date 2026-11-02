@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { f0, f1, pct, type Any } from '@/lib/hq'
-import { Action, DsTable, Input, Prose, Segmented, useView } from '@/components/ds-ui'
+import { Action, DsTable, Input, Segmented, Tooltip, useView } from '@/components/ds-ui'
 
 const POS_OPTS = [['ALL', 'All'], ['QB', 'QB'], ['RB', 'RB'], ['WR', 'WR'], ['TE', 'TE'], ['K', 'K'], ['DEF', 'DEF']] as const
 const OWN_OPTS = [['all', 'Everyone'], ['fa', 'Free agents'], ['mine', 'Mine']] as const
@@ -45,20 +45,20 @@ export default function Players() {
 
   return (
     <div className="flex flex-col gap-(--space-16)">
-      <div className="flex flex-col gap-(--space-8)">
-        <Prose className="px-(--space-8)">
-          Ranked by points above a replacement-level starter for the rest of the season, scored your league's way. <b>Market</b> is each player's rank from real trades in similar leagues. A big gap is your edge: <b>Buy</b> players your scoring likes more than the market does, <b>Sell</b> the opposite.
-        </Prose>
-      </div>
+      <p className="ds-help px-(--space-8)">
+        Ranked by points above a replacement-level starter for the rest of the season, scored your league's way. Market is each player's rank from real trades in similar leagues, and a big gap is your edge: Buy where your scoring likes a player more than the market does, Sell where it likes them less.
+      </p>
       <div className="flex flex-col gap-(--space-8) px-(--space-8)">
         <Segmented className="flex-wrap" value={pos} onChange={reset(setPos)} options={POS_OPTS} label="Position" />
         <div className="flex flex-wrap items-center gap-(--space-8)">
           <Segmented value={own} onChange={reset(setOwn)} options={OWN_OPTS} label="Owner" />
-          <Input
-            id="player-search" type="search" placeholder="Find a player" aria-label="Find a player" value={q}
-            onChange={e => { setQ(e.target.value); setLimit(PAGE) }}
-            className="flex-1 basis-48"
-          />
+          <Tooltip keys="/" label="Search players" side="below" className="min-w-0 flex-1 basis-48">
+            <Input
+              id="player-search" type="search" placeholder="Find a player" aria-label="Find a player" value={q}
+              onChange={e => { setQ(e.target.value); setLimit(PAGE) }}
+              className="w-full"
+            />
+          </Tooltip>
         </div>
       </div>
       <DsTable>
@@ -94,7 +94,7 @@ export default function Players() {
           })}
         </tbody>
       </DsTable>
-      {!list.length && <Prose className="px-(--space-8)">No players match.</Prose>}
+      {!list.length && <p className="ds-help px-(--space-8)">No players match.</p>}
       {all.length > limit && (
         <div className="px-(--space-8)">
           <Action onClick={() => setLimit(limit + PAGE)}>Show {Math.min(PAGE, all.length - limit)} more</Action>
