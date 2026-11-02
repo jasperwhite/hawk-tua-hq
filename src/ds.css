@@ -1,0 +1,481 @@
+/* Hawk Tua HQ — the design system's classes, ported from
+   ~/Claude/Design System/blocks/app-shell.html. Everything below the "app additions"
+   marker is this app's own; everything above it is a copy, so a fix to the block
+   copies straight across. Don't restyle the copied part here — fix the block.
+   Ported: 2026-11-02
+
+   Tailwind's preflight already does the element reset the block carried, so only the
+   components came across. */
+
+:root { color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+
+body {
+  margin: 0;
+  background: var(--surface-content);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-weight: var(--weight-body);
+  font-size: var(--type-interface-size);
+  line-height: var(--type-interface-line);
+  letter-spacing: var(--tracking-normal);
+}
+:focus-visible { outline: var(--focus-outline); outline-offset: var(--focus-offset); }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: var(--transition-none) !important; }
+}
+
+/* ---- Rail nav ---- */
+.rail-nav {
+  background: var(--surface-rail);
+  padding: 0 var(--layout-rail-inset) var(--space-8);
+}
+.rail-nav__brand { display: flex; align-items: center; height: var(--layout-topbar-height); }
+.rail-nav__brand-link {
+  display: inline-flex; align-items: center;
+  height: var(--control-height);
+  padding: 0 var(--space-10) 0 var(--space-8);
+  border-radius: var(--radius-default);
+  color: var(--text-primary);
+}
+.rail-nav__list, .rail-nav__children { display: flex; flex-direction: column; gap: var(--space-2); }
+.rail-nav__item, .rail-nav__child {
+  position: relative;
+  display: flex; align-items: center; gap: var(--gap-default);
+  min-height: var(--control-height);
+  border: var(--border-transparent);
+  border-radius: var(--radius-default);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-secondary);
+}
+.rail-nav__item {
+  padding: var(--control-padding);
+  transition: color var(--transition-nav), background-color var(--transition-nav), border-color var(--transition-nav);
+}
+/* child rows: no transition (measured 0s) */
+.rail-nav__child { padding: var(--control-padding-icon); transition: var(--transition-none); }
+/* selected: the grey pill. Primary text on the selected fill; unselected siblings stay
+   secondary and carry a transparent border, so selecting never shifts layout. */
+.rail-nav :is(.rail-nav__item, .rail-nav__child)[aria-current="page"] {
+  background: var(--surface-selected);
+  border: var(--border-control);
+  border-radius: var(--radius-default);
+  color: var(--text-primary);
+}
+@media (hover: hover) {
+  .rail-nav :is(.rail-nav__item, .rail-nav__child):not([aria-current="page"]):hover {
+    color: var(--text-primary);
+    background: var(--surface-selected);
+  }
+}
+.rail-nav__divider {
+  height: var(--border-hairline);
+  margin: var(--space-8);
+  border: 0;
+  background: var(--border-color);
+}
+.rail-nav__group-label {
+  display: flex; align-items: center; justify-content: space-between;
+  height: var(--control-height);
+  padding: 0 var(--space-8);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-secondary);
+}
+.rail-nav__count { font-variant-numeric: tabular-nums; }
+@media (max-width: 991.98px), (pointer: coarse) {
+  .rail-nav__item, .rail-nav__child { min-height: var(--control-height-touch); }
+}
+
+/* ---- Segmented control (no track) ---- */
+.seg { display: flex; align-items: center; gap: var(--space-2); }
+.seg__btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  height: var(--control-height);
+  padding: 0 var(--space-10);
+  border: var(--border-transparent);
+  border-radius: var(--radius-default);
+  background: var(--surface-content);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: color var(--transition-control), background-color var(--transition-control), border-color var(--transition-control);
+}
+/* selected: the grey pill. Primary text on the selected fill, real border, no transition.
+   Unselected segments stay secondary with a transparent border. */
+.seg__btn[aria-pressed="true"] {
+  background: var(--surface-selected);
+  border: var(--border-control);
+  border-radius: var(--radius-default);
+  color: var(--text-primary);
+  transition: var(--transition-none);
+}
+@media (hover: hover) {
+  .seg__btn:not([aria-pressed="true"]):hover { background: var(--surface-segment-hover); }
+}
+.seg__btn:disabled { color: var(--text-disabled); pointer-events: var(--disabled-pointer-events); }
+/* 44px touch target by invisible extension, vertical only so neighbours stay clear */
+@media (pointer: coarse) {
+  .seg__btn::after { content: ""; position: absolute; inset-block: calc((100% - var(--control-hit-min)) / 2); inset-inline: 0; }
+}
+
+/* ---- Icon button ---- */
+.icon-btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: var(--control-height); height: var(--control-height);
+  border: var(--border-transparent);
+  border-radius: var(--radius-default);
+  color: var(--text-secondary);
+  transition: color var(--transition-control), background-color var(--transition-control);
+}
+.icon-btn svg { display: block; width: var(--icon-size); height: var(--icon-size); }
+.icon-btn[aria-pressed="true"], .icon-btn[aria-expanded="true"] { color: var(--text-primary); background: var(--surface-selected); }
+@media (hover: hover) {
+  .icon-btn:not([aria-pressed="true"], [aria-expanded="true"]):hover { color: var(--text-primary); background: var(--surface-selected); }
+}
+.icon-btn:disabled { color: var(--text-disabled); pointer-events: var(--disabled-pointer-events); }
+@media (max-width: 639.98px), (pointer: coarse) {
+  .icon-btn { width: var(--control-height-touch); height: var(--control-height-touch); }
+}
+@media (pointer: coarse) {
+  .icon-btn::after { content: ""; position: absolute; inset: calc((100% - var(--control-hit-min)) / 2); }
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+  display: flex; align-items: center; gap: var(--gap-default);
+  height: var(--layout-topbar-height);
+  padding: 0 var(--space-4) 0 var(--space-12);
+  background: var(--surface-content);
+}
+.toolbar__title { margin-right: auto; color: var(--text-primary); white-space: nowrap; }
+
+/* ---- Row list ---- */
+.rows { display: flex; flex-direction: column; gap: var(--space-16); }
+.rows__group-label {
+  display: flex; align-items: center;
+  height: var(--control-height);
+  padding: 0 var(--space-8);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-secondary);
+}
+.rows__list { display: flex; flex-direction: column; gap: var(--space-2); }
+.rows__row {
+  position: relative;
+  display: flex; align-items: center; gap: var(--gap-default);
+  min-height: var(--control-height);
+  padding: var(--control-padding);
+  border: var(--border-transparent);
+  border-radius: var(--radius-default);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-secondary);               /* descriptor + figure inherit this */
+  transition: color var(--transition-nav), background-color var(--transition-nav);
+}
+.rows__label { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
+.rows__desc  { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rows__figure { flex: none; margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
+/* selected row: the grey pill. Primary text on the selected fill; no border on a row,
+   the fill alone marks it. Unselected rows keep the transparent border. */
+.rows__row[aria-current="true"] {
+  background: var(--surface-selected);
+  border-radius: var(--radius-default);
+  color: var(--text-primary);
+}
+@media (hover: hover) {
+  .rows__row:not([aria-current="true"]):hover { color: var(--text-primary); background: var(--surface-selected); }
+}
+@media (max-width: 991.98px), (pointer: coarse) {
+  .rows__row { min-height: var(--control-height-touch); }
+}
+
+/* ---- Info pairs (right rail) ---- */
+.info-rail {
+  background: var(--surface-rail);
+  padding: 0 var(--layout-rail-inset) var(--space-8);
+}
+.info-rail__title {
+  display: flex; align-items: center;
+  height: var(--layout-topbar-height);
+  padding: 0 var(--space-8);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-primary);
+}
+.info {
+  display: flex; flex-direction: column; gap: var(--space-12);
+  min-height: var(--layout-topbar-height);
+  padding: 0 var(--space-8);
+}
+.info__pair { display: flex; align-items: flex-start; }               /* no gap: value starts where the label column ends */
+.info__label { flex: none; width: var(--info-label-width); color: var(--text-secondary); }
+.info__value { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; color: var(--text-primary); }
+.info__link { display: flex; align-items: center; gap: var(--space-4); height: var(--type-interface-line); }
+.info__arrow { flex: none; width: var(--icon-size); height: var(--icon-size); opacity: 0; transition: opacity var(--transition-control); }
+@media (hover: hover) { .info__link:hover .info__arrow { opacity: 1; } }
+.info__link:focus-visible .info__arrow { opacity: 1; }
+
+/* ---- App shell ---- */
+/* The window never scrolls: the shell is exactly one viewport high and <main> scrolls inside it. */
+.shell {
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  height: 100vh; height: 100dvh;
+  overflow: hidden;
+}
+.shell__centre { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface-content); }
+.shell__main { flex: 1; min-height: 0; overflow: auto; padding: var(--space-4); }
+/* Rails: the outer element clips and animates width; the inner element holds the padding and
+   a fixed width, so the content slides away instead of reflowing while the rail closes. */
+.shell .rail-nav, .shell .info-rail { padding: 0; }
+.shell .rail-nav__inner, .shell .info-rail__inner {
+  display: flex; flex-direction: column;
+  height: 100%;
+  padding: 0 var(--layout-rail-inset) var(--space-8);
+}
+.shell .rail-nav__inner { width: var(--layout-rail-left); }
+.shell .info-rail__inner { width: var(--layout-rail-right); overflow: auto; }
+/* the list scrolls inside the rail, the theme switch stays pinned to the foot */
+.shell .rail-nav__body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.shell .rail-nav__theme { flex: none; padding-top: var(--space-8); }
+/* rails dock at 992: flex row, so a closing rail hands its width to <main> */
+@media (min-width: 992px) {
+  .shell { display: flex; }
+  .shell__centre { flex: 1 1 0; }
+  .shell .rail-nav, .shell .info-rail { flex: none; overflow: hidden; transition: var(--transition-panel); }
+  .shell .rail-nav { width: var(--layout-rail-left); }
+  .shell .info-rail { width: var(--layout-rail-right); }
+  .shell .rail-nav__inner, .shell .info-rail__inner { transition: var(--transition-panel); }
+  .shell .rail-nav[data-collapsed], .shell .info-rail[data-collapsed] { width: 0; }
+  .shell .rail-nav[data-collapsed] .rail-nav__inner { translate: calc(var(--layout-rail-left) * -1) 0; }
+  .shell .info-rail[data-collapsed] .info-rail__inner { translate: var(--layout-rail-right) 0; }
+}
+/* toggles exist only while the rails are overlays */
+.shell [data-toggle] { display: none; }
+@media (max-width: 991.98px) {
+  .shell [data-toggle] { display: inline-flex; }
+  .shell .toolbar { padding-left: var(--space-4); }
+  .shell .rail-nav, .shell .info-rail {
+    display: none; position: fixed;
+    top: var(--layout-topbar-height); bottom: 0;
+    overflow: auto;
+    box-shadow: var(--border-panel-ring);
+  }
+  .shell .rail-nav { left: 0; width: var(--layout-rail-left); }
+  .shell .info-rail { right: 0; width: var(--layout-rail-right); }
+  .shell .rail-nav[data-open], .shell .info-rail[data-open] { display: block; }
+}
+/* 768: the run of row groups goes 1 -> 2 columns */
+.shell .rows { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--grid-gap-column); row-gap: var(--grid-gap-row); align-content: start; }
+@media (min-width: 768px) {
+  .shell .rows { grid-template-columns: repeat(var(--grid-columns-max), minmax(0, 1fr)); }
+}
+/* 640: top bar becomes the bottom bar */
+@media (max-width: 639.98px) {
+  .shell .toolbar { order: 2; height: var(--layout-bottombar-height); padding: 0 var(--space-4); }
+  .shell .toolbar__title { display: none; }
+  .shell .toolbar .seg { min-width: 0; margin-inline: auto; align-self: stretch; overflow-x: auto; scrollbar-width: none; }
+  .shell .rail-nav, .shell .info-rail { top: 0; bottom: var(--layout-bottombar-height); }
+}
+
+/* ---- Theme switch: three icon segments in a 28px track, same pattern as the segmented control ---- */
+.seg--track {
+  width: 100%;
+  height: calc(var(--control-height) + var(--space-4));
+  padding: var(--space-2);
+  border-radius: var(--radius-track);
+  background: var(--surface-content);
+}
+.seg--icons .seg__btn { flex: 1 1 0; min-width: 0; padding: 0; }
+.seg--icons .seg__btn svg { display: block; width: var(--icon-size); height: var(--icon-size); }
+
+/* ---- Skip link: first focusable element; slides in on focus ---- */
+.skip {
+  position: absolute; z-index: 1;
+  top: var(--space-8); left: var(--space-8);
+  display: inline-flex; align-items: center;
+  height: var(--control-height);
+  padding: var(--control-padding);
+  border-radius: var(--radius-default);
+  background: var(--surface-action);
+  color: var(--text-primary);
+  box-shadow: var(--border-panel-ring);
+  translate: 0 calc(-100% - var(--space-8));
+  transition: var(--transition-move);
+}
+.skip:focus { translate: 0 0; }
+
+/* ---- Shortcut legend: a floating panel that blurs in ---- */
+.legend {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  padding: var(--space-16);
+  opacity: 0; filter: blur(var(--blur-enter)); translate: 0 var(--space-8);
+  transition: var(--transition-reveal);
+}
+.legend[data-open] { opacity: 1; filter: blur(0); translate: 0 0; }
+.legend__panel {
+  display: flex; flex-direction: column; gap: var(--space-8);
+  width: var(--layout-rail-right); max-width: 100%;
+  padding: var(--space-12);
+  border-radius: var(--radius-default);
+  background: var(--surface-rail);
+  box-shadow: var(--border-panel-ring);
+}
+.legend__head { display: flex; align-items: center; justify-content: space-between; }
+.legend__title { color: var(--text-primary); }
+.legend__list { display: flex; flex-direction: column; gap: var(--space-8); margin: 0; }
+.legend__row { display: flex; align-items: center; gap: var(--space-16); }
+.legend__row dt { flex: none; width: var(--info-label-width); }
+.legend__row dd { margin: 0; color: var(--text-secondary); }
+.legend kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--icon-size);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-default);
+  background: var(--surface-selected);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+/* ==== Demo wrapper only. Delete when pasting the block elsewhere. ==== */
+/* nothing needed: the shell is the page */
+
+
+/* ==========================================================================
+   APP ADDITIONS — this app's own, not in any block
+   ========================================================================== */
+
+/* ---- Data table ----
+   A row list can't do a seven-column table with a header, so this is ours. It is built
+   from the row-list's values so the two can't drift: same row height, same gap, same
+   hover, same selected pill, tabular figures. Borders stay off — the header's secondary
+   grey and the 2px row gap do the separating, per DESIGN.md's borders-are-rare rule. */
+.ds-table { width: 100%; border-collapse: separate; border-spacing: 0 var(--space-2); }
+.ds-table th {
+  padding: 0 var(--space-8);
+  height: var(--control-height);
+  text-align: left;
+  font-weight: var(--weight-body);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.ds-table td {
+  padding: var(--control-padding);
+  height: var(--control-height);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+.ds-table tbody tr > *:first-child { border-top-left-radius: var(--radius-default); border-bottom-left-radius: var(--radius-default); }
+.ds-table tbody tr > *:last-child  { border-top-right-radius: var(--radius-default); border-bottom-right-radius: var(--radius-default); }
+.ds-table .ds-table__name { color: var(--text-primary); }
+.ds-table .r { text-align: right; font-variant-numeric: tabular-nums; }
+@media (hover: hover) {
+  .ds-table tbody tr:hover td { color: var(--text-primary); background: var(--surface-selected); }
+}
+@media (max-width: 991.98px), (pointer: coarse) {
+  .ds-table td { height: var(--control-height-touch); }
+}
+
+/* ---- The accent, with its one job on this screen ----
+   DESIGN.md: the accent marks a state that differs in KIND, not in importance. On a
+   league-wide player table that state is "mine" — your players against everyone else's.
+   It is the one thing you scan for, and no grey can say it.
+   One signal, not two: a tint on the row. The name stays primary black, because a
+   coloured name plus a tinted row would be the same fact said twice.
+   Nothing else on this screen is accented. Not the biggest number, not the rank. */
+.ds-table tbody tr.is-mine td { background: var(--mine-tint); }
+@media (hover: hover) {
+  .ds-table tbody tr.is-mine:hover td { background: var(--mine-tint-hover); color: var(--text-primary); }
+}
+
+/* The tint is NOT one value in both themes. 8% of the accent reads clearly on white and
+   all but vanishes on black — checked on screen, not assumed, and the dark rows were
+   indistinguishable from a hover state. Dark needs more than twice the mix to carry the
+   same meaning, which is why these are two values rather than one.
+   Not a token in tokens.css: the design system has no "category tint", and inventing one
+   off a single screen would be the same mistake as the rules that had to be unwound.
+   If a second tool needs this, it earns a token then. */
+:root {
+  --mine-tint: color-mix(in oklab, var(--accent) 8%, transparent);
+  --mine-tint-hover: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --mine-tint: color-mix(in oklab, var(--accent) 20%, transparent);
+    --mine-tint-hover: color-mix(in oklab, var(--accent) 30%, transparent);
+  }
+}
+[data-theme="dark"] {
+  --mine-tint: color-mix(in oklab, var(--accent) 20%, transparent);
+  --mine-tint-hover: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+
+/* ---- Shell plumbing ---- */
+.ds-skip {
+  position: absolute; left: var(--space-8); top: var(--space-8); z-index: 2;
+  display: inline-flex; align-items: center; height: var(--control-height);
+  padding: var(--control-padding);
+  border-radius: var(--radius-default);
+  background: var(--surface-selected); color: var(--text-primary);
+  translate: 0 -200%;
+  transition: var(--transition-move);
+}
+.ds-skip:focus-visible { translate: 0 0; }
+
+/* The search input. Inputs are the one control DESIGN.md gives a real border. */
+.ds-input {
+  height: var(--control-height);
+  padding: var(--control-padding);
+  border: var(--border-control);
+  border-radius: var(--radius-default);
+  background: var(--surface-content);
+  color: var(--text-primary);
+  font: inherit;
+  letter-spacing: inherit;
+  min-width: 0;
+}
+.ds-input::placeholder { color: var(--text-secondary); }
+@media (max-width: 639.98px), (pointer: coarse) {
+  .ds-input { height: var(--control-height-touch); }
+}
+
+/* Standalone action button — "ours" in DESIGN.md: rail grey at rest, selected fill on
+   hover, no border, no accent, no shadow. */
+.ds-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: var(--control-height);
+  padding: var(--control-padding);
+  border-radius: var(--radius-default);
+  background: var(--surface-action);
+  color: var(--text-primary);
+  white-space: nowrap;
+  transition: background-color var(--transition-control);
+}
+@media (hover: hover) { .ds-action:hover { background: var(--surface-action-hover); } }
+@media (max-width: 639.98px), (pointer: coarse) {
+  .ds-action { height: var(--control-height-touch); }
+}
+
+/* The phone bottom bar. Measured on the reference at 40px; it replaces the left rail
+   below the rails breakpoint, where a thumb beats a sidebar. */
+.ds-bottombar {
+  position: fixed; inset-inline: 0; bottom: 0; z-index: 3;
+  display: none;
+  height: calc(var(--layout-bottombar-height) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--surface-rail);
+}
+.ds-bottombar__list { display: flex; align-items: stretch; height: var(--layout-bottombar-height); }
+.ds-bottombar__item {
+  flex: 1 1 0; min-width: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-secondary);
+  transition: color var(--transition-nav);
+}
+.ds-bottombar__item[aria-current="page"] { color: var(--text-primary); background: var(--surface-selected); }
+@media (max-width: 991.98px) { .ds-bottombar { display: block; } }
+
+/* Empty / loading state, from the empty-state block's shape. */
+.ds-note { display: flex; flex-direction: column; gap: var(--space-8); padding: var(--space-32) var(--space-12); color: var(--text-secondary); }
+.ds-note__title { color: var(--text-primary); }
+.ds-prose { max-width: var(--measure-reading); font-size: var(--type-body-size); line-height: var(--type-body-line); color: var(--text-secondary); }
+.ds-prose b, .ds-prose strong { font-weight: var(--weight-strong); color: var(--text-primary); }

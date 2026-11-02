@@ -13,7 +13,7 @@ import {
   Action, BottomBar, BottomBarButton, BottomBarItem, GroupLabel, IconButton, InfoPairs, InfoRail, Input, Legend, Note,
   Prose, RailNav, RailNavBrand, RailNavDivider, RailNavItem, RailNavList, Segmented, Select, SkipLink, Toolbar, useView,
 } from '@/components/ds-ui'
-import { applyTheme, readTheme, type Theme } from '@/main'
+import { applyTheme, readTheme, type Theme } from '@/lib/theme'
 import Brief from '@/views/Brief'
 import Defences from '@/views/Defences'
 import Lineup from '@/views/Lineup'

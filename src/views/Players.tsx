@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { f0, f1, pct, type Any } from '@/lib/hq'
-import { Action, DsTable, GroupLabel, Input, Prose, Segmented, useView } from '@/components/ds-ui'
+import { Action, DsTable, Input, Prose, Segmented, useView } from '@/components/ds-ui'
 
 const POS_OPTS = [['ALL', 'All'], ['QB', 'QB'], ['RB', 'RB'], ['WR', 'WR'], ['TE', 'TE'], ['K', 'K'], ['DEF', 'DEF']] as const
 const OWN_OPTS = [['all', 'Everyone'], ['fa', 'Free agents'], ['mine', 'Mine']] as const
@@ -46,7 +46,6 @@ export default function Players() {
   return (
     <div className="flex flex-col gap-(--space-16)">
       <div className="flex flex-col gap-(--space-8)">
-        <GroupLabel>Player values</GroupLabel>
         <Prose className="px-(--space-8)">
           Ranked by points above a replacement-level starter for the rest of the season, scored your league's way. <b>Market</b> is each player's rank from real trades in similar leagues. A big gap is your edge: <b>Buy</b> players your scoring likes more than the market does, <b>Sell</b> the opposite.
         </Prose>
@@ -65,7 +64,7 @@ export default function Players() {
       <DsTable>
         <thead><tr>
           <th className="r">#</th><th>Player</th><th className="hidden md:table-cell">Team</th><th className="r">Pos</th>
-          <th className="r">This wk</th><th className="r">Per wk</th><th className="r">Value</th>
+          <th className="r hidden sm:table-cell">This wk</th><th className="r">Per wk</th><th className="r hidden sm:table-cell">Value</th>
           {L.hasMarket && <><th className="r hidden sm:table-cell">Market</th><th /></>}
           <th className="r hidden md:table-cell">vs half-PPR</th>
         </tr></thead>
@@ -85,9 +84,9 @@ export default function Players() {
                 </td>
                 <td className="hidden max-w-40 truncate md:table-cell">{p.owner != null ? team(p.owner).name : 'Free agent'}</td>
                 <td className="r">{p.pos}{p.posRank}</td>
-                <td className="r">{f1(p.thisWk)}</td>
+                <td className="r hidden sm:table-cell">{f1(p.thisWk)}</td>
                 <td className="r">{f1(p.rosWk)}</td>
-                <td className="r">{f0(p.vorp)}</td>
+                <td className="r hidden sm:table-cell">{f0(p.vorp)}</td>
                 {L.hasMarket && <><td className="r hidden sm:table-cell">{m.txt}</td><td title={m.title}>{m.tag}</td></>}
                 <td className="r hidden md:table-cell">{p.boost == null || p.pos === 'K' || p.pos === 'DEF' ? '–' : pct(p.boost)}</td>
               </tr>
