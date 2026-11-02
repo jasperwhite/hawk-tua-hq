@@ -1,26 +1,19 @@
 import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { HugeiconsIcon } from '@hugeicons/react'
 import {
-  AmericanFootballIcon, ArrowDataTransferHorizontalIcon, News01Icon, RankingIcon, RefreshIcon,
-  Shield01Icon, TaskDaily01Icon, UserAdd01Icon, UserGroupIcon,
+  AmericanFootballIcon, ArrowDataTransferHorizontalIcon, LaptopIcon, Moon01Icon, News01Icon, RankingIcon, RefreshIcon,
+  Shield01Icon, SidebarLeft01Icon, SidebarRight01Icon, Sun01Icon, TaskDaily01Icon, UserAdd01Icon, UserGroupIcon,
 } from '@hugeicons/core-free-icons'
 
 import {
   DEFAULT_LEAGUE, DEFAULT_USER, HQ, TABS, VERSION, boardFor, f1, makeView, ord, store, whenLong, type Any, type Tab,
 } from '@/lib/hq'
 import { cn } from '@/lib/utils'
-import { Kicker, Lede, Num, ViewContext, useView } from '@/components/hq-ui'
-import { GlassBadge } from '@/components/ui/opaline/glass-badge'
-import { GlassButton } from '@/components/ui/opaline/glass-button'
-import { GlassCard } from '@/components/ui/opaline/glass-card'
-import { GlassInput } from '@/components/ui/opaline/glass-input'
+import { ViewContext } from '@/components/hq-ui'
 import {
-  GlassSelect, GlassSelectContent, GlassSelectItem, GlassSelectTrigger, GlassSelectValue,
-} from '@/components/ui/opaline/glass-select'
-import { GlassTabBar, GlassTabBarItem } from '@/components/ui/opaline/glass-tab-bar'
-import { GlassText } from '@/components/ui/opaline/glass-text'
-import { GlassToaster, toast } from '@/components/ui/opaline/glass-toast'
-import { LiquidGlassProvider } from '@/components/ui/opaline/liquid-glass'
+  Action, BottomBar, BottomBarButton, BottomBarItem, GroupLabel, IconButton, InfoPairs, InfoRail, Input, Legend, Note,
+  Prose, RailNav, RailNavBrand, RailNavDivider, RailNavItem, RailNavList, Segmented, Select, SkipLink, Toolbar, useView,
+} from '@/components/ds-ui'
+import { applyTheme, readTheme, type Theme } from '@/main'
 import Brief from '@/views/Brief'
 import Defences from '@/views/Defences'
 import Lineup from '@/views/Lineup'
@@ -39,10 +32,43 @@ const VIEW: Record<Tab, () => ReactNode> = {
 }
 const STEPS = ['Reading your league', 'Pulling projections and stats', 'Scoring every player your way']
 
+const THEMES: readonly (readonly [Theme, string])[] = [['system', 'System'], ['light', 'Light'], ['dark', 'Dark']]
+const THEME_ICON: Record<Theme, Any> = { system: LaptopIcon, light: Sun01Icon, dark: Moon01Icon }
+const SHORTCUTS = [
+  ['[', 'Toggle left rail'], [']', 'Toggle right rail'], ['T', 'Cycle theme'], ['/', 'Search players'],
+  ['?', 'Show shortcuts'], ['Esc', 'Close'],
+] as const
+
+/* The legacy views were laid out for a centred column on a wallpaper. Until each is migrated they
+   keep that column inside the new shell. Delete this as the last one moves over. */
+const LEGACY = 'mx-auto flex w-full max-w-[1080px] min-w-0 flex-col gap-5 p-4'
+
 const isTab = (s: string): s is Tab => TABS.some(t => t[0] === s)
 const hashTab = (): Tab => { const h = location.hash.slice(1); return isTab(h) ? h : 'brief' }
+const tabName = (t: Tab) => TABS.find(x => x[0] === t)![1]
 
 type Load = { state: 'loading'; step: number } | { state: 'error'; message: string } | { state: 'ready' }
+type Sides = { l: boolean; r: boolean }
+
+const RAILS_KEY = 'hq-rails'
+const readRails = (): Sides => {
+  try {
+    const v = JSON.parse(localStorage.getItem(RAILS_KEY) || '')
+    return { l: !!v.l, r: !!v.r }
+  } catch { return { l: false, r: false } }
+}
+
+function useMedia(query: string) {
+  const [matches, setMatches] = useState(() => matchMedia(query).matches)
+  useEffect(() => {
+    const mq = matchMedia(query)
+    const on = () => setMatches(mq.matches)
+    on()
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [query])
+  return matches
+}
 
 export default function App() {
   const [leagueId, setLeagueId] = useState(() => store.get('league') || DEFAULT_LEAGUE)
@@ -52,6 +78,14 @@ export default function App() {
   const [tab, setTab] = useState<Tab>(hashTab)
   const [nonce, setNonce] = useState(0)
   const [rev, setRev] = useState(0)
+
+  const docked = useMedia('(min-width: 992px)')
+  const wide = useMedia('(min-width: 640px)')
+  const [theme, setTheme] = useState<Theme>(readTheme)
+  const [collapsed, setCollapsed] = useState<Sides>(readRails)   // docked: the rail is closed
+  const [overlay, setOverlay] = useState<Sides>({ l: false, r: false })   // undocked: the rail is open
+  const [legend, setLegend] = useState(false)
+  const [notice, setNotice] = useState('')
 
   /* load (and reload) the league */
   useEffect(() => {
@@ -65,7 +99,7 @@ export default function App() {
         setL(data)
         setRid(r => (r && data.teamByRid[r] ? r : saved && data.teamByRid[saved] ? saved : (me || data.teams[0]).rid))
         setLoad({ state: 'ready' })
-        if (nonce) toast.success('Up to date', { description: `Week ${data.week} calls refreshed.` })
+        if (nonce) setNotice(`Week ${data.week} calls refreshed.`)
         // defences switch to betting-line values once the lines are in (a few seconds on a first visit)
         boardFor(data).then((b: Any) => { if (!live) return; HQ.applyDefBoard(data, b); setRev(r => r + 1) }).catch(() => {})
       })
@@ -74,6 +108,12 @@ export default function App() {
     // nonce re-runs the load on refresh
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leagueId, nonce])
+
+  useEffect(() => {
+    if (!notice) return
+    const id = setTimeout(() => setNotice(''), 4000)
+    return () => clearTimeout(id)
+  }, [notice])
 
   /* hash routing, so a tab can be bookmarked or shared */
   useEffect(() => {
@@ -84,8 +124,12 @@ export default function App() {
   const go = useCallback((t: Tab) => {
     setTab(t)
     try { history.replaceState(null, '', '#' + t) } catch { location.hash = t }
-    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
   }, [])
+  /* <main> scrolls, not the window; a new section starts at its top, and an overlay rail gets out of the way */
+  useEffect(() => {
+    document.getElementById('main')?.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+    setOverlay({ l: false, r: false })
+  }, [tab])
 
   // rev rebuilds every tab's numbers when the defence values change underneath L
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -94,57 +138,145 @@ export default function App() {
   useEffect(() => { if (t) document.title = `${t.name} HQ` }, [t])
 
   const pickTeam = (r: number) => { setRid(r); store.set('rid:' + L.leagueId, String(r)) }
+  const chooseTheme = useCallback((next: Theme) => { applyTheme(next); setTheme(next) }, [])
+  const newLeague = (id: string) => { store.set('league', id); setL(null); setRid(null); setLeagueId(id) }
+
+  /* rails: docked they collapse in place; undocked the same controls open them as overlays */
+  const toggleRail = useCallback((side: keyof Sides) => {
+    if (docked) setCollapsed(c => ({ ...c, [side]: !c[side] }))
+    else setOverlay(o => ({ l: false, r: false, [side]: !o[side] }))
+  }, [docked])
+  useEffect(() => { try { localStorage.setItem(RAILS_KEY, JSON.stringify(collapsed)) } catch { /* nothing to do */ } }, [collapsed])
+  useEffect(() => { setOverlay({ l: false, r: false }) }, [docked])
+  useEffect(() => {
+    if (!overlay.l && !overlay.r) return
+    const away = (e: MouseEvent) => {
+      if (!(e.target as Element).closest('.rail-nav, .info-rail, [data-rail-toggle]')) setOverlay({ l: false, r: false })
+    }
+    document.addEventListener('click', away)
+    return () => document.removeEventListener('click', away)
+  }, [overlay])
+
+  /* shortcuts. Never while a text field has focus or a modifier is down (Shift stays free: ? needs it). */
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (legend) setLegend(false)
+        else setOverlay({ l: false, r: false })
+        return
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const el = e.target as HTMLElement
+      if (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return
+      if (legend) { if (e.key === '?') setLegend(false); return }
+      if (e.key === '[') toggleRail('l')
+      else if (e.key === ']') toggleRail('r')
+      else if (e.key === '?') setLegend(true)
+      else if (e.key.toLowerCase() === 't') {
+        const i = THEMES.findIndex(x => x[0] === readTheme())
+        chooseTheme(THEMES[(i + 1) % THEMES.length][0])
+      } else if (e.key === '/') {
+        const box = document.getElementById('player-search')
+        if (!box) return
+        e.preventDefault()
+        box.focus()
+      }
+    }
+    window.addEventListener('keydown', on)
+    return () => window.removeEventListener('keydown', on)
+  }, [legend, toggleRail, chooseTheme])
+
   const View = VIEW[tab]
+  const title = tabName(tab)
+  const leftShown = docked ? !collapsed.l : overlay.l
+  const rightShown = docked ? !collapsed.r : overlay.r
+  const navTo = (k: Tab) => (e: { preventDefault: () => void }) => { e.preventDefault(); go(k) }
 
   return (
-    <>
-      <div className="wallpaper" aria-hidden />
-      <GlassToaster position="top-center" />
-      <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-5 px-4 pt-[max(20px,env(safe-area-inset-top))] pb-[calc(env(safe-area-inset-bottom,0px)+112px)] sm:px-6">
-        {view && t ? (
-          <ViewContext.Provider value={view}>
-            <Masthead onTeam={pickTeam} onRefresh={() => setNonce(n => n + 1)} busy={load.state === 'loading'} />
-            <main className="flex min-w-0 flex-col gap-5"><Section key={`${tab}:${rid}`}><View /></Section></main>
-          </ViewContext.Provider>
-        ) : load.state === 'error' ? (
-          <Status title="Couldn't load the league.">
-            <Lede>{load.message}. Check the league ID below, or your connection, then try again.</Lede>
-            <GlassButton className="self-start" onClick={() => setNonce(n => n + 1)}>Try again</GlassButton>
-          </Status>
-        ) : (
-          <Status title="Getting this week's calls ready.">
-            <ol className="flex flex-col gap-2">
-              {STEPS.map((s, i) => {
-                const step = load.state === 'loading' ? load.step : 0
-                return (
-                  <li key={s} className={cn('flex items-center gap-2.5 text-[15px] transition-opacity', i > step && 'opacity-40')}>
-                    <span className={cn('size-2 rounded-full', i < step ? 'bg-[var(--good)]' : i === step ? 'animate-pulse bg-[var(--accent-fill)]' : 'bg-current/30')} />
-                    {s}
-                  </li>
-                )
-              })}
-            </ol>
-          </Status>
-        )}
-        <Footer L={L} leagueId={leagueId} onLeague={id => { store.set('league', id); setL(null); setRid(null); setLeagueId(id) }} />
-      </div>
-      {view && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[calc(env(safe-area-inset-bottom,0px)+12px)]">
-          {/* Frosted so the labels stay readable over a dense table. */}
-          <LiquidGlassProvider variant="frosted" blur={6}>
-          <GlassTabBar value={tab} onValueChange={v => go(v as Tab)} aria-label="Sections" className="pointer-events-auto">
+    <div inert={legend}>
+      <SkipLink />
+      {view && t ? (
+        <ViewContext.Provider value={view}>
+          <div className="shell">
+            <RailNav
+              id="rail-left" label="Main" className="z-4" collapsed={docked && collapsed.l} open={!docked && overlay.l}
+              brand={<RailNavBrand href="#brief" onClick={navTo('brief')}>Hawk Tua HQ</RailNavBrand>}
+              foot={<Segmented value={theme} onChange={chooseTheme} options={THEMES} label="Theme" icons={THEME_ICON} />}
+            >
+              <RailNavList>
+                {TABS.map(([k, label]) => (
+                  <RailNavItem key={k} href={`#${k}`} icon={ICON[k]} current={k === tab} onClick={navTo(k)}>{label}</RailNavItem>
+                ))}
+              </RailNavList>
+              <RailNavDivider />
+              <div className="flex items-center gap-(--space-8) px-(--space-4)">
+                <Select aria-label="Whose team" className="min-w-0 flex-1" value={String(view.rid)} onChange={e => pickTeam(+e.target.value)}>
+                  {view.L.teams.slice().sort((a: Any, b: Any) => a.name.localeCompare(b.name)).map((x: Any) => (
+                    <option key={x.rid} value={String(x.rid)}>{x.name}</option>
+                  ))}
+                </Select>
+                <IconButton icon={RefreshIcon} label="Refresh" spin={load.state === 'loading'} disabled={load.state === 'loading'} onClick={() => setNonce(n => n + 1)} />
+              </div>
+              <p role="status" className="rows__group-label">{notice}</p>
+            </RailNav>
+
+            <div className="shell__centre">
+              {wide && (
+                <Toolbar
+                  title={title}
+                  start={<IconButton icon={SidebarLeft01Icon} label="Toggle main navigation" data-rail-toggle aria-controls="rail-left" aria-expanded={leftShown} onClick={() => toggleRail('l')} />}
+                  end={<IconButton icon={SidebarRight01Icon} label="Toggle information panel" data-rail-toggle aria-controls="rail-right" aria-expanded={rightShown} onClick={() => toggleRail('r')} />}
+                />
+              )}
+              <main id="main" className="shell__main" tabIndex={-1} aria-label={title}>
+                {!wide && <h1 className="sr-only">{title}</h1>}
+                <Section key={`${tab}:${rid}`}>
+                  {tab === 'players' ? <View /> : <div className={LEGACY}><View /></div>}
+                </Section>
+                {/* clear of the fixed bottom bar */}
+                <div aria-hidden className="max-[991.98px]:h-(--layout-bottombar-height)" />
+              </main>
+            </div>
+
+            <RightRail id="rail-right" className="z-4" collapsed={docked && collapsed.r} open={!docked && overlay.r} onLeague={newLeague} />
+          </div>
+
+          <BottomBar label="Sections">
             {TABS.map(([k, label]) => (
-              <GlassTabBarItem
-                key={k} value={k} label={label}
-                icon={<HugeiconsIcon icon={ICON[k]} strokeWidth={1.8} />}
-                className="h-[52px] w-[42px] min-w-0 px-0 tracking-[-0.03em] sm:tracking-[0.01em] [&_svg]:size-[22px] sm:w-16 aria-[current=page]:text-[var(--num)] dark:aria-[current=page]:text-[var(--num)]"
-              />
+              <BottomBarItem key={k} href={`#${k}`} icon={ICON[k]} label={label} current={k === tab} onClick={navTo(k)} />
             ))}
-          </GlassTabBar>
-          </LiquidGlassProvider>
+            {!wide && <>
+              <BottomBarButton icon={SidebarLeft01Icon} label="Team and theme" data-rail-toggle aria-controls="rail-left" aria-expanded={leftShown} onClick={() => toggleRail('l')} />
+              <BottomBarButton icon={SidebarRight01Icon} label="Standing and weeks" data-rail-toggle aria-controls="rail-right" aria-expanded={rightShown} onClick={() => toggleRail('r')} />
+            </>}
+          </BottomBar>
+        </ViewContext.Provider>
+      ) : (
+        <div className="shell">
+          <div className="shell__centre">
+            <main id="main" className="shell__main" tabIndex={-1} aria-label="Hawk Tua HQ">
+              {load.state === 'error' ? (
+                <Note title="Couldn't load the league.">
+                  <Prose>{load.message}. Check the league ID below, or your connection, then try again.</Prose>
+                  <div><Action onClick={() => setNonce(n => n + 1)}>Try again</Action></div>
+                </Note>
+              ) : (
+                <Note title="Getting this week's calls ready.">
+                  <ol aria-live="polite">
+                    {STEPS.map((s, i) => {
+                      const step = load.state === 'loading' ? load.step : 0
+                      return <li key={s} aria-current={i === step ? 'step' : undefined} className={cn(i === step && 'ds-note__title')}>{s}</li>
+                    })}
+                  </ol>
+                </Note>
+              )}
+              <LeagueForm leagueId={leagueId} onLeague={newLeague} />
+            </main>
+          </div>
         </div>
       )}
-    </>
+      <Legend open={legend} onClose={() => setLegend(false)} items={SHORTCUTS} />
+    </div>
   )
 }
 
@@ -155,111 +287,85 @@ class Section extends Component<{ children: ReactNode }, { err: Error | null }> 
   componentDidCatch(err: Error) { console.error(err) }
   render() {
     return this.state.err
-      ? <Status title="This section hit a snag."><Lede>{this.state.err.message}</Lede></Status>
+      ? <Note title="This section hit a snag."><Prose>{this.state.err.message}</Prose></Note>
       : this.props.children
   }
 }
 
-function Status({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <GlassCard blur={8} className="mt-[12vh] gap-4 rounded-[28px] px-6 py-7">
-      <p className="text-[22px] font-semibold tracking-[-0.025em]">{title}</p>
-      {children}
-    </GlassCard>
-  )
-}
-
-function Masthead({ onTeam, onRefresh, busy }: { onTeam: (r: number) => void; onRefresh: () => void; busy: boolean }) {
-  const { L, rid, team } = useView()
+/* The right rail: where you stand, the season at a glance, and where the numbers come from. */
+function RightRail({
+  id, className, collapsed, open, onLeague,
+}: { id: string; className?: string; collapsed: boolean; open: boolean; onLeague: (id: string) => void }) {
+  const { L, team } = useView()
   const t = team()
   const rec = `${t.wins}–${t.losses}${t.ties ? '–' + t.ties : ''}`
   return (
-    <header className="flex flex-col gap-4 pt-2">
-      <div className="flex items-center justify-between gap-3">
-        <Kicker className="truncate"><span className="hidden sm:inline">{L.name} · </span>Week {L.week} of {L.lastWeek}</Kicker>
-        <div className="flex shrink-0 items-center gap-2">
-          <GlassSelect value={String(rid)} onValueChange={v => onTeam(+v)}>
-            <GlassSelectTrigger aria-label="Whose team" className="h-9 max-w-[46vw] text-[13px] sm:max-w-none"><GlassSelectValue /></GlassSelectTrigger>
-            <GlassSelectContent align="end">
-              {L.teams.slice().sort((a: Any, b: Any) => a.name.localeCompare(b.name)).map((x: Any) => (
-                <GlassSelectItem key={x.rid} value={String(x.rid)}>{x.name}</GlassSelectItem>
-              ))}
-            </GlassSelectContent>
-          </GlassSelect>
-          <GlassButton size="icon-sm" aria-label="Refresh" onClick={onRefresh} disabled={busy}>
-            <HugeiconsIcon icon={RefreshIcon} className={cn(busy && 'animate-spin')} />
-          </GlassButton>
-        </div>
-      </div>
-      <h1 className="text-[44px] leading-[1.02] font-bold tracking-[-0.045em] text-balance sm:text-[64px]">
-        <GlassText key={t.name} bevel={10} refraction={16} tint="var(--title-fill)">{t.name}</GlassText>
-      </h1>
-      <div className="flex flex-wrap gap-2">
-        <GlassBadge><Num>{rec}</Num></GlassBadge>
-        <GlassBadge><Num>{ord(t.rank)}</Num><span className="opacity-70">of {L.nTeams}</span></GlassBadge>
-        <GlassBadge><Num>{f1(t.pf)}</Num><span className="opacity-70">pts for</span></GlassBadge>
-        <GlassBadge>
-          {L.waiver.type === 'faab'
-            ? <><Num>${t.faabLeft}</Num><span className="opacity-70">FAAB left</span></>
-            : <><Num>#{t.waiver || '–'}</Num><span className="opacity-70">on waivers</span></>}
-        </GlassBadge>
-      </div>
+    <InfoRail id={id} className={className} title={t.name} collapsed={collapsed} open={open}>
+      <InfoPairs items={[
+        ['League', L.name],
+        ['Record', rec],
+        ['Rank', `${ord(t.rank)} of ${L.nTeams}`],
+        ['Points for', f1(t.pf)],
+        L.waiver.type === 'faab' ? ['FAAB left', `$${t.faabLeft}`] : ['On waivers', `#${t.waiver || '–'}`],
+      ]} />
       <Ruler />
-    </header>
+      <div className="flex flex-col gap-(--space-8) px-(--space-8)">
+        <Prose>
+          Live from Sleeper each time you open it. Projections and stats: Sleeper. Market values: FantasyCalc. Kickoffs, betting lines and player news: ESPN and RotoWire. Free, no account. Your choices and past betting lines are kept on this device.
+        </Prose>
+      </div>
+      <InfoPairs items={[['Loaded', whenLong(L.loadedAt)], ['Version', `v${VERSION}`]]} />
+      <details>
+        <summary className="rows__group-label cursor-pointer select-none">Use a different league</summary>
+        <LeagueForm leagueId={L.leagueId} onLeague={onLeague} />
+      </details>
+    </InfoRail>
   )
 }
 
+/* One cell per week. Today is the grey pill, past weeks step back to the secondary grey,
+   playoffs get their own row group, and the trade deadline is footnoted. No colour. */
+const PER_ROW = 6
 function Ruler() {
   const { L } = useView()
-  const weeks = Array.from({ length: L.lastWeek }, (_, i) => i + 1)
-  const stripes = 'repeating-linear-gradient(135deg, color-mix(in oklch, currentColor 22%, transparent) 0 2px, transparent 2px 5px)'
+  const weeks = (from: number, to: number) => Array.from({ length: Math.max(0, to - from + 1) }, (_, i) => from + i)
+  const playoffs = L.playoffStart && L.playoffStart <= L.lastWeek
+  const season = weeks(1, playoffs ? L.playoffStart - 1 : L.lastWeek)
+  const cell = (w: number) => (
+    <li
+      key={w} className="rows__row pointer-events-none justify-center"
+      aria-current={w === L.week ? 'true' : undefined} aria-label={`Week ${w}`}
+    >
+      <span className={cn(w >= L.week && 'rows__label')}>{w}{L.tradeDeadline === w ? '†' : ''}</span>
+    </li>
+  )
+  const grid = (ws: number[]) => (
+    <ol className="grid gap-(--space-2) px-(--space-4)" style={{ gridTemplateColumns: `repeat(${Math.min(PER_ROW, ws.length)}, minmax(0, 1fr))` }}>
+      {ws.map(cell)}
+    </ol>
+  )
   return (
-    <div className="flex flex-col gap-2">
-      <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${L.lastWeek}, minmax(0, 1fr))` }}>
-        {weeks.map(w => (
-          <div
-            key={w} title={`Week ${w}`}
-            className={cn(
-              'relative flex h-7 items-center justify-center rounded-md text-[11px] tnum',
-              w < L.week && 'bg-current/8 opacity-55',
-              w === L.week && 'bg-[var(--accent-fill)] font-bold text-white',
-              w > L.week && 'border border-current/15',
-            )}
-            style={w >= L.playoffStart && w !== L.week ? { backgroundImage: stripes } : undefined}
-          >
-            {w}
-            {L.tradeDeadline === w && <span className="absolute inset-y-0 -right-[2.5px] w-[2px] rounded bg-[var(--bad)]" />}
-          </div>
-        ))}
-      </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-semibold tracking-[0.1em] uppercase opacity-60">
-        <span className="flex items-center gap-1.5"><i className="inline-block h-[3px] w-3.5 bg-[var(--accent-fill)]" />This week</span>
-        <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-3.5" style={{ backgroundImage: stripes }} />Playoffs from week {L.playoffStart}</span>
-        {L.tradeDeadline ? <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-[2px] bg-[var(--bad)]" />Trade deadline after week {L.tradeDeadline}</span> : null}
-      </div>
-    </div>
+    <section aria-label="Season" className="flex flex-col pt-(--space-12)">
+      <GroupLabel>Week {L.week} of {L.lastWeek}</GroupLabel>
+      {grid(season)}
+      {playoffs && <>
+        <GroupLabel>Playoffs from week {L.playoffStart}</GroupLabel>
+        {grid(weeks(L.playoffStart, L.lastWeek))}
+      </>}
+      {L.tradeDeadline ? <GroupLabel>† Trade deadline after week {L.tradeDeadline}</GroupLabel> : null}
+    </section>
   )
 }
 
-function Footer({ L, leagueId, onLeague }: { L: Any; leagueId: string; onLeague: (id: string) => void }) {
+function LeagueForm({ leagueId, onLeague }: { leagueId: string; onLeague: (id: string) => void }) {
   const [val, setVal] = useState(leagueId)
   return (
-    <footer className="mt-6 flex flex-col gap-3 text-[13px]">
-      <p className="max-w-[68ch] leading-relaxed opacity-65">
-        Live from Sleeper each time you open it. Projections and stats: Sleeper. Market values: FantasyCalc. Kickoffs, betting lines and player news: ESPN and RotoWire. Free, no account. Your choices and past betting lines are kept on this device.
-      </p>
-      {L && <Kicker>Loaded {whenLong(L.loadedAt)} · v{VERSION}</Kicker>}
-      <details className="group">
-        <summary className="cursor-pointer opacity-70 select-none">Use a different league</summary>
-        <form
-          className="mt-3 flex flex-wrap items-center gap-2"
-          onSubmit={e => { e.preventDefault(); const id = val.trim().replace(/\D/g, ''); if (id) onLeague(id) }}
-        >
-          <GlassInput aria-label="Sleeper league ID" placeholder="Sleeper league ID" inputMode="numeric" autoComplete="off" value={val} onChange={e => setVal(e.target.value)} className="min-w-0 flex-1 basis-56" />
-          <GlassButton type="submit">Load</GlassButton>
-        </form>
-      </details>
-    </footer>
+    <form
+      className="flex items-center gap-(--space-8) p-(--space-8)"
+      onSubmit={e => { e.preventDefault(); const id = val.trim().replace(/\D/g, ''); if (id) onLeague(id) }}
+    >
+      <Input aria-label="Sleeper league ID" placeholder="Sleeper league ID" inputMode="numeric" autoComplete="off" value={val} onChange={e => setVal(e.target.value)} className="flex-1" />
+      <Action type="submit">Load</Action>
+    </form>
   )
 }
-
