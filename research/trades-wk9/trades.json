@@ -1,0 +1,293 @@
+[
+ {
+  "p": "christianvanas",
+  "get": [
+   "Jaylen Warren",
+   "DK Metcalf"
+  ],
+  "give": [
+   "Jeremiyah Love",
+   "Rhamondre Stevenson"
+  ],
+  "dd": "Fair",
+  "tier": "send",
+  "note": "Warren is a clear RB2 upgrade (17.0 a week vs Stevenson's 11.3) and Jeremiyah Love goes. Both PIT players are on bye this week, so it pays off from week 10."
+ },
+ {
+  "p": "tgill15",
+  "get": [
+   "Isaiah Likely",
+   "Braelon Allen"
+  ],
+  "give": [
+   "Zach Charbonnet",
+   "Colston Loveland"
+  ],
+  "dd": "Fair",
+  "tier": "send",
+  "note": "Likely has been a top-five TE lately (19.7 over three weeks). Braelon starts while Breece Hall is out. Moves Charbonnet. Pairs with the Warren deal: no shared players."
+ },
+ {
+  "p": "willjames101",
+  "get": [
+   "Joe Burrow",
+   "Dalton Kincaid"
+  ],
+  "give": [
+   "Colston Loveland",
+   "Rhamondre Stevenson"
+  ],
+  "dd": "Fair",
+  "tier": "send",
+  "note": "Best single trade: Burrow is about 5 a week better than Jordan Love and has no bye left. Uses Loveland and Stevenson, so it rules out the two above."
+ },
+ {
+  "p": "Zobba",
+  "get": [
+   "Trevor Lawrence",
+   "Deebo Samuel Sr."
+  ],
+  "give": [
+   "A.J. Brown",
+   "Omar Cooper Jr."
+  ],
+  "dd": "Overpay",
+  "tier": "maybe",
+  "note": "Moves Brown and Cooper, both on your out list. Lawrence is a small QB upgrade with no bye left. Deebo is listed out."
+ },
+ {
+  "p": "mpreid",
+  "get": [
+   "Brock Purdy",
+   "Dak Prescott"
+  ],
+  "give": [
+   "Jeremiyah Love",
+   "Jordyn Tyson"
+  ],
+  "dd": "Fair",
+  "tier": "maybe",
+  "note": "Two QBs for two players you don't start. Purdy is about 2 a week better than Jordan Love and covers his week 11 bye."
+ },
+ {
+  "p": "Colonel_Tan",
+  "get": [
+   "Bucky Irving",
+   "Denzel Boston"
+  ],
+  "give": [
+   "Tetairoa McMillan",
+   "A.J. Brown"
+  ],
+  "dd": "Overpay",
+  "tier": "maybe",
+  "note": "Irving is a real RB2 (15.6) and McMillan and Brown both go. Losing McMillan's 16.1 at flex cancels most of the gain for now."
+ },
+ {
+  "p": "tgill15",
+  "get": [
+   "Isaiah Likely",
+   "Braelon Allen"
+  ],
+  "give": [
+   "Omar Cooper Jr.",
+   "Colston Loveland"
+  ],
+  "dd": "Fair",
+  "tier": "maybe",
+  "note": "Same return as the Charbonnet version. Send the Charbonnet one instead: Cooper is the drop for your KC D claim anyway."
+ },
+ {
+  "p": "tgill15",
+  "get": [
+   "George Pickens",
+   "Davante Adams"
+  ],
+  "give": [
+   "Mike Evans",
+   "A.J. Brown"
+  ],
+  "dd": "Fair",
+  "tier": "maybe",
+  "note": "Pickens is healthy and steady (13.8). Adams is on IR. Evans projects 17.6 to 21 a week, so you'd likely lose points now."
+ },
+ {
+  "p": "christianvanas",
+  "get": [
+   "Breece Hall",
+   "Travis Kelce"
+  ],
+  "give": [
+   "Jeremiyah Love",
+   "Jonah Coleman"
+  ],
+  "dd": "Fair",
+  "tier": "skip",
+  "note": "Hall is out injured and Kelce is only about level with Loveland. Coleman is useful depth."
+ },
+ {
+  "p": "christianvanas",
+  "get": [
+   "Breece Hall",
+   "Travis Kelce"
+  ],
+  "give": [
+   "Zach Charbonnet",
+   "Tetairoa McMillan"
+  ],
+  "dd": "Fair",
+  "tier": "skip",
+  "note": "Loses McMillan's 16.1 for an injured RB and a TE you don't need."
+ },
+ {
+  "p": "christianvanas",
+  "get": [
+   "Breece Hall",
+   "DK Metcalf"
+  ],
+  "give": [
+   "Rhamondre Stevenson",
+   "Mike Evans"
+  ],
+  "dd": "Fair",
+  "tier": "skip",
+  "note": "Hall is out. Metcalf at 9.8 doesn't replace Evans."
+ },
+ {
+  "p": "christianvanas",
+  "get": [
+   "Breece Hall",
+   "DK Metcalf"
+  ],
+  "give": [
+   "Rhamondre Stevenson",
+   "A.J. Brown"
+  ],
+  "dd": "Fair",
+  "tier": "skip",
+  "note": "Moves Brown, but Hall is out and Stevenson is your RB2 now."
+ },
+ {
+  "p": "tgill15",
+  "get": [
+   "Quinshon Judkins",
+   "Davante Adams"
+  ],
+  "give": [
+   "Mike Evans",
+   "Omar Cooper Jr."
+  ],
+  "dd": "Fair",
+  "tier": "skip",
+  "note": "Judkins (11.7) is no better than what you have, and Adams is on IR."
+ },
+ {
+  "p": "tedbuzza1",
+  "get": [
+   "Ladd McConkey",
+   "Keenan Allen"
+  ],
+  "give": [
+   "Rhamondre Stevenson"
+  ],
+  "dd": "Fair",
+  "tier": "skip",
+  "note": "Two more WRs, which you're trying to offload, for your RB2."
+ },
+ {
+  "p": "tomlinshog",
+  "get": [
+   "Sam LaPorta",
+   "Wan'Dale Robinson"
+  ],
+  "give": [
+   "Jordyn Tyson",
+   "Colston Loveland"
+  ],
+  "dd": "Overpay",
+  "tier": "skip",
+  "note": "LaPorta (12.1) is a sideways TE move. Robinson is on bye this week and averages 9.4."
+ },
+ {
+  "p": "tomlinshog",
+  "get": [
+   "Sam LaPorta",
+   "Wan'Dale Robinson"
+  ],
+  "give": [
+   "Mike Evans",
+   "Jordyn Tyson"
+  ],
+  "dd": "Overpay",
+  "tier": "skip",
+  "note": "Gives up Evans for a TE you don't need."
+ },
+ {
+  "p": "tomlinshog",
+  "get": [
+   "Sam LaPorta",
+   "Wan'Dale Robinson"
+  ],
+  "give": [
+   "Jordyn Tyson",
+   "A.J. Brown"
+  ],
+  "dd": "Overpay",
+  "tier": "skip",
+  "note": "Moves Brown and Tyson but brings back nothing you'd start."
+ },
+ {
+  "p": "tomlinshog",
+  "get": [
+   "Sam LaPorta",
+   "Wan'Dale Robinson"
+  ],
+  "give": [
+   "Rhamondre Stevenson",
+   "Zach Charbonnet"
+  ],
+  "dd": "Overpay",
+  "tier": "skip",
+  "note": "Empties your RB room for a backup TE."
+ },
+ {
+  "p": "tomlinshog",
+  "get": [
+   "Sam LaPorta",
+   "Wan'Dale Robinson"
+  ],
+  "give": [
+   "Omar Cooper Jr.",
+   "Rhamondre Stevenson"
+  ],
+  "dd": "Overpay",
+  "tier": "skip",
+  "note": "Loses your RB2 for a backup TE."
+ },
+ {
+  "p": "tomlinshog",
+  "get": [
+   "Jalen Coker"
+  ],
+  "give": [
+   "Colston Loveland"
+  ],
+  "dd": "Overpay",
+  "tier": "skip",
+  "note": "Your TE for a WR4."
+ },
+ {
+  "p": "Colonel_Tan",
+  "get": [
+   "Parker Washington",
+   "Denzel Boston"
+  ],
+  "give": [
+   "Tetairoa McMillan",
+   "Colston Loveland"
+  ],
+  "dd": "Overpay",
+  "tier": "skip",
+  "note": "Washington is a WR you'd play over nobody, and it leaves you without a TE."
+ }
+]
