@@ -16,8 +16,9 @@ verdicts first, one-line reasons, tabs for the working.
 plus the league standings page) was merged with this Mac's copy (the design-system
 rebuild of the shell and Players). Both are kept.
 
-**League standings** (`public/standings.html`) — the minimal one. One HTML file, no build,
-loads live from Sleeper every time it opens. See `HANDOFF-hawk-tua-v1.md`.
+**League standings** (`public/standings.html`) — the minimal one, rebuilt in System Jasper
+(v0.5.0). One HTML file, no build, loads live from Sleeper every time it opens — reload or
+press `R` for the latest week. See `HANDOFF-hawk-tua-v1.md`.
 
 **Hawk Tua HQ** — the shell and the Players tab are rebuilt on Jasper's design system
 (`~/Claude/Design System`, via `/design`). Hawk Tua HQ is its first consumer and its
@@ -53,7 +54,8 @@ somewhere to be worked through.
   is unaffected and the Sleeper data loads either way.
 
 Moving it to a new Mac: `HANDOFF-hawk-tua-v1.md`, and paste `PROMPT for new Claude.md`
-into the new Claude. **Nothing since 14 Oct is pushed**, so `/standings.html` isn't live yet.
+into the new Claude. Pushed 9 Nov 2026: the standings page is live at
+https://jasperwhite.github.io/hawk-tua-hq/standings.html.
 
 ## How to run it
 

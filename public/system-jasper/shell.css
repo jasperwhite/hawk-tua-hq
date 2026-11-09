@@ -1,0 +1,343 @@
+/* System Jasper — app shell.
+   PORTED from ~/Claude/Design System/blocks/app-shell.html (9 Nov 2026).
+   Fix the block and re-port; never patch this copy. Tokens: ./tokens.css (vendored). */
+*, *::before, *::after { box-sizing: border-box; }
+:root { color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
+body {
+  margin: 0;
+  background: var(--surface-content);
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-weight: var(--weight-body);
+  font-size: var(--type-interface-size);
+  line-height: var(--type-interface-line);
+  letter-spacing: var(--tracking-normal);
+}
+h1, h2, h3, p, ul, dl, dd { margin: 0; padding: 0; }
+h1, h2, h3 { font: inherit; }
+ul { list-style: none; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+:focus-visible { outline: var(--focus-outline); outline-offset: var(--focus-offset); }
+/* Reduced motion: the springs (rails, skip link, legend) stop, and so does everything else
+   that transitions. A deliberate departure from the reference, whose sidebars still spring. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: var(--transition-none) !important; }
+}
+
+/* ---- Rail nav ---- */
+.rail-nav {
+  background: var(--surface-rail);
+  padding: 0 var(--layout-rail-inset) var(--space-8);
+}
+.rail-nav__brand { display: flex; align-items: center; height: var(--layout-topbar-height); }
+.rail-nav__brand-link {
+  display: inline-flex; align-items: center;
+  min-height: var(--control-height);
+  padding: 0 var(--space-10) 0 var(--space-8);
+  border-radius: var(--radius-default);
+  color: var(--text-primary);
+}
+.rail-nav__list, .rail-nav__children { display: flex; flex-direction: column; gap: var(--space-2); }
+.rail-nav__item, .rail-nav__child {
+  position: relative;
+  display: flex; align-items: center; gap: var(--gap-default);
+  min-height: var(--control-height);
+  border: var(--border-transparent);
+  border-radius: var(--radius-default);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-secondary);
+}
+.rail-nav__item {
+  padding: var(--control-padding);
+  transition: color var(--transition-nav), background-color var(--transition-nav), border-color var(--transition-nav);
+}
+/* child rows: no transition (measured 0s) */
+.rail-nav__child { padding: var(--control-padding-icon); transition: var(--transition-none); }
+/* selected: the grey pill. Primary text on the selected fill; unselected siblings stay
+   secondary and carry a transparent border, so selecting never shifts layout. */
+.rail-nav :is(.rail-nav__item, .rail-nav__child)[aria-current="page"] {
+  transition: all var(--transition-row);  /* measured: the current row runs slower */
+  background: var(--surface-strong);
+  border: var(--border-control);
+  border-radius: var(--radius-default);
+  color: var(--text-primary);
+}
+@media (hover: hover) {
+  .rail-nav :is(.rail-nav__item, .rail-nav__child):not([aria-current="page"]):hover {
+    color: var(--text-primary);
+    background: var(--surface-strong);
+  }
+}
+.rail-nav__divider {
+  height: var(--border-hairline);
+  margin: var(--space-8);
+  border: 0;
+  background: var(--border-color);
+}
+.rail-nav__group-label {
+  display: flex; align-items: center; justify-content: space-between;
+  min-height: var(--control-height);
+  padding: 0 var(--space-8);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-secondary);
+}
+.rail-nav__count { font-variant-numeric: tabular-nums; }
+@media (max-width: 991.98px), (pointer: coarse) {
+  .rail-nav__item, .rail-nav__child { min-height: var(--control-height-touch); }
+}
+
+/* ---- Segmented control (no track) ---- */
+.seg { display: flex; align-items: center; gap: var(--space-2); }
+.seg__btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center;
+  height: var(--control-height);
+  padding: 0 var(--space-10);
+  border: var(--border-transparent);
+  border-radius: var(--radius-default);
+  background: var(--surface-content);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  transition: color var(--transition-control), background-color var(--transition-control), border-color var(--transition-control);
+}
+/* selected: the grey pill. Primary text on the selected fill, real border, no transition.
+   Unselected segments stay secondary with a transparent border. */
+.seg__btn[aria-pressed="true"] {
+  background: var(--surface-strong);
+  border: var(--border-control);
+  border-radius: var(--radius-default);
+  color: var(--text-primary);
+  transition: var(--transition-none);
+}
+@media (hover: hover) {
+  .seg__btn:not([aria-pressed="true"]):hover { background: var(--surface-soft); }
+}
+.seg__btn:disabled { color: var(--text-disabled); pointer-events: var(--disabled-pointer-events); }
+/* 44px touch target by invisible extension, vertical only so neighbours stay clear */
+@media (pointer: coarse) {
+  .seg__btn::after { content: ""; position: absolute; inset-block: calc((100% - var(--control-hit-min)) / 2); inset-inline: 0; }
+}
+
+/* ---- Icon button ---- */
+.icon-btn {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+  width: var(--control-height); height: var(--control-height);
+  border: var(--border-transparent);
+  border-radius: var(--radius-default);
+  color: var(--text-secondary);
+  transition: color var(--transition-control), background-color var(--transition-control);
+}
+.icon-btn svg { display: block; width: var(--icon-size); height: var(--icon-size); }
+.icon-btn[aria-pressed="true"], .icon-btn[aria-expanded="true"] { color: var(--text-primary); background: var(--surface-strong); }
+@media (hover: hover) {
+  .icon-btn:not([aria-pressed="true"], [aria-expanded="true"]):hover { color: var(--text-primary); background: var(--surface-strong); }
+}
+.icon-btn:disabled { color: var(--text-disabled); pointer-events: var(--disabled-pointer-events); }
+@media (max-width: 639.98px), (pointer: coarse) {
+  .icon-btn { width: var(--control-height-touch); height: var(--control-height-touch); }
+}
+@media (pointer: coarse) {
+  .icon-btn::after { content: ""; position: absolute; inset: calc((100% - var(--control-hit-min)) / 2); }
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+  display: flex; align-items: center; gap: var(--gap-default);
+  height: var(--layout-topbar-height);
+  padding: 0 var(--space-4) 0 var(--space-12);
+  background: var(--surface-content);
+}
+.toolbar__title { margin-right: auto; color: var(--text-primary); white-space: nowrap; }
+
+/* ---- Row list ---- */
+.rows { display: flex; flex-direction: column; gap: var(--space-16); }
+.rows__group-label {
+  display: flex; align-items: center;
+  min-height: var(--control-height);
+  padding: 0 var(--space-8);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-secondary);
+}
+.rows__list { display: flex; flex-direction: column; gap: var(--space-2); }
+.rows__row {
+  position: relative;
+  display: flex; align-items: center; gap: var(--gap-default);
+  min-height: var(--control-height);
+  padding: var(--control-padding);
+  border: var(--border-transparent);
+  border-radius: var(--radius-default);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-secondary);               /* descriptor + figure inherit this */
+  transition: color var(--transition-nav), background-color var(--transition-nav);
+}
+.rows__label { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); }
+.rows__desc  { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rows__figure { flex: none; margin-left: auto; text-align: right; font-variant-numeric: tabular-nums; }
+/* selected row: the grey pill. Primary text on the selected fill; no border on a row,
+   the fill alone marks it. Unselected rows keep the transparent border. */
+.rows__row[aria-current="true"] {
+  transition: all var(--transition-row);  /* measured: the current row runs slower */
+  background: var(--surface-strong);
+  border-radius: var(--radius-default);
+  color: var(--text-primary);
+}
+/* Hover fill depends on what is UNDERNEATH, not on what the control is. A row in the
+   white content column hovers to --surface-soft; on the rail grey it would be
+   --surface-strong. Measured from the reference's own stylesheet. */
+@media (hover: hover) {
+  .rows__row:not([aria-current="true"]):hover { color: var(--text-primary); background: var(--surface-soft); }
+}
+@media (max-width: 991.98px), (pointer: coarse) {
+  .rows__row { min-height: var(--control-height-touch); }
+}
+
+/* ---- Info pairs (right rail) ---- */
+.info-rail {
+  background: var(--surface-rail);
+  padding: 0 var(--layout-rail-inset) var(--space-8);
+}
+.info-rail__title {
+  display: flex; align-items: center;
+  height: var(--layout-topbar-height);
+  padding: 0 var(--space-8);
+  line-height: var(--type-interface-tight-line);
+  color: var(--text-primary);
+}
+.info {
+  display: flex; flex-direction: column; gap: var(--space-12);
+  min-height: var(--layout-topbar-height);
+  padding: 0 var(--space-8);
+}
+.info__pair { display: flex; align-items: flex-start; }               /* no gap: value starts where the label column ends */
+.info__label { flex: none; width: var(--info-label-width); color: var(--text-secondary); }
+.info__value { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; color: var(--text-primary); }
+.info__link { display: flex; align-items: center; gap: var(--space-4); height: var(--type-interface-line); }
+.info__arrow { flex: none; width: var(--icon-size); height: var(--icon-size); opacity: 0; transition: opacity var(--transition-control); }
+@media (hover: hover) { .info__link:hover .info__arrow { opacity: 1; } }
+.info__link:focus-visible .info__arrow { opacity: 1; }
+
+/* ---- App shell ---- */
+/* The window never scrolls: the shell is exactly one viewport high and <main> scrolls inside it. */
+.shell {
+  display: grid; grid-template-columns: minmax(0, 1fr);
+  height: 100vh; height: 100dvh;
+  overflow: hidden;
+}
+.shell__centre { display: flex; flex-direction: column; min-width: 0; min-height: 0; background: var(--surface-content); }
+.shell__main { flex: 1; min-height: 0; overflow: auto; padding: var(--space-4); }
+/* Rails: the outer element clips and animates width; the inner element holds the padding and
+   a fixed width, so the content slides away instead of reflowing while the rail closes. */
+.shell .rail-nav, .shell .info-rail { padding: 0; }
+.shell .rail-nav__inner, .shell .info-rail__inner {
+  display: flex; flex-direction: column;
+  height: 100%;
+  padding: 0 var(--layout-rail-inset) var(--space-8);
+}
+.shell .rail-nav__inner { width: var(--layout-rail-left); }
+.shell .info-rail__inner { width: var(--layout-rail-right); overflow: auto; }
+/* the list scrolls inside the rail, the theme switch stays pinned to the foot */
+.shell .rail-nav__body { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.shell .rail-nav__theme { flex: none; padding-top: var(--space-8); }
+/* rails dock at 992: flex row, so a closing rail hands its width to <main> */
+@media (min-width: 992px) {
+  .shell { display: flex; }
+  .shell__centre { flex: 1 1 0; }
+  .shell .rail-nav, .shell .info-rail { flex: none; overflow: hidden; transition: var(--transition-panel); }
+  .shell .rail-nav { width: var(--layout-rail-left); }
+  .shell .info-rail { width: var(--layout-rail-right); }
+  .shell .rail-nav__inner, .shell .info-rail__inner { transition: var(--transition-panel); }
+  .shell .rail-nav[data-collapsed], .shell .info-rail[data-collapsed] { width: 0; }
+  .shell .rail-nav[data-collapsed] .rail-nav__inner { translate: calc(var(--layout-rail-left) * -1) 0; }
+  .shell .info-rail[data-collapsed] .info-rail__inner { translate: var(--layout-rail-right) 0; }
+}
+/* toggles exist only while the rails are overlays */
+.shell [data-toggle] { display: none; }
+@media (max-width: 991.98px) {
+  .shell [data-toggle] { display: inline-flex; }
+  .shell .toolbar { padding-left: var(--space-4); }
+  .shell .rail-nav, .shell .info-rail {
+    display: none; position: fixed;
+    top: var(--layout-topbar-height); bottom: 0;
+    overflow: auto;
+    box-shadow: var(--border-panel-ring);
+  }
+  .shell .rail-nav { left: 0; width: var(--layout-rail-left); }
+  .shell .info-rail { right: 0; width: var(--layout-rail-right); }
+  .shell .rail-nav[data-open], .shell .info-rail[data-open] { display: block; }
+}
+/* 768: the run of row groups goes 1 -> 2 columns */
+.shell .rows { display: grid; grid-template-columns: minmax(0, 1fr); column-gap: var(--grid-gap-column); row-gap: var(--grid-gap-row); align-content: start; }
+@media (min-width: 768px) {
+  .shell .rows { grid-template-columns: repeat(var(--grid-columns-max), minmax(0, 1fr)); }
+}
+/* 640: top bar becomes the bottom bar */
+@media (max-width: 639.98px) {
+  .shell .toolbar { order: 2; height: var(--layout-bottombar-height); padding: 0 var(--space-4); }
+  .shell .toolbar__title { display: none; }
+  .shell .toolbar .seg { min-width: 0; margin-inline: auto; align-self: stretch; overflow-x: auto; scrollbar-width: none; }
+  .shell .rail-nav, .shell .info-rail { top: 0; bottom: var(--layout-bottombar-height); }
+}
+
+/* ---- Theme switch: three icon segments in a 28px track, same pattern as the segmented control ---- */
+.seg--track {
+  width: 100%;
+  height: calc(var(--control-height) + var(--space-4));
+  padding: var(--space-2);
+  border-radius: var(--radius-track);
+  background: var(--surface-content);
+}
+.seg--icons .seg__btn { flex: 1 1 0; min-width: 0; padding: 0; }
+.seg--icons .seg__btn svg { display: block; width: var(--icon-size); height: var(--icon-size); }
+
+/* ---- Skip link: first focusable element; slides in on focus ---- */
+.skip {
+  position: absolute; z-index: 1;
+  top: var(--space-8); left: var(--space-8);
+  display: inline-flex; align-items: center;
+  height: var(--control-height);
+  padding: var(--control-padding);
+  border-radius: var(--radius-default);
+  background: var(--surface-action);
+  color: var(--text-primary);
+  box-shadow: var(--border-panel-ring);
+  translate: 0 calc(-100% - var(--space-8));
+  transition: var(--transition-move);
+}
+.skip:focus { translate: 0 0; }
+
+/* ---- Shortcut legend: a floating panel that blurs in ---- */
+.legend {
+  position: fixed; inset: 0;
+  display: grid; place-items: center;
+  padding: var(--space-16);
+  opacity: 0; filter: blur(var(--blur-enter)); translate: 0 var(--space-8);
+  transition: var(--transition-reveal);
+}
+.legend[data-open] { opacity: 1; filter: blur(0); translate: 0 0; }
+.legend__panel {
+  display: flex; flex-direction: column; gap: var(--space-8);
+  width: var(--layout-rail-right); max-width: 100%;
+  padding: var(--space-12);
+  border-radius: var(--radius-default);
+  background: var(--surface-rail);
+  box-shadow: var(--border-panel-ring);
+}
+.legend__head { display: flex; align-items: center; justify-content: space-between; }
+.legend__title { color: var(--text-primary); }
+.legend__list { display: flex; flex-direction: column; gap: var(--space-8); margin: 0; }
+.legend__row { display: flex; align-items: center; gap: var(--space-16); }
+.legend__row dt { flex: none; width: var(--info-label-width); }
+.legend__row dd { margin: 0; color: var(--text-secondary); }
+.legend kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--icon-size);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-default);
+  background: var(--surface-strong);
+  color: var(--text-primary);
+  font: inherit;
+}

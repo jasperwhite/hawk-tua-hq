@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0 — 2026-11-09
+**`/standings.html` rebuilt in System Jasper** (the design system in `~/Claude/Design System`).
+An app shell: the seven sections in a left rail, one at a time; Hawk Tua's record, league
+play, luck, points and next opponent in a right rail; theme switch (System · Light · Dark).
+Instrument Sans, one weight, two greys, 0.5px rules. The green/red wash stays, with dark
+versions. Shortcuts: `1`–`7` sections, `J` `K` next/previous, `R` reload from Sleeper,
+`T` theme, `[` `]` rails, `?` legend. Section, theme and rails are remembered. Below 992px
+the rails become overlays; below 640px the bar moves to the bottom. Export cards
+(`?export=`) are unchanged apart from the type. Tokens are vendored to
+`public/system-jasper/tokens.css`; the app-shell block is ported to `shell.css`.
+
 ## 0.4.1 — 2026-10-20
 New standalone page, **`/standings.html`**: three tables for telling good from lucky, plain
 Helvetica, black and white. Modelled on Dynasty Daddy's league standings.

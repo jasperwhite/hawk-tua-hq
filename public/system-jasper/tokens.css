@@ -1,0 +1,335 @@
+/* ==========================================================================
+   Design tokens
+   Plain CSS custom properties. No build step. Safe to paste into a single
+   HTML file, a Figma plugin HTML string, or an Artifact.
+
+   Typeface: Instrument Sans (variable). Load with:
+   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400..700&display=swap">
+
+   Naming rule (mirrored in tokens.json): the JSON key path joined with "-"
+   is the custom property name. Example: text.primary -> --text-primary.
+
+   Provenance: everything here was measured on the reference unless a comment
+   says "OURS" — those are our own decisions, not measurements.
+   ========================================================================== */
+
+:root {
+
+  /* ---- Typeface ---------------------------------------------------------
+     One weight throughout. --weight-strong exists but is rarely used.
+     Reference face was ABC Oracle at 335. Instrument Sans' wght axis is
+     400-700 (read from the font's fvar table), so 400 is the floor and the
+     honest match — anything lower silently clamps. The system therefore runs
+     a little heavier than the reference; that is a known, accepted gap. */
+  --font-family: "Instrument Sans", system-ui, sans-serif;
+  --weight-body: 400;
+  --weight-strong: 500;
+
+  /* ---- Type: three sizes only (12, 16, 10), nothing between ------------- */
+  --type-interface-size: 12px;
+  --type-interface-line: 16px;
+  --type-interface-tight-size: 12px;  /* single-line rows */
+  --type-interface-tight-line: 12px;
+  --type-body-size: 16px;             /* article body */
+  --type-body-line: 22px;
+  --type-label-size: 10px;            /* smallest label */
+  --type-label-line: 10px;
+
+  /* ---- Letter-spacing: normal everywhere; optional on 10px labels only.
+     No all-caps tracked kickers in this system. --------------------------- */
+  --tracking-normal: normal;
+  --tracking-label: 0.16px;
+
+  /* ---- Colour: text ----------------------------------------------------- */
+  --text-primary: #000000;
+  --text-secondary: #666666;
+  --text-on-accent: #ffffff;   /* OURS, not measured. Same in both themes. */
+  --text-disabled: #999999;    /* OURS, not measured. Secondary at reduced contrast. */
+
+  /* ---- Colour: surfaces ---------------------------------------------------
+     There is no grey "page background". The centre column is white; the
+     rails are grey.
+     There are SIX, not four, and the reference's own names are used here — taken
+     from its stylesheet, not inferred from a screenshot:
+     --surface-content       centre column, top bar, unselected segments (its `base`)
+     --surface-rail          left and right rails (its `surface`)
+     --surface-strong        the SELECTED fill, and the hover fill for anything
+                             sitting ON the rail grey (nav items, icon buttons)
+     --surface-soft          the hover fill for anything sitting ON WHITE —
+                             filter tabs, segments, rows in the content column
+     TWO hover fills, not one. Which you use depends on what is underneath:
+     on grey you go darker (--surface-strong), on white you go barely-grey
+     (--surface-soft). Using the dark one on white is the single most visible
+     way to get the hover wrong. */
+  --surface-content: #ffffff;
+  --surface-rail: #f0f0f0;
+  --surface-strong: #e6e6e6;
+  --surface-soft: #fafafa;
+
+  /* Earlier names for the two fills above. Kept so existing blocks keep working;
+     write new code against --surface-strong / --surface-soft. The old names were
+     a guess at what each fill was FOR; the new ones are what the reference calls
+     them. --surface-selected was never selection-only, and --surface-segment-hover
+     was never segments-only. */
+  --surface-selected: var(--surface-strong);
+  --surface-segment-hover: var(--surface-soft);
+
+  /* ---- Colour: a standalone action button. OURS — the reference is a
+     marketing site and has no such control, so there was nothing to measure.
+     Built from measured surfaces so it can't drift: rail grey at rest, the
+     selected fill on hover. No border, no accent, no shadow. ---------------- */
+  --surface-action: var(--surface-rail);
+  --surface-action-hover: var(--surface-selected);
+
+  /* ---- Colour: border. TWO, not one.
+     --border-color  the ordinary one: inputs, selected controls, dividers
+     --border-soft   lighter again, for a border that is almost not there —
+                     a card edge, a block that needs separating without a line
+                     you consciously see. One step away from the surface it sits on. */
+  --border-color: #e0e0e0;
+  --border-soft: #ededed;
+
+  /* ---- Borders: rare and specific. Never a general separator between rows
+     or sections — separation stays gap and tone. The only uses:
+       - selected nav item or segment: --border-control; unselected ones carry
+         --border-transparent so selection never shifts layout
+       - inputs: --border-control
+       - floating panel: --border-panel-ring as a box-shadow, instead of a
+         drop shadow
+       - a divider in EITHER rail, separating one group of nav items from
+         another: a bar --border-hairline high, filled with --border-color.
+         Never in the content column. */
+  --border-control: 0.5px solid var(--border-color);
+  --border-transparent: 0.5px solid transparent;
+  --border-panel-ring: 0 0 0 0.5px var(--surface-content);  /* measured: a white
+     highlight edge on floating panels, NOT the border colour. Inverts on dark. */
+  --border-hairline: 0.5px; /* A divider BAR, in --border-color.
+     MEASURED, and corrected: this said 1px, with a theory attached about 0.5px
+     rounding to zero on a 1x display. The reference's own rule is
+     `.border { border-width: .5px }` — every border on it is a half pixel. On a
+     Retina display that is one physical pixel, which is exactly the hairline
+     look the system is after; 1px is twice the weight of the thing it was
+     measured from. If a 1x display ever matters, solve it there with a media
+     query — don't double the weight everywhere to pre-empt it. */
+
+  /* ---- Colour: accent. OURS ENTIRELY — the reference's interface has no colour in
+     it at all, across 19 pages in light, dark and system. So the accent can never be
+     justified by the reference; it has to earn its place on its own.
+     Its one job: a meaning the greys cannot carry — a state that is different in KIND,
+     not merely more important. Yours vs everyone else's. Live vs finished. Over the line
+     vs under it.
+     NEVER for: where you are (that is the grey pill), emphasis, a figure that is merely
+     the biggest, or decoration. If you cannot say in one sentence what the colour MEANS
+     on that screen, it does not go on. */
+  --accent: #0055ff;
+
+  /* ---- Colour: chart palette. Separate from the interface. Same hex in
+     light and dark, fixed order. The accent never appears as a data series. */
+  --chart-1: #EBC302;
+  --chart-2: #F27439;
+  --chart-3: #29BC61;
+  --chart-4: #0DB6EF;
+  --chart-5: #E869C0;
+  --chart-6: #884CFF;
+  --chart-7: #ED455C;
+  --chart-neutral: #8A8A8A;  /* "everything else" behind a highlighted series.
+     Gridlines use --border-color; axis labels use --text-secondary. */
+  --chart-stroke: 2px;       /* OURS. Minimum line weight. 1px marks in
+     --chart-1 are invisible on white (1.7:1) — see DESIGN.md, Charts. */
+  --chart-plot-ratio: 16 / 9;  /* OURS. The plot area. Not --grid-tile-ratio,
+     which is for image tiles and happens to share the number. */
+
+  /* ---- States. A deliberate departure, and an improvement on the reference.
+     The reference turns the browser outline OFF and shows focus as `inset 0 0 0 1px #000`,
+     which all but vanishes on a dark fill — on its own wordmark link it is invisible. It
+     also ships no skip link and puts 30+ tab stops before the first piece of content.
+     We don't copy any of that. Focus gets a real outline, outside the box, in the accent:
+     this is the one place the accent marks position rather than meaning, because a focus
+     ring has to be seen before it can mean anything.
+     Apply as: outline: var(--focus-outline); outline-offset: var(--focus-offset);
+     Disabled: --text-disabled for text, plus pointer-events: var(--disabled-pointer-events). */
+  --focus-outline: 2px solid var(--accent);
+  --focus-offset: 1px;
+  --disabled-pointer-events: none;
+
+  /* ---- Spacing: exactly these. Gaps use 2/4/8/12/16/32; 6 and 10 appear
+     only as control padding (10px is the measured segment padding). ------- */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-10: 10px;   /* measured: segment padding. Padding only, never a gap. */
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-32: 32px;
+  --gap-default: var(--space-8);
+
+  /* ---- Radius: nothing above 4px exists --------------------------------- */
+  --radius-none: 0;
+  --radius-small: 2px;     /* measured: a chip only (the reference's "New"
+                              chip, 10px text, ~20x16). Not a general small radius. */
+  --radius-default: 4px;   /* essentially everything */
+  --radius-track: 6px;     /* measured: the one exception — a track that
+                              WRAPS 4px controls (e.g. a segmented switch),
+                              so its corner clears theirs. Never anywhere else. */
+
+  /* ---- Shadows: none for elevation. A floating panel takes the 0.5px ring
+     above (--border-panel-ring), not a drop shadow. ------------------------- */
+
+  /* ---- Controls ---------------------------------------------------------- */
+  --control-height: 24px;
+  --control-height-touch: 32px;  /* measured: controls grow in the 390px bottom
+     bar. Use below --breakpoint-rails, or wherever touch is the primary input. */
+  --control-padding: 3px 8px;
+  --control-padding-icon: 3px 4px 3px 28px;  /* with a leading icon slot */
+  --control-hit-min: 44px;  /* reach with invisible padding, not a bigger box.
+     ISOLATED controls only — an icon button, a segment, a standalone action.
+     NOT items in a dense vertical list: at 24px on a 26px pitch, 44px targets
+     would overlap their neighbours. Dense lists meet touch by growing to
+     --control-height-touch instead. */
+  --icon-size: 16px;            /* measured: the icon box in bars and rows */
+  --info-label-width: 80px;     /* measured: the label column in a key/value pair */
+
+  /* ---- Layout -------------------------------------------------------------
+     The page never scrolls; the centre column scrolls internally.
+     Rails are flush with the centre column (no gap) and dock at the rails
+     breakpoint. Content sits --layout-rail-inset in from the rail edge, and
+     items a further --layout-rail-item-inset in (text lands 12px from the edge).
+     Centre column = viewport minus both rails (viewport - 520px), no max
+     width, once the rails are docked. */
+  --layout-rail-left: 200px;
+  --layout-rail-right: 320px;
+  --layout-rail-inset: var(--space-4);
+  --layout-rail-item-inset: var(--space-8);
+  --layout-topbar-height: 32px;
+  --layout-bottombar-height: 40px;      /* mobile only */
+  --layout-centre-width: calc(100vw - var(--layout-rail-left) - var(--layout-rail-right));
+
+  /* ---- Breakpoints: only the three that carry layout. CSS cannot use custom
+     properties inside @media, so these are the reference values to copy into
+     media queries, not variables to read.
+       --breakpoint-topbar : top bar on at 640 and up; below it the 40px
+                             bottom bar replaces it
+       --breakpoint-grid   : grid goes 1 -> 2 columns at 768 and up
+       --breakpoint-rails  : rails dock at 992 and up, undock below */
+  --breakpoint-topbar: 640px;
+  --breakpoint-grid: 768px;
+  --breakpoint-rails: 992px;
+
+  /* ---- Grid: never more than 2 columns, even at 2560px ------------------- */
+  --grid-columns-max: 2;
+  --grid-gap-column: var(--space-2);
+  --grid-gap-row: var(--space-16);
+  --grid-tile-ratio: 16 / 10;  /* measured: 457x285 = 1.6035. NOT 16/9 —
+                                  an earlier version said 16/9 and was wrong. */
+
+  /* ---- Motion. Two different languages, and conflating them was the old error.
+     COLOUR changes are short and nearly linear.
+     Anything that MOVES, APPEARS or BLURS runs on a spring. Both springs below are the
+     reference's own `linear()` curves, lifted from its stylesheet.
+       --ease-spring            settles, no overshoot. The default.
+       --ease-spring-overshoot  overshoots to 1.046 before settling. For something
+                                arriving — a panel, a dialog, a toast. Not for exits.
+     There is NO page transition: navigation is an instant swap and the reference has the
+     view transition deliberately switched off. Don't invent one. */
+  --transition-nav: 0.1s cubic-bezier(.4, 0, .2, 1);      /* nav item colour */
+  --transition-control: 0.15s cubic-bezier(.4, 0, .2, 1); /* control colour */
+  --transition-row: 0.2s cubic-bezier(.4, 0, .2, 1);      /* the CURRENT row.
+     Measured: the reference gives the row you are on `transition-all` at 200ms —
+     slower than its siblings, and it transitions everything, not just colour,
+     because that row is also cancelling its own hover. */
+  --transition-none: none;
+
+  --ease-spring: linear(0,.001 .44%,.0045 .94%,.0195 2.03%,.0446 3.19%,.0811 4.5%,.1598 6.82%,.3685 12.34%,.4693 15.17%,.5663,.6498 21.27%,.7215 24.39%,.7532 25.98%,.7829 27.65%,.8105,.8349 31.14%,.8573 32.95%,.8776 34.84%,.8964 36.87%,.9136 39.05%,.929 41.37%,.9421 43.77%,.9537 46.38%,.9636 49.14%,.9789 55.31%,.9888 62.35%,.9949 71.06%,.9982 82.52%,.9997 99.94%);
+  --ease-spring-overshoot: linear(0,.0018,.0069,.0151 1.74%,.0277 2.4%,.062 3.7%,.1115 5.15%,.2211 7.77%,.4778 13.21%,.5912 15.75%,.6987 18.44%,.7862 20.98%,.861 23.59%,.8926,.9205,.945 27.51%,.9671 28.89%,.9868,1.003 31.79%,1.0224 34.11%,1.0358 36.58%,1.0436 39.27%,1.046 42.31%,1.0446 44.71%,1.0406 47.47%,1.0118 61.84%,1.0027 69.53%,.9981 80.49%,.9991 99.94%);
+  --duration-spring: 0.332s;
+  --duration-spring-slow: 0.498s;
+
+  /* Ready-made pairs. Use these rather than assembling timings by hand. */
+  --transition-move: translate var(--duration-spring) var(--ease-spring),
+                     scale var(--duration-spring) var(--ease-spring),
+                     rotate var(--duration-spring) var(--ease-spring);
+  --transition-reveal: opacity var(--duration-spring) var(--ease-spring),
+                       filter var(--duration-spring) var(--ease-spring),
+                       translate var(--duration-spring) var(--ease-spring);
+  --transition-panel: width var(--duration-spring-slow) var(--ease-spring),
+                      translate var(--duration-spring-slow) var(--ease-spring);
+  --blur-enter: 8px;   /* what a revealed thing blurs FROM. Measured 8-20px; 8 is the
+                          common case. It always animates to 0. */
+
+  /* ---- Hover must be gated -------------------------------------------------
+     The reference wraps ALL hover styling in @media (hover: hover) so touch
+     devices never get a stuck hover state. Components must do the same. A
+     token file cannot enforce it:
+       @media (hover: hover) { .nav-item:hover { background: var(--surface-selected); } } */
+
+  /* ---- Reading measure --------------------------------------------------- */
+  --measure-reading: 66ch;
+}
+
+/* ==========================================================================
+   DARK MODE
+   All values measured. Only colour tokens are redefined.
+   The two blocks below must be kept identical.
+
+   Known gap: the reference drops its font weight from 335 to 325 in dark
+   mode to counter optical bloom (light text on dark looks heavier).
+   Instrument Sans' wght axis floor is 400, so we cannot do this. Weight
+   stays 400 in both themes.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --text-primary: #ffffff;
+    --text-secondary: #999999;
+    --text-on-accent: #ffffff;
+    --text-disabled: #666666;
+
+    --surface-content: #000000;
+    --surface-rail: #0f0f0f;
+    --surface-strong: #1a1a1a;
+    --surface-soft: #0a0a0a;
+
+    --border-color: #242424;
+    --border-soft: #171717;
+
+    --accent: #4d8bff;
+
+    /* Chart palette: unchanged from light */
+    --chart-1: #EBC302;
+    --chart-2: #F27439;
+    --chart-3: #29BC61;
+    --chart-4: #0DB6EF;
+    --chart-5: #E869C0;
+    --chart-6: #884CFF;
+    --chart-7: #ED455C;
+    --chart-neutral: #8A8A8A;
+  }
+}
+
+[data-theme="dark"] {
+  --text-primary: #ffffff;
+  --text-secondary: #999999;
+  --text-on-accent: #ffffff;
+  --text-disabled: #666666;
+
+  --surface-content: #000000;
+  --surface-rail: #0f0f0f;
+  --surface-strong: #1a1a1a;
+  --surface-soft: #0a0a0a;
+
+  --border-color: #242424;
+  --border-soft: #171717;
+
+  --accent: #4d8bff;
+
+  /* Chart palette: unchanged from light */
+  --chart-1: #EBC302;
+  --chart-2: #F27439;
+  --chart-3: #29BC61;
+  --chart-4: #0DB6EF;
+  --chart-5: #E869C0;
+  --chart-6: #884CFF;
+  --chart-7: #ED455C;
+  --chart-neutral: #8A8A8A;
+}
