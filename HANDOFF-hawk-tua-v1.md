@@ -40,7 +40,8 @@ still uses the raw figure, so it overrates pass-catchers.
 
 ## Running it
 
-The standings page needs nothing — open it through any local server:
+The standings page needs nothing — double-click it and it loads live from Sleeper (checked
+9 Nov 2026). Or through a local server:
 
 ```bash
 cd public && python3 -m http.server 8000   # then http://localhost:8000/standings.html
