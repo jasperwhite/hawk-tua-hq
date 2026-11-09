@@ -52,8 +52,8 @@ has a `hq-dev` entry on port 5174.
 ## Hosting — not up to date
 
 The repo is public at `github.com/jasperwhite/hawk-tua-hq` and GitHub Pages republishes on
-every push to `main`. **The last 16 commits were never pushed** — everything from the
-standings page on. So on 9 Nov 2026 the HQ was live at
+every push to `main`. **Nothing since 14 Oct 2026 was pushed** — the standings page
+and everything after it. So on 9 Nov 2026 the HQ was live at
 https://jasperwhite.github.io/hawk-tua-hq/ but `/standings.html` was a 404. A
 `git push` publishes it.
 
@@ -67,5 +67,5 @@ https://jasperwhite.github.io/hawk-tua-hq/ but `/standings.html` was a 404. A
 
 ## Status
 
-v0.4.1 plus the standings work through week 9 (Oct–Nov 2026). Everything committed; 16
-commits ahead of GitHub.
+v0.4.1 plus the standings work through week 9 (Oct–Nov 2026). Everything committed;
+nothing since 14 Oct pushed to GitHub.

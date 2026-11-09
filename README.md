@@ -15,7 +15,7 @@ Every tab renders against the live league with no console errors, in light and d
 mode, at phone and desktop width, both locally and on the live link.
 
 Moving it to a new Mac: `HANDOFF-hawk-tua-v1.md`, and paste `PROMPT for new Claude.md`
-into the new Claude. **16 commits aren't pushed yet**, so `/standings.html` isn't live.
+into the new Claude. **Nothing since 14 Oct is pushed**, so `/standings.html` isn't live.
 
 ## How to run it
 
