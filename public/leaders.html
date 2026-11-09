@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>NFL Scoring Leaders</title>
+<meta name="description" content="Every NFL player this season, scored with the NFL Casuals rules.">
+<link rel="icon" href="./favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* One white column: masthead, a row of text controls, one long table. */
+:root{
+  --paper:#ffffff; --ink:#111314; --mid:#5f6668; --faint:#9aa1a3;
+  --rule:#eceeee; --rule-firm:#dcdfdf; --accent:#d9761f; --wash:#f7f8f8;
+  --sans:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper)}
+body{color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:44px 80px}
+
+.kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:var(--faint);margin:0}
+h1{font-size:clamp(34px,6.2vw,52px);font-weight:600;letter-spacing:-.035em;line-height:1;margin:14px 0 0;text-wrap:balance}
+.standfirst{max-width:52ch;color:var(--mid);font-size:15px;margin:14px 0 0}
+.standfirst b{color:var(--ink);font-weight:500}
+
+.bar{display:flex;align-items:flex-end;justify-content:space-between;gap:20px 28px;flex-wrap:wrap;
+  margin-top:34px;padding-bottom:12px;border-bottom:1px solid var(--rule-firm)}
+.group{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;min-width:0}
+.lbl{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--faint)}
+.tx{background:none;border:0;padding:0 0 3px;font:inherit;font-size:14px;color:var(--mid);cursor:pointer;
+  border-bottom:1.5px solid transparent;letter-spacing:-.005em}
+.tx:hover{color:var(--ink)}
+.tx[aria-pressed="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
+#q{font:inherit;font-size:14px;color:var(--ink);background:none;border:0;border-bottom:1px solid var(--rule-firm);
+  padding:0 0 4px;width:150px;outline:none}
+#q::placeholder{color:var(--faint)}
+#q:focus{border-bottom-color:var(--accent)}
+
+.scroll{overflow-x:auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);
+  font-weight:400;text-align:right;padding:16px 0 10px 18px;white-space:nowrap;cursor:pointer}
+th:hover{color:var(--ink)}
+th[aria-sort]{color:var(--ink)}
+th.l{text-align:left;padding-left:0}
+td{padding:11px 0 11px 18px;border-top:1px solid var(--rule);text-align:right;white-space:nowrap;vertical-align:middle}
+td.l{text-align:left;padding-left:0}
+tbody tr:hover td{background:var(--wash)}
+.rank{font-family:var(--mono);font-size:12px;color:var(--faint);width:36px;padding-left:0}
+.nm{font-weight:500;letter-spacing:-.01em}
+.meta2{font-family:var(--mono);font-size:11px;color:var(--faint);letter-spacing:.02em;margin-top:2px}
+.n{font-family:var(--mono);font-size:14px}
+.n.lead{font-weight:500}
+.n.off{color:var(--faint)}
+.delta{font-family:var(--mono);font-size:12px;color:var(--faint)}
+.delta.up{color:var(--mid)}
+.state{padding:70px 0;text-align:center;font-family:var(--mono);font-size:12px;color:var(--faint)}
+.more{margin-top:26px;background:none;border:0;padding:0;font:inherit;font-size:14px;color:var(--mid);
+  cursor:pointer;border-bottom:1px solid var(--rule-firm)}
+.more:hover{color:var(--ink);border-bottom-color:var(--accent)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--rule);color:var(--faint);font-size:13px;max-width:60ch}
+footer a{color:var(--mid)}
+@media (max-width:560px){
+  .wrap{padding-block:30px 64px}
+  td,th{padding-left:12px}
+  .n{font-size:13px}
+  .vstd{display:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker" id="kicker">2026 season</p>
+  <h1>NFL scoring leaders</h1>
+  <p class="standfirst" id="stand">Every player in the league, scored the way <b>NFL Casuals</b> scores them — a point for every receiving first down, four-point passing touchdowns, distance kicking, three-and-outs for defences.</p>
+
+  <div class="bar">
+    <div class="group"><span class="lbl">Position</span><span id="pos" class="group"></span></div>
+    <div class="group"><span class="lbl">Rank by</span><span id="sortby" class="group"></span></div>
+    <div class="group"><label class="lbl" for="q">Find</label><input id="q" type="search" placeholder="Player name" autocomplete="off"></div>
+  </div>
+
+  <div class="scroll"><table><thead id="head"></thead><tbody id="body"></tbody></table></div>
+  <div class="state" id="state">Loading this season…</div>
+  <button class="more" id="more" hidden></button>
+
+  <footer>
+    Built from every week's real stat lines each time you open this page, so the current week fills in as games finish. Points are this league's
+    <span id="rulecount">scoring settings</span> applied to real stat lines, so they match what Sleeper paid out.
+    Standard is half-PPR. <a href="./index.html">Hawk Tua HQ</a>
+  </footer>
+</div>
+
+<script>
+const LEAGUE = '1312056164149641216';
+const API = 'https://api.sleeper.app/v1';
+const POS = ['QB','RB','WR','TE','K','DEF'];
+const $ = id => document.getElementById(id);
+const f1 = n => (Math.round((n||0)*10)/10).toFixed(1);
+
+let rows = [], pos = 'ALL', by = 'total', q = '', limit = 50;
+
+const SORTS = [['total','Total'],['pg','Per game']];
+
+function chips(host, items, get, set){
+  host.innerHTML = '';
+  items.forEach(([v,label]) => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'tx'; b.textContent = label;
+    b.setAttribute('aria-pressed', String(get() === v));
+    b.onclick = () => { set(v); limit = 50; paint(); };
+    host.append(b);
+  });
+}
+
+/* Sleeper's season-to-date aggregate lags: mid-week some players carry the current
+   week and some don't. Totals are summed from the weekly stat lines instead, which
+   are right as soon as a game ends. Finished weeks never change, so they are kept
+   in localStorage as scored points and only the live week is refetched. */
+const cache = {
+  get(k){ try { return JSON.parse(localStorage.getItem('nflld.' + k) || 'null') } catch { return null } },
+  set(k, v){ try { v == null ? localStorage.removeItem('nflld.' + k) : localStorage.setItem('nflld.' + k, JSON.stringify(v)) } catch { /* private window */ } },
+};
+
+function scoreWeek(stats, sc){
+  const out = {};
+  for (const id in stats){
+    const s = stats[id];
+    let pts = 0;
+    for (const k in sc) if (s[k]) pts += s[k] * sc[k];
+    const gp = s.gp ? 1 : 0;
+    if (pts || gp) out[id] = [Math.round(pts * 100) / 100, gp, Math.round((s.pts_half_ppr || 0) * 100) / 100];
+  }
+  return out;
+}
+
+async function load(){
+  const [league, state] = await Promise.all([
+    fetch(`${API}/league/${LEAGUE}`).then(r => r.json()),
+    fetch(`${API}/state/nfl`).then(r => r.json()),
+  ]);
+  const season = league.season, week = Math.min(state.week || 1, 18);
+
+  const sc = {};
+  for (const k in league.scoring_settings) if (league.scoring_settings[k]) sc[k] = league.scoring_settings[k];
+  const tag = season + ':' + Object.keys(sc).length + ':' + Object.values(sc).join(',');
+  if (cache.get('tag') !== tag) { for (let w = 1; w <= 18; w++) cache.set('w' + season + '.' + w, null); cache.set('tag', tag); }
+
+  const players = await fetch('./nfl-players.json').then(r => r.json());
+  const weeks = await Promise.all(Array.from({ length: week }, (_, i) => i + 1).map(async w => {
+    const key = 'w' + season + '.' + w;
+    const hit = w < week ? cache.get(key) : null;
+    if (hit) return hit;
+    const raw = await fetch(`${API}/stats/nfl/regular/${season}/${w}`).then(r => r.json()).catch(() => ({}));
+    const scored = scoreWeek(raw, sc);
+    if (w < week) cache.set(key, scored);
+    return scored;
+  }));
+
+  const by = {};
+  weeks.forEach(wk => {
+    for (const id in wk){
+      const [pts, gp, std] = wk[id];
+      const r = by[id] || (by[id] = { total: 0, gp: 0, std: 0 });
+      r.total += pts; r.gp += gp; r.std += std;
+    }
+  });
+
+  rows = [];
+  for (const id in by){
+    const info = players[id]; if (!info) continue;
+    const r = by[id];
+    if (!r.gp && !r.total) continue;
+    rows.push({
+      id, name: info[0], pos: info[1], team: info[2],
+      gp: r.gp, total: r.total, pg: r.gp ? r.total / r.gp : 0,
+      std: r.std, delta: r.total - r.std,
+    });
+  }
+
+  $('rulecount').textContent = Object.keys(sc).length + ' scoring settings';
+  $('kicker').textContent = `${season} season · weeks 1\u2013${week}`;
+  $('state').hidden = true;
+}
+
+function paint(){
+  chips($('pos'), [['ALL','All'], ...POS.map(p => [p,p])], () => pos, v => pos = v);
+  chips($('sortby'), SORTS, () => by, v => by = v);
+
+  const term = q.trim().toLowerCase();
+  const list = rows
+    .filter(r => (pos === 'ALL' || r.pos === pos) && (!term || r.name.toLowerCase().includes(term)))
+    .sort((a, b) => b[by] - a[by]);
+  const shown = list.slice(0, limit);
+
+  $('head').innerHTML = `<tr>
+    <th class="l"></th><th class="l">Player</th>
+    <th>G</th>
+    <th data-k="total"${by === 'total' ? ' aria-sort="descending"' : ''}>Total</th>
+    <th data-k="pg"${by === 'pg' ? ' aria-sort="descending"' : ''}>Per game</th>
+    <th class="vstd">vs standard</th></tr>`;
+  [...$('head').querySelectorAll('th[data-k]')].forEach(th =>
+    th.onclick = () => { by = th.dataset.k; limit = 50; paint(); });
+
+  $('body').innerHTML = shown.map((r, i) => `<tr>
+      <td class="rank">${i + 1}</td>
+      <td class="l"><div class="nm">${r.pos === 'DEF' ? r.name + ' D/ST' : r.name}</div>
+        <div class="meta2">${r.pos}${r.team ? ' · ' + r.team : ''}</div></td>
+      <td class="n off">${r.gp || '–'}</td>
+      <td class="n${by === 'total' ? ' lead' : ' off'}">${f1(r.total)}</td>
+      <td class="n${by === 'pg' ? ' lead' : ' off'}">${f1(r.pg)}</td>
+      <td class="vstd delta${r.delta > 0.05 ? ' up' : ''}">${r.delta >= 0 ? '+' : '−'}${f1(Math.abs(r.delta))}</td>
+    </tr>`).join('');
+
+  const rest = list.length - shown.length;
+  $('more').hidden = rest <= 0;
+  $('more').textContent = `Show ${Math.min(rest, 150)} more`;
+  if (!list.length) $('body').innerHTML = `<tr><td class="l" colspan="6" style="color:var(--faint);padding:28px 0">Nobody matches that.</td></tr>`;
+}
+
+$('q').oninput = e => { q = e.target.value; limit = 50; paint(); };
+$('more').onclick = () => { limit += 150; paint(); };
+
+load().then(paint).catch(err => {
+  console.error(err);
+  $('state').textContent = "Couldn't reach Sleeper — " + err.message;
+});
+</script>
+</body>
+</html>

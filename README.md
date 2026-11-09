@@ -12,7 +12,14 @@ verdicts first, one-line reasons, tabs for the working.
 
 ## Status
 
-**v0.3.3 — the shell and the Players tab are rebuilt on Jasper's design system**
+**Two lines of work joined here on 9 Nov 2026.** The work Mac's copy (v0.4.1, Opaline,
+plus the league standings page) was merged with this Mac's copy (the design-system
+rebuild of the shell and Players). Both are kept.
+
+**League standings** (`public/standings.html`) — the minimal one. One HTML file, no build,
+loads live from Sleeper every time it opens. See `HANDOFF-hawk-tua-v1.md`.
+
+**Hawk Tua HQ** — the shell and the Players tab are rebuilt on Jasper's design system
 (`~/Claude/Design System`, via `/design`). Hawk Tua HQ is its first consumer and its
 first real test.
 
@@ -45,6 +52,9 @@ somewhere to be worked through.
 - ESPN scoreboard fetches are blocked by CORS from a localhost origin; the deployed build
   is unaffected and the Sleeper data loads either way.
 
+Moving it to a new Mac: `HANDOFF-hawk-tua-v1.md`, and paste `PROMPT for new Claude.md`
+into the new Claude. **Nothing since 14 Oct is pushed**, so `/standings.html` isn't live yet.
+
 ## How to run it
 
 React + Vite + Tailwind, with the Opaline liquid-glass components (shadcn registry
@@ -72,6 +82,8 @@ and Firefox get frosted glass instead, which is fine.
 | `src/components/hq-ui.tsx` | Shared pieces: panels, tables, chips, steps, bars, filters. |
 | `src/components/ui/opaline/` | The Opaline components, as installed by shadcn. Edit in place if needed. |
 | `src/app.css` | The app's tokens (orange accent, wallpaper, table styles) for light and dark. |
+| `public/leaders.html` | Standalone page at `/leaders.html`: every NFL player ranked by points under this league's scoring. Plain HTML and CSS, no build step, reads `public/nfl-players.json` for names. |
+| `public/standings.html` | Standalone page at `/standings.html`: schedule comparison, all-play record and actual vs projected, all live from Sleeper. Plain HTML, no build step. `?league=` and `?team=` pick another league or team. |
 | `.github/workflows/pages.yml` | Builds and publishes to GitHub Pages on every push to `main`. |
 
 ## How the calls are made

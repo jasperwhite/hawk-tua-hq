@@ -1,5 +1,90 @@
 # Changelog
 
+## 0.4.1 — 2026-10-20
+New standalone page, **`/standings.html`**: three tables for telling good from lucky, plain
+Helvetica, black and white. Modelled on Dynasty Daddy's league standings.
+
+- **Schedule comparison.** Every team's scores run against every other team's schedule.
+  The week a team would meet itself, it plays the schedule's owner instead. A **Luck**
+  column is real wins minus the average across all schedules.
+  An **Average** row under the grid gives the record a typical team would post on each
+  schedule (added after the week 7 refresh).
+- **League play record.** Every team against all nine others, every week, shaded white to
+  black by how much of the league it would have beaten.
+- **Against projection.** Each week, what a team's starters scored against what Sleeper
+  projected for those same starters, scored with this league's rules. Tap a team for the
+  projected and scored numbers.
+
+**Sleeper's projected receiving first downs are a placeholder:** always receiving yards ÷
+10, about 2.4 times the real rate (yards ÷ 24 this season). With 1 pt a first down, that
+put every team 20 points a week under projection. The page replaces it with the real rate
+by position. **The main app still uses the raw figure**, so it overrates pass-catchers.
+
+Same day, second pass:
+- Green and red washes instead of black and white, as on Dynasty Daddy: a winning record
+  is green, a losing one red, stronger the further from even.
+- Each team's Sleeper photo next to its name, and above each schedule column.
+- Schedule comparison has three numbered steps on how to read it, plus a line that spells
+  out whichever square you hover or tap ("Hawk Tua, playing Bill Belichick's schedule,
+  would be 5-1"). It opens on your kindest schedule.
+- Totals, Win %, Luck and the projection sums stay pinned to the right when a table
+  scrolls sideways. Weeks not yet played aren't shown.
+- Your team is marked with a YOU tag instead of an arrow.
+
+**Schedule ahead** (fourth table): every team's remaining opponents, each coloured by
+that opponent's own league play rank (#1 deepest red, #10 deepest green), whoever's
+schedule it's on. Sorted hardest first by opponents' average league play win %, with
+their average rank alongside. Hawk Tua has the second-hardest run (51.2%). An earlier
+version coloured opponents by above or below the team itself; Jasper didn't want that.
+
+**Scoring form**: every team's rolling three-week scoring average on one chart, one
+colour each, with a colour key underneath (latest average, face, name; highest first).
+Starts at week 3, the first week with three scores behind it. Hover or tap a line or a
+name to pick it out; your team's line is thicker on the web. Replaced a first pass of one
+small chart per team, then one with labels at the line ends.
+
+**Draft board**: the whole draft as a grid, one column per team in draft order, one row
+per round, each pick with headshot, pick number, the position rank it was drafted at,
+points so far and its position rank now. Coloured by its points against the average of
+the same-position players drafted around it (two either side), on a log scale: double is
+deepest green, half is deepest red. A first pass measured each pick against the Nth-best
+scorer at its drafted rank, but that turns most picks red because the best scorers so far
+are partly luck. Bottom row is each team's Return: its picks' points against their peers'.
+Points are summed from `/v1/stats/nfl/regular/{season}/{w}` with the league's scoring and
+cached per finished week.
+
+**Projected winners**: for every team and week, whether the projection had it as favourite
+or underdog (higher projected total for the starters who played) and whether it won. Pale
+squares are games the projection called, deep ones are misses; a last row counts the calls
+right per week. Weeks 1–6: 17 of 30, 9 of 18 when the projected gap was under 10 points and
+8 of 12 when it was wider. Filled in by `renderProj` once the projections load, so it shares
+the cache. Hawk Tua was favoured three times and lost all three.
+
+Export cards: `standings.html?export=swap|allplay|form|ahead|proj|calls|draft` draws one table on a 1080×1440
+card with the same header on each (league · season · weeks, title, one-line subtitle), a
+key underneath and no YOU tag. Screenshot at 2x with headless Chrome:
+`Google Chrome --headless=new --window-size=1080,1440 --force-device-scale-factor=2
+--virtual-time-budget=40000 --screenshot=out.png "<url>?export=swap"`.
+
+League play matches Dynasty Daddy exactly. Schedule comparison matches 84 of 100 cells;
+the rest differ only in the week a team meets itself, where Dynasty Daddy does something
+undocumented.
+
+## 0.4.0 — 2026-10-19
+New standalone page, **`/leaders.html`**: every NFL player this season ranked by what
+they scored under this league's rules.
+
+- Filter by position, rank by total or per game, search by name.
+- A **vs standard** column shows what this league's scoring is worth to each player
+  against half-PPR — Jaxon Smith-Njigba is +29.0, Josh Allen is −4.0.
+- Plain white, no glass, its own URL.
+
+**Totals come from the weekly stat lines, not Sleeper's season aggregate.** That
+aggregate lags mid-week — on 19 Oct it had Jaxon Smith-Njigba's week 6 but not Josh
+Allen's, so a leaderboard built on it mixes five-game and six-game totals. The page
+sums each week instead and keeps finished weeks in localStorage, so only the live
+week is refetched.
+
 ## 0.3.3 — 2026-10-14
 Between the last game of a week and the waiver run, every free agent shows as
 **Waivers**, bye-week teams included.
