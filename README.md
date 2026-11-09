@@ -14,6 +14,9 @@ verdicts first, one-line reasons, tabs for the working.
 Every tab renders against the live league with no console errors, in light and dark
 mode, at phone and desktop width, both locally and on the live link.
 
+Moving it to a new Mac: `HANDOFF-hawk-tua-v1.md`, and paste `PROMPT for new Claude.md`
+into the new Claude. **16 commits aren't pushed yet**, so `/standings.html` isn't live.
+
 ## How to run it
 
 React + Vite + Tailwind, with the Opaline liquid-glass components (shadcn registry
