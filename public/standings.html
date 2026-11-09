@@ -282,6 +282,58 @@ html:not(.export) .flegend li{font-size:12px}
 .info-foot button{text-align:left;color:var(--text-secondary);text-decoration:underline;text-underline-offset:2px}
 @media (hover:hover){.info-foot button:hover{color:var(--text-primary)}}
 .legend__row dt kbd + kbd{margin-left:2px}
+
+/* ---------- Compact: tables, faces and the draft board sized to the 12px interface ---------- */
+html:not(.export) td{height:28px}
+html:not(.export) .face{width:18px;height:18px;font-size:8px}
+html:not(.export) th .face{width:20px;height:20px;margin-bottom:4px}
+html:not(.export) .tm{gap:6px}
+html:not(.export) .op .face,html:not(.export) .flegend .face{width:18px;height:18px}
+html:not(.export) .scroll{margin-top:var(--space-16)}
+html:not(.export) .steps{margin-top:var(--space-12);gap:var(--space-8) var(--space-16)}
+html:not(.export) .steps li{padding-top:var(--space-8)}
+html:not(.export) .steps li::before{font-size:10px;line-height:10px}
+html:not(.export) .reader{margin-top:var(--space-12);min-height:0}
+html:not(.export) .key{margin-top:var(--space-12);gap:var(--space-12)}
+html:not(.export) .sw{width:10px;height:10px}
+html:not(.export) #calls td{height:36px;line-height:12px}
+html:not(.export) #calls td .rs{font-size:12px}
+html:not(.export) #calls td .fv{font-size:10px;margin-top:0}
+html:not(.export) #draft{min-width:760px}
+html:not(.export) #draft th .tn{font-size:10px}
+html:not(.export) #draft td.dc{padding:3px 4px 4px;border-width:1px;line-height:12px}
+html:not(.export) #draft .ph{display:none}
+html:not(.export) #draft .dt{font-size:10px;line-height:10px;opacity:1;color:inherit}
+html:not(.export) #draft .pn{font-size:12px;line-height:14px;margin-top:2px}
+html:not(.export) #draft .pp{font-size:10px;line-height:10px;margin-top:1px}
+html:not(.export) #draft tr.ret td{height:28px;font-size:12px}
+html:not(.export) #draft td.rd{font-size:10px}
+html:not(.export) #ahead th{min-width:44px}
+html:not(.export) #ahead td.rank,html:not(.export) #allplay td.rank{font-size:10px}
+
+/* This week */
+#live td.yet{color:var(--text-secondary);white-space:normal;min-width:180px;padding-left:var(--space-12);line-height:14px}
+#live tr.g2nd td{border-top:0}
+#live tr.g1st td{border-top:0.5px solid var(--border-color)}
+#live tbody tr.g1st:first-child td{border-top:0}
+#live th{min-width:72px}
+
+/* Scoring leaders */
+.lead-pos{margin-top:var(--space-12)}
+#leaders td.rk{color:var(--text-secondary);width:28px;font-size:10px}
+#leaders .pl{display:block}
+#leaders .sub{display:block;font-size:10px;line-height:10px;color:var(--text-secondary);margin-top:2px}
+#leaders td{height:32px}
+#leaders td.own{color:var(--text-secondary);padding-right:var(--space-12)}
+#leaders tr.mine td.own{color:var(--accent)}
+#leaders th.sortable{cursor:pointer}
+#leaders th[aria-sort]{color:var(--text-primary)}
+#leaders th{min-width:64px}
+#leaders .own-m{display:none}
+#leaders tr.mine .own-m{color:var(--accent)}
+@media (max-width:639.98px){#leaders .own{display:none}#leaders .own-m{display:inline}#leaders th{min-width:48px}#live td.yet,#live th.yet{display:none}#live th{min-width:56px}}
+.mine-sw{background:var(--accent);border-radius:50%}
+.more{margin-top:var(--space-8)}
 /* Export cards: the shell disappears and the old 1080×1440 card takes the page */
 html.export .rail-nav,html.export .info-rail,html.export .toolbar,html.export .skip,html.export .legend{display:none}
 html.export .shell{display:block;height:auto;overflow:visible}
@@ -391,6 +443,13 @@ async function load() {
   if (!last && league.season === state.season) last = Math.max(0, (state.week || 1) - 1);
   last = Math.min(last, playoffStart - 1);
   const regWeeks = playoffStart - 1;
+  // The week being played now counts too, live, once Sleeper has any points for it.
+  let live = 0, liveRaw = null;
+  const cur = state.week || 0;
+  if (league.season === state.season && state.season_type === 'regular' && cur > last && cur <= regWeeks) {
+    liveRaw = await get(`/league/${LEAGUE}/matchups/${cur}`);
+    if (liveRaw.some(m => m.points > 0)) { live = cur; last = cur; }
+  }
 
   const byUser = Object.fromEntries(users.map(u => [u.user_id, u]));
   const teams = rosters.map(r => {
@@ -406,7 +465,7 @@ async function load() {
 
   const weeks = [];
   for (let w = 1; w <= last; w++) weeks.push(w);
-  const raw = await Promise.all(weeks.map(w => get(`/league/${LEAGUE}/matchups/${w}`)));
+  const raw = await Promise.all(weeks.map(w => w === live ? liveRaw : get(`/league/${LEAGUE}/matchups/${w}`)));
 
   // pts[w][rid], opp[w][rid]
   const pts = {}, opp = {};
@@ -435,7 +494,10 @@ async function load() {
     for (const g of Object.values(groups)) if (g.length === 2) { opp[w][g[0]] = g[1]; opp[w][g[1]] = g[0]; }
   });
 
-  return { league, teams, weeks, ahead, regWeeks, pts, opp, starters };
+  // Who owns whom, for the scoring leaders.
+  const owner = {};
+  rosters.forEach(r => (r.players || []).forEach(pid => { owner[pid] = r.roster_id; }));
+  return { league, state, teams, weeks, done: weeks.filter(w => w !== live), live, liveRaw, ahead, regWeeks, pts, opp, starters, owner };
 }
 
 // Team A's record if it had played team B's schedule.
@@ -465,7 +527,7 @@ function allPlayWeek(d, a, wk) {
 
 function render(d) {
   const n = d.teams.length;
-  $('#kicker').textContent = `${d.league.season} · ${n} teams · through week ${d.weeks.length}`;
+  $('#kicker').textContent = `${d.league.season} · ${n} teams · ` + (d.live ? `week ${d.live} live` : `through week ${d.weeks.length}`);
   $('#xkicker').textContent = $('#kicker').textContent;
   $('#brand').textContent = d.league.name;
   $('#stand').textContent = 'Two ways to separate a good team from a lucky one: swap everyone’s schedule, and play everyone, every week.';
@@ -695,7 +757,7 @@ async function loadProjections(d) {
   const sc = d.league.scoring_settings || {};
   const out = {};
   await Promise.all(d.weeks.map(async w => {
-    const hit = cacheGet(w);
+    const hit = w === d.live ? null : cacheGet(w);
     if (hit) { out[w] = hit; return; }
     const rows = await getUrl(`https://api.sleeper.app/projections/nfl/${d.league.season}/${w}?season_type=regular&${POS_QS}`);
     const byId = {};
@@ -706,7 +768,7 @@ async function loadProjections(d) {
     const wk = {};
     for (const t of d.teams) wk[t.id] = (d.starters[w][t.id] || []).reduce((s, id) => s + (byId[id] || 0), 0);
     out[w] = wk;
-    cacheSet(w, wk);
+    if (w !== d.live) cacheSet(w, wk);
   }));
   return out;
 }
@@ -802,11 +864,11 @@ async function loadPoints(d) {
   const tag = Object.entries(sc).join(';').length;
   const weeks = await Promise.all(d.weeks.map(async w => {
     const key = `standings-pts-v1-${d.league.season}-${w}-${tag}`;
-    try { const hit = JSON.parse(localStorage.getItem(key)); if (hit) return hit; } catch {}
+    if (w !== d.live) try { const hit = JSON.parse(localStorage.getItem(key)); if (hit) return hit; } catch {}
     const raw = await get(`/stats/nfl/regular/${d.league.season}/${w}`);
     const out = {};
     for (const id in raw) { let p = 0; for (const k in sc) if (raw[id][k]) p += raw[id][k] * sc[k]; if (p) out[id] = Math.round(p * 100) / 100; }
-    try { localStorage.setItem(key, JSON.stringify(out)); } catch {}
+    if (w !== d.live) try { localStorage.setItem(key, JSON.stringify(out)); } catch {}
     return out;
   }));
   const tot = {};
@@ -888,19 +950,180 @@ function renderDraft(d, { draft, list }) {
 
 load().then(d => {
   render(d);
+  if (!EXPORT) addSections(d);
   shell(d);
   if (!d.weeks.length) return;
   if (d.league.draft_id && (!EXPORT || EXPORT === 'draft')) loadDraft(d).then(x => renderDraft(d, x)).catch(err => {
     $('#draftout').innerHTML = `<div class="state">Couldn\u2019t load the draft. ${esc(err.message)}</div>`;
   });
   if (EXPORT && EXPORT !== 'proj' && EXPORT !== 'calls') return;
-  loadProjections(d).then(p => renderProj(d, p)).catch(err => {
+  const fin = { ...d, weeks: d.done };
+  if (!EXPORT) loadLive(d).then(x => renderLive(d, x)).catch(err => {
+    $('#liveout').innerHTML = `<div class="state">Couldn\u2019t load this week. ${esc(err.message)}</div>`;
+  });
+  loadProjections(fin).then(p => renderProj(fin, p)).catch(err => {
     $('#projout').innerHTML = `<div class="state">Couldn\u2019t load projections. ${esc(err.message)}</div>`;
   });
 }).catch(err => {
   $('#stand').textContent = '';
   $('#out').innerHTML = `<div class="state">Couldn’t load league ${esc(LEAGUE)}. ${esc(err.message)}</div>`;
 });
+
+
+// ================= This week: live scores and predicted finals =================
+// Normal CDF, for turning a projected margin into a win chance.
+const phi = z => { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const p = 0.3989423 * Math.exp(-z * z / 2) * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; };
+// Sleeper's weekly projections run high by position in this league's scoring (measured 2025–26).
+const PROJ_BIAS = { WR: 3.3, TE: 2.1, RB: 1.4 };
+const PLAYER_SD = 7.5;   // spread of one player's score around his projection
+
+function addSections(d) {
+  const week = d.live || d.ahead[0];
+  if (week) $('#out').insertAdjacentHTML('afterbegin', `<section data-k="week">
+    <h2>Week ${week}</h2>
+    <p class="note">${d.live ? 'Live scores, and where each game is heading. Players still to play are added at their projection, trimmed the way Sleeper’s run high.' : 'Each game, projected. The week hasn’t started.'}</p>
+    <div id="liveout"><div class="state">Loading week ${week}…</div></div></section>`);
+  $('#out').insertAdjacentHTML('beforeend', `<section data-k="leaders">
+    <h2>Scoring leaders</h2>
+    <p class="note">Every player, in this league’s scoring, weeks 1–${d.state.week}. The current week counts as soon as a game finishes, so reload after each one.</p>
+    <div class="seg lead-pos" role="group" aria-label="Position">${['QB','RB','WR','TE','K','DEF'].map((p, i) => `<button class="seg__btn" type="button" data-pos="${p}" aria-pressed="${i === 0}">${p}</button>`).join('')}</div>
+    <div id="leadout"><div class="state">Loading…</div></div></section>`);
+  initLeaders(d);
+}
+
+async function loadLive(d) {
+  const w = d.live || d.ahead[0];
+  if (!w) return null;
+  const sc = d.league.scoring_settings || {};
+  const ms = d.live ? d.liveRaw : await get(`/league/${LEAGUE}/matchups/${w}`);
+  const [rows, stats] = await Promise.all([
+    getUrl(`https://api.sleeper.app/projections/nfl/${d.league.season}/${w}?season_type=regular&${POS_QS}`),
+    d.live ? get(`/stats/nfl/regular/${d.league.season}/${w}`) : Promise.resolve({}),
+  ]);
+  const proj = {}, info = {};
+  for (const r of rows) {
+    const pos = (r.player && r.player.fantasy_positions && r.player.fantasy_positions[0]) || r.player?.position;
+    const out = r.player && /^(Out|IR|PUP|Sus)/i.test(r.player.injury_status || '');
+    proj[r.player_id] = out ? 0 : Math.max(0, projPoints(r.stats || {}, pos, sc) - (PROJ_BIAS[pos] || 0));
+    info[r.player_id] = { pos, name: r.player ? `${(r.player.first_name || '')[0] || ''}. ${r.player.last_name || ''}` : r.player_id };
+  }
+  const team = {};
+  for (const m of ms) {
+    const st = (m.starters || []).filter(x => x && x !== '0');
+    const pp = m.players_points || {};
+    let left = 0, n = 0;
+    const yet = [];
+    for (const id of st) if (!(stats[id] && stats[id].gp)) { left += proj[id] || 0; n++; yet.push(id); }
+    team[m.roster_id] = { now: m.points || 0, left, n, yet, mid: m.matchup_id };
+  }
+  return { w, team, info, proj };
+}
+
+function renderLive(d, x) {
+  if (!x) { $('#liveout').innerHTML = '<div class="state">No games this week.</div>'; return; }
+  const byId = Object.fromEntries(d.teams.map(t => [t.id, t]));
+  const games = {};
+  for (const id in x.team) if (x.team[id].mid != null) (games[x.team[id].mid] ||= []).push(+id);
+  const list = Object.values(games).filter(g => g.length === 2).map(([a, b]) => {
+    const A = x.team[a], B = x.team[b];
+    const fa = A.now + A.left, fb = B.now + B.left;
+    const sd = PLAYER_SD * Math.sqrt(A.n + B.n);
+    const pa = sd ? phi((fa - fb) / sd) : (A.now > B.now ? 1 : A.now < B.now ? 0 : 0.5);
+    return { a, b, A, B, fa, fb, pa };
+  });
+  // Your game first, then the closest.
+  list.sort((p, q) => ((q.a === ME || q.b === ME) - (p.a === ME || p.b === ME)) || (Math.abs(p.pa - .5) - Math.abs(q.pa - .5)));
+  const pct = v => v >= .995 ? '>99%' : v <= .005 ? '<1%' : Math.round(v * 100) + '%';
+  const yet = T => T.n ? T.yet.map(id => esc(x.info[id]?.name || id)).join(', ') : 'Done';
+  let h = `<div class="scroll"><table id="live"><thead><tr><th class="l">Team</th><th>Score</th><th>Projected</th><th>Win chance</th><th class="l yet">Still to play</th></tr></thead><tbody>`;
+  list.forEach(g => {
+    [[g.a, g.A, g.fa, g.pa], [g.b, g.B, g.fb, 1 - g.pa]].forEach(([id, T, f, p], i) => {
+      h += `<tr class="${i ? 'g2nd' : 'g1st'}"><td class="l">${teamCell(byId[id])}</td>
+        <td>${T.now.toFixed(1)}</td><td>${f.toFixed(1)}</td>
+        <td class="${tint((p - .5) * 2)}">${g.A.n + g.B.n ? pct(p) : p > .5 ? 'Won' : p < .5 ? 'Lost' : 'Tied'}</td>
+        <td class="l yet">${yet(T)}</td></tr>`;
+    });
+  });
+  h += `</tbody></table></div>`;
+  $('#liveout').innerHTML = h;
+  // The right rail picks up your game.
+  const mine = list.find(g => g.a === ME || g.b === ME);
+  if (mine) {
+    const meA = mine.a === ME, my = meA ? mine.A : mine.B, th = meA ? mine.B : mine.A, opp = byId[meA ? mine.b : mine.a];
+    const p = meA ? mine.pa : 1 - mine.pa;
+    $('#info').insertAdjacentHTML('afterbegin', `<div class="info__pair"><dt class="info__label">Week ${x.w}</dt><dd class="info__value"><span>${my.now.toFixed(1)}–${th.now.toFixed(1)} v ${esc(opp.name)}</span><span>${my.n + th.n ? `${pct(p)} to win, projected ${(my.now + my.left).toFixed(1)}–${(th.now + th.left).toFixed(1)}` : (my.now > th.now ? 'Won' : 'Lost')}</span></dd></div>`);
+  }
+}
+
+// ================= Scoring leaders, by position, in this league's scoring =================
+// Summed from the weekly stat lines (the season aggregate lags mid-week). Finished weeks are
+// kept in localStorage; the current week is fetched fresh every time.
+const LEAD = { pos: 'QB', by: 'total', limit: 30, rows: {} };
+function initLeaders(d) {
+  try { const p = localStorage.getItem('standings-lead-pos'); if (p) LEAD.pos = p; } catch {}
+  document.querySelectorAll('.lead-pos .seg__btn').forEach(b => {
+    b.setAttribute('aria-pressed', String(b.dataset.pos === LEAD.pos));
+    b.onclick = () => {
+      LEAD.pos = b.dataset.pos; LEAD.limit = 30;
+      try { localStorage.setItem('standings-lead-pos', LEAD.pos); } catch {}
+      document.querySelectorAll('.lead-pos .seg__btn').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      paintLeaders(d);
+    };
+  });
+  paintLeaders(d);
+}
+async function leadersFor(d, pos) {
+  if (LEAD.rows[pos]) return LEAD.rows[pos];
+  const sc = {};
+  for (const k in d.league.scoring_settings) if (d.league.scoring_settings[k]) sc[k] = d.league.scoring_settings[k];
+  const tag = Object.entries(sc).join(';').length;
+  const season = d.league.season, upTo = Math.min(d.state.week || 1, 18);
+  const finished = w => w < upTo || (w === upTo && !d.live && w <= d.weeks.length);
+  const weeks = await Promise.all(Array.from({ length: upTo }, (_, i) => i + 1).map(async w => {
+    const key = `standings-lead-v1-${season}-${w}-${pos}-${tag}`;
+    if (finished(w)) try { const hit = JSON.parse(localStorage.getItem(key)); if (hit) return hit; } catch {}
+    const raw = await getUrl(`https://api.sleeper.com/stats/nfl/${season}/${w}?season_type=regular&position[]=${pos}`).catch(() => []);
+    const out = {};
+    for (const r of raw) {
+      const st = r.stats || {}; if (!st.gp) continue;
+      let p = 0; for (const k in sc) if (st[k]) p += st[k] * sc[k];
+      const pl = r.player || {};
+      out[r.player_id] = [Math.round(p * 100) / 100, pos === 'DEF' ? `${pl.last_name || r.team}` : `${pl.first_name || ''} ${pl.last_name || ''}`.trim(), r.team || pl.team || ''];
+    }
+    if (finished(w)) try { localStorage.setItem(key, JSON.stringify(out)); } catch {}
+    return out;
+  }));
+  const by = {};
+  weeks.forEach((wk, i) => { for (const id in wk) { const [p, name, team] = wk[id]; const r = by[id] ||= { id, total: 0, gp: 0, last: null }; r.total += p; r.gp++; r.name = name; r.team = team; if (i === upTo - 1) r.last = p; } });
+  const rows = Object.values(by).map(r => ({ ...r, pg: r.total / r.gp }));
+  return LEAD.rows[pos] = { rows, upTo };
+}
+async function paintLeaders(d) {
+  const pos = LEAD.pos;
+  if (!LEAD.rows[pos]) $('#leadout').innerHTML = '<div class="state">Loading…</div>';
+  let res;
+  try { res = await leadersFor(d, pos); } catch (err) { $('#leadout').innerHTML = `<div class="state">Couldn’t load stats. ${esc(err.message)}</div>`; return; }
+  if (pos !== LEAD.pos) return;
+  const byId = Object.fromEntries(d.teams.map(t => [t.id, t]));
+  const list = [...res.rows].sort((a, b) => b[LEAD.by] - a[LEAD.by]);
+  const shown = list.slice(0, LEAD.limit);
+  const sortTh = (k, label) => `<th class="sortable" data-k="${k}"${LEAD.by === k ? ' aria-sort="descending"' : ''}>${label}</th>`;
+  let h = `<div class="scroll"><table id="leaders"><thead><tr><th class="l rk"></th><th class="l">Player</th><th class="l own">Fantasy team</th><th>Games</th>${sortTh('total', 'Total')}${sortTh('pg', 'Per game')}<th>Wk ${res.upTo}</th></tr></thead><tbody>`;
+  shown.forEach((r, i) => {
+    const o = d.owner[r.id], ot = o ? byId[o] : null;
+    h += `<tr${o === ME ? ' class="mine"' : ''}><td class="l rk">${i + 1}</td>
+      <td class="l"><span class="pl">${esc(r.name)}</span><span class="sub">${esc(r.team)}<span class="own-m"> \u00b7 ${ot ? esc(ot.name) : 'Free agent'}</span></span></td>
+      <td class="l own">${ot ? esc(ot.name) : 'Free agent'}</td>
+      <td>${r.gp}</td><td>${r.total.toFixed(1)}</td><td>${r.pg.toFixed(1)}</td>
+      <td>${r.last == null ? '–' : r.last.toFixed(1)}</td></tr>`;
+  });
+  h += `</tbody></table></div>`;
+  if (list.length > shown.length) h += `<button class="seg__btn more" type="button" id="leadmore">Show ${Math.min(30, list.length - shown.length)} more</button>`;
+  h += `<div class="key"><span><i class="sw mine-sw"></i>On your roster</span><span>Click Total or Per game to sort</span></div>`;
+  $('#leadout').innerHTML = h;
+  $('#leadout').querySelectorAll('th[data-k]').forEach(th => th.onclick = () => { LEAD.by = th.dataset.k; paintLeaders(d); });
+  const more = $('#leadmore'); if (more) more.onclick = () => { LEAD.limit += 30; paintLeaders(d); };
+}
 
 // ================= System Jasper shell: section list, team summary, theme, keys =================
 const root = document.documentElement;

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.0 — 2026-11-09
+Standings page:
+- **Week 9, live.** The week being played counts in every table as soon as Sleeper has
+  points for it (labelled "week 9 live"). A new **Week 9** section, first in the list, shows
+  each game's score, projected final and win chance. Players still to play are added at their
+  projection, less Sleeper's known overstatement (WR 3.3, TE 2.1, RB 1.4), zeroed if Out/IR.
+  Your game also leads the right rail. Projected winners and Against projection stay on
+  finished weeks.
+- **Scoring leaders.** New section: QB, RB, WR, TE, K, DEF, in this league's scoring, summed
+  from weekly stat lines so today's games count once they finish. Games, total, per game,
+  this week, and which fantasy team has each player (yours in blue). Week 9 checked against
+  Sleeper's own points: 119 of 119 match.
+- **Compact.** Draft board loses the photos and shrinks to the 12/10px sizes (about half
+  the height). Rows 28px, team faces 18px, tighter keys and notes throughout.
+
 ## 0.5.0 — 2026-11-09
 **`/standings.html` rebuilt in System Jasper** (the design system in `~/Claude/Design System`).
 An app shell: the seven sections in a left rail, one at a time; Hawk Tua's record, league
