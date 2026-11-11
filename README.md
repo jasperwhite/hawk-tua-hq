@@ -127,19 +127,25 @@ Sleeper (league, rosters, matchups, projections, stats, schedule), FantasyCalc (
 values), ESPN (kickoff times, betting lines, RotoWire player notes). Endpoint details and quirks:
 `~/Work/Claude/docs/tooling/sleeper.md`.
 
-## Trade Desk (Artifact)
+## Trade desk
 
-A separate one-page trade calculator: https://claude.ai/artifact/Gp5ECJwLKvBXZmEUKgivfA.
-Source is `research/trade-desk/`. Pick players on both sides, and it shows both starting
-lineups before and after on **Shrunk Form**, plus FantasyCalc's package-adjusted ratio and a
-rough chance-they-accept. Add a third team for a 3-way (tap a player again to change where he goes). Other teams keep their current starters unless a newcomer is 2+ points a week better, and the chance they accept weighs what the deal is worth to their team (lineup change plus bench depth over free agents, scaled by how often a backup plays) equally with the FantasyCalc ratio. Below that: the league table for any range of weeks (with
-all-play record), and every team's best lineup ranked by Shrunk Form, last 3, last 5,
-season average, the chosen week range or next week's bias-corrected projection. Shrunk Form is
-games ÷ (games + 7) × recent form, with the rest taken from the FantasyCalc **full-PPR** value (this league's 1 pt per receiving first
-down makes WRs and TEs score like full PPR), which is
-turned into points on one curve across all positions. The data is a snapshot. To refresh it,
-run `python3 build_data.py && python3 build.py` (this fetches fresh data from Sleeper and
-FantasyCalc), then republish.
+A section of `public/standings.html`, not a page of its own: open the site and pick
+**Trade desk** in the rail (`standings.html#trade`). `trade-desk.html` and `leaders.html`
+are redirects into it, so old links still land.
+
+Pick players on both sides and it shows both starting lineups before and after on
+**Shrunk Form**, plus FantasyCalc's package-adjusted ratio and a rough chance-they-accept.
+Add a third team for a 3-way (tap a player again to change where he goes). Other teams
+keep their current starters unless a newcomer is 2+ points a week better, and the chance
+they accept weighs what the deal is worth to their team (lineup change plus bench depth
+over free agents, scaled by how often a backup plays) equally with the FantasyCalc ratio.
+Shrunk Form is games ÷ (games + 7) × recent form, with the rest taken from the
+FantasyCalc **full-PPR** value (this league's 1 pt per receiving first down makes WRs and
+TEs score like full PPR), turned into points on one curve across all positions.
+
+It builds those numbers live from Sleeper and FantasyCalc on every load, so there is
+nothing to refresh. `research/trade-desk/` is the Python original that baked the same
+maths into a static page, kept as the reference the live version was checked against.
 
 ## Hosting
 
