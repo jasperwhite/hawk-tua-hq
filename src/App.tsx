@@ -1,7 +1,7 @@
 import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
   RiComputerLine, RiExchangeLine, RiExternalLinkLine, RiFootballLine, RiGroupLine, RiLayoutLeftLine, RiLayoutRightLine,
-  RiListOrdered, RiMedalLine, RiMoonLine, RiNewspaperLine, RiRefreshLine, RiScales3Line, RiShieldLine, RiSunLine,
+  RiListOrdered, RiMoonLine, RiNewspaperLine, RiRefreshLine, RiScales3Line, RiShieldLine, RiSunLine,
   RiTableLine, RiTaskLine, RiUserAddLine,
 } from '@remixicon/react'
 
@@ -34,10 +34,11 @@ const VIEW: Record<Tab, () => ReactNode> = {
 }
 /* The standalone pages. They're built and shipped as their own HTML in public/, so they're real
    navigations out of the app, not tabs — hence plain hrefs and the external-link glyph. */
+// One page now: standings, trade desk and scoring leaders are all sections of it.
+// The old two URLs still exist as redirects into it.
 const PAGES = [
-  ['./trade-desk.html', 'Trade Desk', RiScales3Line],
-  ['./standings.html', 'Standings', RiTableLine],
-  ['./leaders.html', 'Leaders', RiMedalLine],
+  ['./standings.html', 'The league', RiTableLine],
+  ['./standings.html#trade', 'Trade desk', RiScales3Line],
 ] as const
 
 const STEPS = ['Reading your league', 'Pulling projections and stats', 'Scoring every player your way']
