@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/57772-1794201887/content/layout.html"
+        ],
+        "createdAt": "2026-11-09T05:31:23.075Z",
+        "reason": "Claude: throwaway scaled-down layout mockup for the brainstorm picker, already decided and its server stopped"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/57772-1794201887/content/layout.html"
+        ],
+        "createdAt": "2026-11-09T05:31:23.096Z",
+        "reason": "Claude: same throwaway mockup, text shrunk to fit two options side by side"
+      }
+    ]
+  }
+}

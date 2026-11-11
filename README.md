@@ -16,6 +16,12 @@ verdicts first, one-line reasons, tabs for the working.
 plus the league standings page) was merged with this Mac's copy (the design-system
 rebuild of the shell and Players). Both are kept.
 
+**Trade Desk** (`public/trade-desk.html`) — moved out of `research/` and onto the site
+(11 Nov 2026). It's a *baked* page: `research/trade-desk/build_data.py` fetches Sleeper and
+FantasyCalc, then `build.py` injects `data.json` into `template.html`. It makes no live calls,
+so **re-run both and re-copy into `public/` to refresh it** — the header says which week it
+holds. Reachable from the left rail under Pages.
+
 **League standings** (`public/standings.html`) — the minimal one, rebuilt in System Jasper
 (v0.5.0). One HTML file, no build, loads live from Sleeper every time it opens — reload or
 press `R` for the latest week. See `HANDOFF-hawk-tua-v1.md`.

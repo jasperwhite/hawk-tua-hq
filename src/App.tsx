@@ -1,7 +1,8 @@
 import { Component, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import {
-  RiComputerLine, RiExchangeLine, RiFootballLine, RiGroupLine, RiLayoutLeftLine, RiLayoutRightLine, RiListOrdered,
-  RiMoonLine, RiNewspaperLine, RiRefreshLine, RiShieldLine, RiSunLine, RiTaskLine, RiUserAddLine,
+  RiComputerLine, RiExchangeLine, RiExternalLinkLine, RiFootballLine, RiGroupLine, RiLayoutLeftLine, RiLayoutRightLine,
+  RiListOrdered, RiMedalLine, RiMoonLine, RiNewspaperLine, RiRefreshLine, RiScales3Line, RiShieldLine, RiSunLine,
+  RiTableLine, RiTaskLine, RiUserAddLine,
 } from '@remixicon/react'
 
 import {
@@ -31,6 +32,14 @@ const ICON: Record<Tab, Glyph> = {
 const VIEW: Record<Tab, () => ReactNode> = {
   brief: Brief, lineup: Lineup, waivers: Waivers, defence: Defences, trades: Trades, players: Players, team: Team, news: News,
 }
+/* The standalone pages. They're built and shipped as their own HTML in public/, so they're real
+   navigations out of the app, not tabs — hence plain hrefs and the external-link glyph. */
+const PAGES = [
+  ['./trade-desk.html', 'Trade Desk', RiScales3Line],
+  ['./standings.html', 'Standings', RiTableLine],
+  ['./leaders.html', 'Leaders', RiMedalLine],
+] as const
+
 const STEPS = ['Reading your league', 'Pulling projections and stats', 'Scoring every player your way']
 
 /* Dark first, as measured on the reference; the T key cycles in this same order. */
@@ -236,6 +245,18 @@ export default function App() {
               <RailNavList>
                 {TABS.map(([k, label]) => (
                   <RailNavItem key={k} href={`#${k}`} icon={ICON[k]} current={k === tab} onClick={navTo(k)}>{label}</RailNavItem>
+                ))}
+              </RailNavList>
+              <RailNavDivider />
+              <p className="rows__group-label">Pages</p>
+              <RailNavList>
+                {PAGES.map(([href, label, icon]) => (
+                  <RailNavItem key={href} href={href} icon={icon}>
+                    <span className="flex min-w-0 flex-1 items-center justify-between gap-(--space-8)">
+                      {label}
+                      <RiExternalLinkLine aria-hidden className="size-3 shrink-0 opacity-50" />
+                    </span>
+                  </RailNavItem>
                 ))}
               </RailNavList>
               <RailNavDivider />
