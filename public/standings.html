@@ -371,7 +371,9 @@ html.export .shell__main{padding:0;overflow:visible}
 .td-deal .sub{display:inline;margin:0}
 .td-odds{display:inline-flex;align-items:center;gap:6px;margin-left:auto}
 
-.td-cols,.td-lineups{display:grid;grid-template-columns:repeat(var(--n,2),minmax(0,1fr));gap:12px;margin-top:22px}
+/* Panels stack on their own when the middle column gets tight, so a name never
+   truncates to "Matthew …" just because a third team is in the deal. */
+.td-cols,.td-lineups{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:22px}
 @media (max-width:860px){.td-cols,.td-lineups,.td-verdict{grid-template-columns:1fr}
   .td-cell + .td-cell{border-left:0;border-top:0.5px solid var(--border-color)}}
 .td-panel{border:0.5px solid var(--border-color);border-radius:4px;padding:12px;min-width:0}
